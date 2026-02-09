@@ -1,65 +1,25 @@
-# Docker template for PHP projects
-This repository provides a starting template for PHP application development.
+## Phinx Setup
 
-It contains:
-* NGINX webserver
-* PHP FastCGI Process Manager with PDO MySQL support
-* MariaDB (GPL MySQL fork)
-* PHPMyAdmin
-* Composer
-* Composer package [nikic/fast-route](https://github.com/nikic/FastRoute) for routing
+### About
 
-## Setup
+This branch contains setup and sample files for getting started with database migration tool Phinx.
 
-1. Install Docker Desktop on Windows or Mac, or Docker Engine on Linux.
-1. Clone the project
+### Setup
 
-## Usage
+Docs: [https://book.cakephp.org/phinx/0/en/](https://book.cakephp.org/phinx/0/en/)
 
-In a terminal, from the cloned project folder, run:
-```bash
-docker compose up
-```
+_In your own project_, while your docker container is running, in a separate terminal, run:
 
-### Composer Autoload
+Install Phinx: `docker compose run --rm php composer require robmorgan/phinx`
 
-This template is configured to use Composer for PSR-4 autoloading:
+Init Phinx: `docker compose run --rm php vendor/bin/phinx init`
 
-- Namespace `App\\` is mapped to `app/src/`.
+Update config details in ./phinx.php, (you can copy/paste the one from this branch)
 
-To install dependencies and generate the autoloader, run:
+Note you may need to create the migration directory manually: `app\db\migrations`
 
-```bash
-docker compose run --rm php composer install
-```
+Create a migration (change CreateUserTable to whatever makes sense for your migration): `docker compose run --rm php vendor/bin/phinx create CreateUserTable`
 
-If you add new classes or change namespaces, regenerate the autoloader:
+View Phinx docs and create a migration (see app\db\migrations\20260209125845_create_user_table.php as an example)
 
-```bash
-docker compose run --rm php composer dump-autoload
-```
-
-Example usage is wired in `app/public/index.php` and a sample class exists at `app/src/hello.php`.
-
-### NGINX
-
-NGINX will now serve files in the app/public folder.
-
-Go to [http://localhost/hello.php](http://localhost/hello.php). You should see a hello world message.
-
-### PHPMyAdmin
-
-PHPMyAdmin provides basic database administration. It is accessible at [localhost:8080](localhost:8080).
-
-Credentials are defined in `docker-compose.yml`. They are: developer/secret123
-
-
-### Stopping the docker container
-
-If you want to stop the containers, press Ctrl+C. 
-
-Or run:
-```bash
-docker compose down
-```
-
+Run migration(s): `docker compose run --rm php vendor/bin/phinx migrate`
