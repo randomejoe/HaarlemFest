@@ -2,7 +2,7 @@
 
 ### About
 
-This branch contains setup and sample files for getting started with database migration tool Phinx.
+This branch contains setup and sample files for getting started with the database migration tool Phinx.
 
 ### Setup
 
@@ -18,8 +18,6 @@ Update config details in ./phinx.php, (you can copy/paste the one from this bran
 
 Note you may need to create the migration directory manually: `app\db\migrations`
 
-Create a migration (change CreateUserTable to whatever makes sense for your migration): `docker compose run --rm php vendor/bin/phinx create CreateUserTable`
-
-View Phinx docs and create a migration (see app\db\migrations\20260209125845_create_user_table.php as an example)
+Referencing Phinx docs create a migration (change "CreateUserTable" to a name that makes sense for your migration): `docker compose run --rm php vendor/bin/phinx create CreateUserTable`
 
 Run migration(s): `docker compose run --rm php vendor/bin/phinx migrate`
