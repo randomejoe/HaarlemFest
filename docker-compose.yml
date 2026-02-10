@@ -14,6 +14,16 @@ services:
             dockerfile: PHP.Dockerfile
         volumes:
             - ./app:/app
+        environment:
+            SMTP_HOST: mailhog
+            SMTP_PORT: 1025
+            SMTP_ENCRYPTION: ''
+            SMTP_USER: ''
+            SMTP_PASS: ''
+            SMTP_FROM: 'no-reply@haarlemfest.test'
+            SMTP_FROM_NAME: 'HaarlemFest'
+            APP_BASE_URL: 'http://localhost'
+            ALTCHA_HMAC_KEY: 'dev-altcha-hmac-key'
     mysql:
         image: mariadb:latest
         environment:
@@ -31,5 +41,10 @@ services:
             - 8080:80
         environment:
             - PMA_HOST=mysql
+    mailhog:
+        image: mailhog/mailhog:latest
+        ports:
+            - "1025:1025"
+            - "8025:8025"
 volumes:
     mysqldata: {}

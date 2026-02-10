@@ -3,7 +3,9 @@
   "type": "project",
   "require": {
     "nikic/fast-route": "^1.3",
-    "robmorgan/phinx": "^0.16.10"
+    "robmorgan/phinx": "^0.16.10",
+    "altcha-org/altcha": "^1.3",
+    "phpmailer/phpmailer": "^7.0"
   },
   "autoload": {
     "psr-4": {
