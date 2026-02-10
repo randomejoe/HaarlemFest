@@ -1,0 +1,41 @@
+nav {
+    height: 10vh;
+    background-color: #555;
+}
+
+.navItemsContainer {
+    display: flex;
+    align-items: center;
+    margin-left: 5px;
+    height: 100%;
+    gap: 5px;
+}
+
+.navItem {
+    background-color: #666;
+    height: 90%;
+    display: flex;
+    align-items: center;
+}
+
+.navItem:hover {
+    background-color: #606060;
+}
+
+.navItem > p {
+    width: 180px;
+    text-align: center;
+}
+
+body {
+    margin: 0;
+}
+
+p {
+    font-family: Arial, Helvetica, sans-serif;
+}
+
+a {
+    color: inherit;
+    text-decoration: none;
+}
