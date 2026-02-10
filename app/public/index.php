@@ -12,12 +12,25 @@ require __DIR__ . '/../vendor/autoload.php';
 use FastRoute\RouteCollector;
 use function FastRoute\simpleDispatcher;
 
+session_start();
+
 /**
  * Define the routes for the application.
  */
 $dispatcher = simpleDispatcher(function (RouteCollector $r) {
     $r->addRoute('GET', '/', ['App\Controllers\HomeController', 'home']);
     $r->addRoute('GET', '/hello/{name}', ['App\Controllers\HelloController', 'greet']);
+    $r->addRoute('GET', '/register', ['App\Controllers\AuthController', 'showRegister']);
+    $r->addRoute('POST', '/register', ['App\Controllers\AuthController', 'register']);
+    $r->addRoute('GET', '/login', ['App\Controllers\AuthController', 'showLogin']);
+    $r->addRoute('POST', '/login', ['App\Controllers\AuthController', 'login']);
+    $r->addRoute('POST', '/logout', ['App\Controllers\AuthController', 'logout']);
+    $r->addRoute('GET', '/password/forgot', ['App\Controllers\PasswordController', 'showForgot']);
+    $r->addRoute('POST', '/password/forgot', ['App\Controllers\PasswordController', 'sendReset']);
+    $r->addRoute('GET', '/password/reset/{token}', ['App\Controllers\PasswordController', 'showReset']);
+    $r->addRoute('POST', '/password/reset/{token}', ['App\Controllers\PasswordController', 'reset']);
+    $r->addRoute('GET', '/altcha', ['App\Controllers\AuthController', 'altchaChallenge']);
+    $r->addRoute('POST', '/altcha', ['App\Controllers\AuthController', 'altchaChallenge']);
 });
 
 
@@ -55,18 +68,15 @@ switch ($routeInfo[0]) {
          * Hint: in PHP we can use a string to call a class method dynamically, like this: `$instance->$methodName($args);`
          */
 
-        // TODO: invoke the controller and method using the data in $routeInfo[1]
+        [$controllerClass, $method] = $routeInfo[1];
+        $controller = new $controllerClass();
+        $vars = $routeInfo[2] ?? [];
 
-        /**
-         * $route[2] contains any dynamic parameters parsed from the URL.
-         * For instance, if we add a route like:
-         *  $r->addRoute('GET', '/hello/{name}', ['App\Controllers\HelloController', 'greet']);
-         * and the URL is `/hello/dan-the-man`, then `$routeInfo[2][name]` will be `dan-the-man`.
-         */
-
-        // TODO: pass the dynamic route data to the controller method
-        // When done, visiting `http://localhost/hello/dan-the-man` should output "Hi, dan-the-man!"
-        throw new Exception('Not implemented yet');
+        if (!empty($vars)) {
+            $controller->$method($vars);
+        } else {
+            $controller->$method();
+        }
 
         break;
 }
