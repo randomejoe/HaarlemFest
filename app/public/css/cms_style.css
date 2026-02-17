@@ -29,6 +29,7 @@ nav {
 .navItem > p {
     width: 180px;
     text-align: center;
+    color: white;
 }
 
 body {
@@ -130,4 +131,8 @@ a {
 .failure {
     background-color: #af6868;
     border-color: #af6868;
+}
+
+.add-page-form {
+    margin-top: 10px;
 }

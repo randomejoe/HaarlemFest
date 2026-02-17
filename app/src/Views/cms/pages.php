@@ -18,8 +18,8 @@
                     unset($_SESSION['create_title']);
                 }
             ?>
-            <button class='add-page-btn button'><p>Add page</p></button>
-            <form method="POST" action="/cms/pages">
+            <button id='add-page-btn' class='add-page-btn button'><p>Add page</p></button>
+            <form id='add-page-form' style='display: none' class='add-page-form' method="POST" action="/cms/pages">
                 <label for="title">Page Name:</label>
                 <input type="text" id="title" name="title" required>
                 <button type="submit">Create</button>
@@ -34,3 +34,12 @@
         </div>
     </div>
 </div>
+
+<script>
+    const btn = document.getElementById('add-page-btn');
+    const form = document.getElementById('add-page-form');
+
+    btn.addEventListener('click', () => {
+    form.style.display = form.style.display === 'none' ? 'block' : 'none';
+    });
+</script>
