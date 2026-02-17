@@ -11,6 +11,8 @@ require __DIR__ . '/../vendor/autoload.php';
 
 use FastRoute\RouteCollector;
 use function FastRoute\simpleDispatcher;
+use App\Repositories\PageRepository;
+use App\Services\PageService;
 
 session_start();
 

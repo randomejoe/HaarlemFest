@@ -2,15 +2,16 @@
 
 namespace App\Controllers;
 
-use App\Repositories\UserRepository;
-use App\Services\AuthService;
-use App\Services\CaptchaService;
 use App\View;
+use App\Services\PageService;
 
 class CmsController
 {
+    private PageService $pageService;
+
     public function __construct()
     {
+        $this->pageService = new PageService();
     }
 
     public function showCmsDashboard(): void
@@ -19,7 +20,9 @@ class CmsController
     }
     public function showCmsPages(): void
     {
-        echo View::render('cms/pages');
+        $pages = $this->pageService->getAllPages();
+
+        echo View::render('cms/pages', ['pages' => $pages]);
     }
     public function showCmsComponents(): void
     {
@@ -37,5 +40,4 @@ class CmsController
     {
         echo View::render('cms/events');
     }
-
 }
