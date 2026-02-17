@@ -29,7 +29,8 @@ class CmsController
         $success = $this->pageService->createPage($title);
         
         if ($success) {
-            $_SESSION['flash_message'] = 'Page created successfully!';
+            $_SESSION['create_success'] = true;
+            $_SESSION['create_title'] = $title;
             header('Location: /cms/pages');
         }
     }
