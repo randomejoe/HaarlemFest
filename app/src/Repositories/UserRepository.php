@@ -85,4 +85,30 @@ class UserRepository
             'id' => $userId,
         ]);
     }
+
+    public function updateProfile(int $userId, array $profileData): void
+    {
+        $stmt = $this->pdo->prepare(
+            'UPDATE users
+             SET username = :username,
+                 first_name = :first_name,
+                 last_name = :last_name,
+                 address = :address,
+                 city = :city,
+                 country = :country,
+                 phone_number = :phone_number
+             WHERE user_id = :id'
+        );
+
+        $stmt->execute([
+            'username' => (string) ($profileData['username'] ?? ''),
+            'first_name' => $profileData['first_name'] ?? null,
+            'last_name' => $profileData['last_name'] ?? null,
+            'address' => $profileData['address'] ?? null,
+            'city' => $profileData['city'] ?? null,
+            'country' => $profileData['country'] ?? null,
+            'phone_number' => $profileData['phone_number'] ?? null,
+            'id' => $userId,
+        ]);
+    }
 }

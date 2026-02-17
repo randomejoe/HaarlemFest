@@ -19,12 +19,15 @@ session_start();
  */
 $dispatcher = simpleDispatcher(function (RouteCollector $r) {
     $r->addRoute('GET', '/', ['App\Controllers\HomeController', 'home']);
+    $r->addRoute('GET', '/jazz', ['App\Controllers\JazzController', 'showProgram']);
     $r->addRoute('GET', '/hello/{name}', ['App\Controllers\HelloController', 'greet']);
     $r->addRoute('GET', '/register', ['App\Controllers\AuthController', 'showRegister']);
     $r->addRoute('POST', '/register', ['App\Controllers\AuthController', 'register']);
     $r->addRoute('GET', '/login', ['App\Controllers\AuthController', 'showLogin']);
     $r->addRoute('POST', '/login', ['App\Controllers\AuthController', 'login']);
     $r->addRoute('POST', '/logout', ['App\Controllers\AuthController', 'logout']);
+    $r->addRoute('GET', '/account', ['App\Controllers\AccountController', 'show']);
+    $r->addRoute('POST', '/account', ['App\Controllers\AccountController', 'update']);
     $r->addRoute('GET', '/password/forgot', ['App\Controllers\PasswordController', 'showForgot']);
     $r->addRoute('POST', '/password/forgot', ['App\Controllers\PasswordController', 'sendReset']);
     $r->addRoute('GET', '/password/reset/{token}', ['App\Controllers\PasswordController', 'showReset']);

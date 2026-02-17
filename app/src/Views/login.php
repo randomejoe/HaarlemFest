@@ -1,36 +1,50 @@
-<!doctype html>
-<html lang="en">
-<head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Login</title>
-</head>
-<body>
-    <h1>Login</h1>
+<?php require __DIR__ . '/partials/header.php'; ?>
 
-    <?php if (!empty($message)): ?>
-        <p style="color: #1b5e20;"><?php echo htmlspecialchars($message, ENT_QUOTES, 'UTF-8'); ?></p>
-    <?php endif; ?>
+<main>
+    <section class="section auth-section">
+        <div class="container">
+            <div class="row justify-content-center">
+                <div class="col-12 col-md-9 col-lg-6">
+                    <div class="account-card auth-card">
+                        <h1>Login</h1>
+                        <p class="account-intro">Welcome back. Sign in to continue.</p>
 
-    <?php if (!empty($error)): ?>
-        <p style="color: #b00020;"><?php echo htmlspecialchars($error, ENT_QUOTES, 'UTF-8'); ?></p>
-    <?php endif; ?>
+                        <?php if (!empty($message)): ?>
+                            <p class="account-message success"><?php echo htmlspecialchars($message, ENT_QUOTES, 'UTF-8'); ?></p>
+                        <?php endif; ?>
 
-    <form method="post" action="/login">
-        <label>
-            Email or Username
-            <input type="text" name="identifier" required>
-        </label>
-        <br>
-        <label>
-            Password
-            <input type="password" name="password" required>
-        </label>
-        <br>
-        <button type="submit">Login</button>
-    </form>
+                        <?php if (!empty($error)): ?>
+                            <p class="account-message error"><?php echo htmlspecialchars($error, ENT_QUOTES, 'UTF-8'); ?></p>
+                        <?php endif; ?>
 
-    <p><a href="/password/forgot">Forgot password?</a></p>
-    <p><a href="/register">Need an account? Register</a></p>
-</body>
-</html>
+                        <form method="post" action="/login" class="account-form auth-form">
+                            <div>
+                                <label class="account-label" for="login-identifier">Email or Username</label>
+                                <input
+                                    id="login-identifier"
+                                    class="account-input"
+                                    type="text"
+                                    name="identifier"
+                                    value="<?php echo htmlspecialchars((string) ($_POST['identifier'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>"
+                                    required
+                                >
+                            </div>
+                            <div>
+                                <label class="account-label" for="login-password">Password</label>
+                                <input id="login-password" class="account-input" type="password" name="password" required>
+                            </div>
+                            <button type="submit" class="btn cta-btn w-100">Login</button>
+                        </form>
+
+                        <div class="auth-links">
+                            <a href="/password/forgot">Forgot password?</a>
+                            <a href="/register">Need an account? Register</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+</main>
+
+<?php require __DIR__ . '/partials/footer.php'; ?>
