@@ -2,12 +2,12 @@
     <div class='page-item-content vertical-center'>
         <?php echo $title; ?>
         <div class='page-item-buttons vertical-center'>
-            <button class='edit-btn button'>
+            <a class='edit-btn button'>
                 <p>Edit page</p>
-            </button>
-            <button class='delete-btn button'>
+            </a>
+            <a class='delete-btn button'>
                 <p>Delete page</p>
-            </button>
+            </a>
         </div>
     </div>
 </div>
