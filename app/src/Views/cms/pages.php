@@ -2,21 +2,23 @@
     <?php include __DIR__ . '/../components/cms_nav.php';?>
     <div class='horizontal-center vertical-center'>
         <div class='cms-container'>
-            <button class='add-page-btn button'><p>Add page</p></button>
             <?php 
                 if (isset($_SESSION['create_success']) && isset($_SESSION['create_title'])) {
                     if ($_SESSION['create_success']) {
                         $message = 'Successfully added page ' . $_SESSION['create_title'];
-                        require __DIR__ . '/../components/success_notification.php';
+                        $notification_type = 'success';
                     }
                     else {
                         $message = 'Failed to add page ' . $_SESSION['create_title'];
-                        require __DIR__ . '/../components/error_notification.php';
+                        $notification_type = 'failure';
+                        
                     }
+                    require __DIR__ . '/../components/notification.php';
                     unset($_SESSION['create_success']);
                     unset($_SESSION['create_title']);
                 }
             ?>
+            <button class='add-page-btn button'><p>Add page</p></button>
             <form method="POST" action="/cms/pages">
                 <label for="title">Page Name:</label>
                 <input type="text" id="title" name="title" required>

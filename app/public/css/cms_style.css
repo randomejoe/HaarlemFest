@@ -112,3 +112,22 @@ a {
 .edit-btn > p, .delete-btn > p {
     color: white;
 }
+
+.notification {
+    padding: 5px;
+    margin: 5px 0px;
+    border-radius: 5px;
+    border: solid 2px black;
+}
+.notification > p {
+    margin: 5px;
+}
+
+.success {
+    background-color: #c0e9c085;
+    border-color: #93c993;
+}
+.failure {
+    background-color: #af6868;
+    border-color: #af6868;
+}
