@@ -55,7 +55,12 @@ class AuthController
         $passwordHash = password_hash($password, PASSWORD_DEFAULT);
         $userId = $this->users->create($username, $email, $passwordHash);
 
-        $this->auth->login(['user_id' => $userId, 'role' => 'user']);
+        $this->auth->login([
+            'user_id' => $userId,
+            'username' => $username,
+            'email' => $email,
+            'role' => 'user',
+        ]);
         header('Location: /');
         exit;
     }
