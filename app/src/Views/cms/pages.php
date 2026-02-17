@@ -3,6 +3,11 @@
     <div class='horizontal-center vertical-center'>
         <div class='cms-container'>
             <button class='add-page-btn button'><p>Add page</p></button>
+            <form method="POST" action="/cms/pages">
+                <label for="title">Page Name:</label>
+                <input type="text" id="title" name="title" required>
+                <button type="submit">Create</button>
+            </form>
             <div class='page-item-container'>
             <?php 
             foreach ($pages as $page) {

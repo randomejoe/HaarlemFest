@@ -16,4 +16,9 @@ class PageService
     public function getAllPages() {
         return $this->repository->getAllPages();
     }
+
+    public function createPage(string $title): bool 
+    {
+        return $this->repository->createPage($title);
+    }
 }

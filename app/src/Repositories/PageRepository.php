@@ -33,4 +33,10 @@ class PageRepository
         $page = $stmt->fetchAll();
         return $page;
     }
+
+    public function createPage(string $title): bool {
+        $stmt = $this->pdo->prepare('INSERT INTO pages (title) VALUES (:title)');
+        $stmt->execute(['title' => $title]);
+        return true;
+    }
 }

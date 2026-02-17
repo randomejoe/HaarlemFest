@@ -35,6 +35,7 @@ $dispatcher = simpleDispatcher(function (RouteCollector $r) {
     $r->addRoute('POST', '/altcha', ['App\Controllers\AuthController', 'altchaChallenge']);
     $r->addRoute('GET', '/cms', ['App\Controllers\CmsController', 'showCmsDashboard']);
     $r->addRoute('GET', '/cms/pages', ['App\Controllers\CmsController', 'showCmsPages']);
+    $r->addRoute('POST', '/cms/pages', ['App\Controllers\CmsController', 'createPage']);
     $r->addRoute('GET', '/cms/components', ['App\Controllers\CmsController', 'showCmsComponents']);
     $r->addRoute('GET', '/cms/events', ['App\Controllers\CmsController', 'showCmsEvents']);
     $r->addRoute('GET', '/cms/tickets', ['App\Controllers\CmsController', 'showCmsTickets']);

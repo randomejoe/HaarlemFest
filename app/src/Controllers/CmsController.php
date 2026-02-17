@@ -24,6 +24,15 @@ class CmsController
 
         echo View::render('cms/pages', ['pages' => $pages]);
     }
+    public function createPage() {
+        $title = $_POST['title'];
+        $success = $this->pageService->createPage($title);
+        
+        if ($success) {
+            $_SESSION['flash_message'] = 'Page created successfully!';
+            header('Location: /cms/pages');
+        }
+    }
     public function showCmsComponents(): void
     {
         echo View::render('cms/components');
