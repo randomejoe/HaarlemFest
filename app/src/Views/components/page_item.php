@@ -9,6 +9,5 @@
                 <p>Delete page</p>
             </button>
         </div>
-        
     </div>
 </div>

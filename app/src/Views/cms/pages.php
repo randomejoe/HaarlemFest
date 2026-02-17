@@ -11,7 +11,6 @@
                     else {
                         $message = 'Failed to add page ' . $_SESSION['create_title'];
                         $notification_type = 'failure';
-                        
                     }
                     require __DIR__ . '/../components/notification.php';
                     unset($_SESSION['create_success']);
