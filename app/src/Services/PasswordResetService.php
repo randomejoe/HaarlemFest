@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Config;
+use App\Exceptions\AuthException;
 use App\Repositories\UserRepository;
 use DateTime;
 
@@ -10,11 +11,13 @@ class PasswordResetService
 {
     private UserRepository $users;
     private Mailer $mailer;
+    private AuthService $auth;
 
     public function __construct()
     {
         $this->users = new UserRepository();
         $this->mailer = new Mailer();
+        $this->auth = new AuthService();
     }
 
     public function requestReset(string $email): void
@@ -28,7 +31,11 @@ class PasswordResetService
         $tokenHash = hash('sha256', $token);
         $expiresAt = (new DateTime('+1 hour'))->format('Y-m-d H:i:s');
 
-        $this->users->setPasswordResetToken((int) $user['user_id'], $tokenHash, $expiresAt);
+        try {
+            $this->users->setPasswordResetToken($user->id(), $tokenHash, $expiresAt);
+        } catch (\Throwable $e) {
+            throw new AuthException('Failed to store reset token.', 0, $e);
+        }
 
         $baseUrl = rtrim(Config::env('APP_BASE_URL', 'http://localhost'), '/');
         $resetUrl = $baseUrl . '/password/reset/' . $token;
@@ -38,7 +45,7 @@ class PasswordResetService
             . '<p><a href="' . htmlspecialchars($resetUrl, ENT_QUOTES, 'UTF-8') . '">Reset password</a></p>'
             . '<p>This link expires in 1 hour.</p>';
 
-        $this->mailer->send($user['email'], $user['username'], $subject, $body);
+        $this->mailer->send($user->email(), $user->username(), $subject, $body);
     }
 
     public function resetPassword(string $token, string $newPassword): bool
@@ -49,13 +56,19 @@ class PasswordResetService
             return false;
         }
 
-        $expiresAt = $user['password_reset_expires_at'] ?? null;
+        $expiresAt = $user->passwordResetExpiresAt();
         if (!$expiresAt || strtotime($expiresAt) < time()) {
             return false;
         }
 
-        $passwordHash = password_hash($newPassword, PASSWORD_DEFAULT);
-        $this->users->updatePassword((int) $user['user_id'], $passwordHash);
+        $passwordHash = $this->auth->hashPassword($newPassword);
+
+        try {
+            $this->users->updatePassword($user->id(), $passwordHash);
+        } catch (\Throwable $e) {
+            throw new AuthException('Failed to update password.', 0, $e);
+        }
+
         return true;
     }
 }

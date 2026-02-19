@@ -3,7 +3,6 @@
 namespace App\Controllers;
 
 use App\Repositories\EventRepository;
-use App\View;
 use DateTimeImmutable;
 
 class JazzController
@@ -68,12 +67,13 @@ class JazzController
             $plannerTotal += (float) $event['price_value'];
         }
 
-        echo View::render('jazz', [
+        extract([
             'days' => $days,
             'selected_day' => $selectedDay,
             'events' => $selectedEvents,
             'planner_count' => $plannerCount,
             'planner_total' => number_format($plannerTotal, 2),
-        ]);
+        ], EXTR_SKIP);
+        require(__DIR__ . '/../Views/jazz.php');
     }
 }

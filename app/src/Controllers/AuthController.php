@@ -2,10 +2,11 @@
 
 namespace App\Controllers;
 
+use App\Models\UserRole;
+use App\Models\User;
 use App\Repositories\UserRepository;
 use App\Services\AuthService;
 use App\Services\CaptchaService;
-use App\View;
 
 class AuthController
 {
@@ -22,86 +23,124 @@ class AuthController
 
     public function showRegister(): void
     {
-        echo View::render('register');
+        try {
+            require(__DIR__ . '/../Views/register.php');
+        } catch (\Throwable $e) {
+            http_response_code(500);
+            error_log('AuthController::showRegister error: ' . $e->getMessage());
+            require(__DIR__ . '/../Views/error.php');
+        }
     }
 
     public function register(): void
     {
-        $username = trim($_POST['username'] ?? '');
-        $email = trim($_POST['email'] ?? '');
-        $password = $_POST['password'] ?? '';
-        $captchaPayload = $_POST['altcha'] ?? '';
+        try {
+            $username = trim($_POST['username'] ?? '');
+            $email = trim($_POST['email'] ?? '');
+            $password = $_POST['password'] ?? '';
+            $captchaPayload = $_POST['altcha'] ?? '';
+            $old = [
+                'username' => $username,
+                'email' => $email,
+            ];
 
-        if ($username === '' || $email === '' || $password === '') {
-            echo View::render('register', ['error' => 'All fields are required.']);
-            return;
+            $errors = User::validateRegistration($username, $email, $password);
+            if ($errors !== []) {
+                extract(['error' => $errors[0], 'old' => $old], EXTR_SKIP);
+                require(__DIR__ . '/../Views/register.php');
+                return;
+            }
+
+            if (!$this->captcha->verify($captchaPayload)) {
+                extract(['error' => 'Captcha verification failed.', 'old' => $old], EXTR_SKIP);
+                require(__DIR__ . '/../Views/register.php');
+                return;
+            }
+
+            if ($this->users->findByEmail($email) || $this->users->findByUsername($username)) {
+                extract(['error' => 'That email or username is already in use.', 'old' => $old], EXTR_SKIP);
+                require(__DIR__ . '/../Views/register.php');
+                return;
+            }
+
+            $passwordHash = $this->auth->hashPassword($password);
+            $userId = $this->users->create($username, $email, $passwordHash);
+
+            $this->auth->login(new User(
+                id: $userId,
+                username: $username,
+                email: $email,
+                role: UserRole::User
+            ));
+            header('Location: /');
+            exit;
+        } catch (\Throwable $e) {
+            http_response_code(500);
+            error_log('AuthController::register error: ' . $e->getMessage());
+            require(__DIR__ . '/../Views/error.php');
         }
-
-        if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-            echo View::render('register', ['error' => 'Please provide a valid email address.']);
-            return;
-        }
-
-        if (!$this->captcha->verify($captchaPayload)) {
-            echo View::render('register', ['error' => 'Captcha verification failed.']);
-            return;
-        }
-
-        if ($this->users->findByEmail($email) || $this->users->findByUsername($username)) {
-            echo View::render('register', ['error' => 'That email or username is already in use.']);
-            return;
-        }
-
-        $passwordHash = password_hash($password, PASSWORD_DEFAULT);
-        $userId = $this->users->create($username, $email, $passwordHash);
-
-        $this->auth->login([
-            'user_id' => $userId,
-            'username' => $username,
-            'email' => $email,
-            'role' => 'user',
-        ]);
-        header('Location: /');
-        exit;
     }
 
     public function showLogin(): void
     {
-        echo View::render('login');
+        try {
+            require(__DIR__ . '/../Views/login.php');
+        } catch (\Throwable $e) {
+            http_response_code(500);
+            error_log('AuthController::showLogin error: ' . $e->getMessage());
+            require(__DIR__ . '/../Views/error.php');
+        }
     }
 
     public function login(): void
     {
-        $identifier = trim($_POST['identifier'] ?? '');
-        $password = $_POST['password'] ?? '';
+        try {
+            $identifier = trim($_POST['identifier'] ?? '');
+            $password = $_POST['password'] ?? '';
+            $old = [
+                'identifier' => $identifier,
+            ];
 
-        if ($identifier === '' || $password === '') {
-            echo View::render('login', ['error' => 'Email/username and password are required.']);
-            return;
+            if ($identifier === '' || $password === '') {
+                extract(['error' => 'Email/username and password are required.', 'old' => $old], EXTR_SKIP);
+                require(__DIR__ . '/../Views/login.php');
+                return;
+            }
+
+            $user = null;
+            if (str_contains($identifier, '@')) {
+                $user = $this->users->findByEmail($identifier);
+            } else {
+                $user = $this->users->findByUsername($identifier);
+            }
+
+            if (!$user || !$this->auth->verifyPassword($password, $user->passwordHash() ?? '')) {
+                extract(['error' => 'Invalid credentials.', 'old' => $old], EXTR_SKIP);
+                require(__DIR__ . '/../Views/login.php');
+                return;
+            }
+
+            $this->auth->login($user);
+            header('Location: /');
+            exit;
+        } catch (\Throwable $e) {
+            http_response_code(500);
+            error_log('AuthController::login error: ' . $e->getMessage());
+            require(__DIR__ . '/../Views/error.php');
         }
-
-        $user = null;
-        if (str_contains($identifier, '@')) {
-            $user = $this->users->findByEmail($identifier);
-        } else {
-            $user = $this->users->findByUsername($identifier);
-        }
-
-        if (!$user || !password_verify($password, $user['password_hash'] ?? '')) {
-            echo View::render('login', ['error' => 'Invalid credentials.']);
-            return;
-        }
-
-        $this->auth->login($user);
-        header('Location: /');
-        exit;
     }
 
     public function logout(): void
     {
-        $this->auth->logout();
-        header('Location: /login');
-        exit;
+        try {
+            $this->auth->logout();
+            header('Location: /login');
+            exit;
+        } catch (\Throwable $e) {
+            http_response_code(500);
+            error_log('AuthController::logout error: ' . $e->getMessage());
+            require(__DIR__ . '/../Views/error.php');
+        }
     }
 
     public function altchaChallenge(): void
@@ -127,4 +166,5 @@ class AuthController
         }
         exit;
     }
+
 }

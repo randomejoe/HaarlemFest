@@ -3,39 +3,39 @@
 namespace App\Repositories;
 
 use App\Database\Connection;
+use App\Models\User;
+use App\Models\UserRole;
 use PDO;
 
 class UserRepository
 {
     private PDO $pdo;
+    private const USER_COLUMNS = 'user_id, username, email, role, password_hash, first_name, last_name, address, city, country, phone_number, created_at, password_reset_token, password_reset_expires_at';
 
     public function __construct()
     {
         $this->pdo = Connection::get();
     }
 
-    public function findByEmail(string $email): ?array
+    public function findByEmail(string $email): ?User
     {
-        $stmt = $this->pdo->prepare('SELECT * FROM users WHERE email = :email LIMIT 1');
+        $stmt = $this->pdo->prepare('SELECT ' . self::USER_COLUMNS . ' FROM users WHERE email = :email LIMIT 1');
         $stmt->execute(['email' => $email]);
-        $user = $stmt->fetch();
-        return $user ?: null;
+        return ($row = $stmt->fetch()) !== false ? User::fromArray($row) : null;
     }
 
-    public function findByUsername(string $username): ?array
+    public function findByUsername(string $username): ?User
     {
-        $stmt = $this->pdo->prepare('SELECT * FROM users WHERE username = :username LIMIT 1');
+        $stmt = $this->pdo->prepare('SELECT ' . self::USER_COLUMNS . ' FROM users WHERE username = :username LIMIT 1');
         $stmt->execute(['username' => $username]);
-        $user = $stmt->fetch();
-        return $user ?: null;
+        return ($row = $stmt->fetch()) !== false ? User::fromArray($row) : null;
     }
 
-    public function findById(int $id): ?array
+    public function findById(int $id): ?User
     {
-        $stmt = $this->pdo->prepare('SELECT * FROM users WHERE user_id = :id LIMIT 1');
+        $stmt = $this->pdo->prepare('SELECT ' . self::USER_COLUMNS . ' FROM users WHERE user_id = :id LIMIT 1');
         $stmt->execute(['id' => $id]);
-        $user = $stmt->fetch();
-        return $user ?: null;
+        return ($row = $stmt->fetch()) !== false ? User::fromArray($row) : null;
     }
 
     public function create(string $username, string $email, string $passwordHash): int
@@ -44,7 +44,7 @@ class UserRepository
             'INSERT INTO users (role, username, email, password_hash, created_at) VALUES (:role, :username, :email, :password_hash, NOW())'
         );
         $stmt->execute([
-            'role' => 'user',
+            'role' => UserRole::User->value,
             'username' => $username,
             'email' => $email,
             'password_hash' => $passwordHash,
@@ -65,14 +65,13 @@ class UserRepository
         ]);
     }
 
-    public function findByResetTokenHash(string $tokenHash): ?array
+    public function findByResetTokenHash(string $tokenHash): ?User
     {
         $stmt = $this->pdo->prepare(
-            'SELECT * FROM users WHERE password_reset_token = :token LIMIT 1'
+            'SELECT ' . self::USER_COLUMNS . ' FROM users WHERE password_reset_token = :token LIMIT 1'
         );
         $stmt->execute(['token' => $tokenHash]);
-        $user = $stmt->fetch();
-        return $user ?: null;
+        return ($row = $stmt->fetch()) !== false ? User::fromArray($row) : null;
     }
 
     public function updatePassword(int $userId, string $passwordHash): void
@@ -111,4 +110,5 @@ class UserRepository
             'id' => $userId,
         ]);
     }
+
 }
