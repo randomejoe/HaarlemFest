@@ -2,7 +2,6 @@
 
 namespace App\Controllers;
 
-use App\View;
 use App\Services\PageService;
 
 class CmsController
@@ -16,38 +15,45 @@ class CmsController
 
     public function showCmsDashboard(): void
     {
-        echo View::render('cms/index');
+        require(__DIR__ . '/../Views/cms/index.php');
     }
+
     public function showCmsPages(): void
     {
         $pages = $this->pageService->getAllPages();
-
-        echo View::render('cms/pages', ['pages' => $pages]);
+        extract(['pages' => $pages], EXTR_SKIP);
+        require(__DIR__ . '/../Views/cms/pages.php');
     }
-    public function createPage() {
+
+    public function createPage(): void
+    {
         $title = $_POST['title'];
         $success = $this->pageService->createPage($title);
-        
+
         if ($success) {
             $_SESSION['create_success'] = true;
             $_SESSION['create_title'] = $title;
             header('Location: /cms/pages');
         }
     }
+
     public function showCmsComponents(): void
     {
-        echo View::render('cms/components');
+        require(__DIR__ . '/../Views/cms/components.php');
     }
+
     public function showCmsTickets(): void
     {
-        echo View::render('cms/tickets');
+        require(__DIR__ . '/../Views/cms/tickets.php');
     }
+
     public function showCmsUsers(): void
     {
-        echo View::render('cms/users');
+        require(__DIR__ . '/../Views/cms/users.php');
     }
+
     public function showCmsEvents(): void
     {
-        echo View::render('cms/events');
+        require(__DIR__ . '/../Views/cms/events.php');
     }
 }
