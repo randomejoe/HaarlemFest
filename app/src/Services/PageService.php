@@ -21,4 +21,8 @@ class PageService
     {
         return $this->repository->createPage($title);
     }
+
+    public function getAllComponents() {
+        return $this->repository->getAllComponents();
+    }
 }

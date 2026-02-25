@@ -30,13 +30,20 @@ class PageRepository
     public function getAllPages() {
         $stmt = $this->pdo->prepare('SELECT title FROM pages');
         $stmt->execute();
-        $page = $stmt->fetchAll();
-        return $page;
+        $pages = $stmt->fetchAll();
+        return $pages;
     }
 
     public function createPage(string $title): bool {
         $stmt = $this->pdo->prepare('INSERT INTO pages (title) VALUES (:title)');
         $stmt->execute(['title' => $title]);
         return true;
+    }
+
+    public function getAllComponents() {
+        $stmt = $this->pdo->prepare('SELECT component_name FROM page_components');
+        $stmt->execute();
+        $components = $stmt->fetchAll();
+        return $components;
     }
 }

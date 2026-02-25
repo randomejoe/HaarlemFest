@@ -36,8 +36,21 @@ class CmsController
     }
     public function showCmsComponents(): void
     {
-        echo View::render('cms/components');
+        $components = $this->pageService->getAllComponents();
+        var_dump($pages);
+
+        echo View::render('cms/components', ['components' => $components]);
     }
+    // public function createComponent() {
+    //     $title = $_POST['title'];
+    //     $success = $this->pageService->createComponent($title);
+        
+    //     if ($success) {
+    //         $_SESSION['create_success'] = true;
+    //         $_SESSION['create_title'] = $title;
+    //         header('Location: /cms/pages');
+    //     }
+    // }
     public function showCmsTickets(): void
     {
         echo View::render('cms/tickets');
