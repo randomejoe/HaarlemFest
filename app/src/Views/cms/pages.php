@@ -1,5 +1,5 @@
 <div>
-    <?php include __DIR__ . '/../components/cms_nav.php';?>
+    <?php include __DIR__ . '/../partials/cms/cms_nav.php';?>
     <div class='horizontal-center vertical-center'>
         <div class='cms-container'>
             <?php 
@@ -13,7 +13,7 @@
                         $notification_type = 'failure';
                         
                     }
-                    require __DIR__ . '/../components/notification.php';
+                    require __DIR__ . '/../partials/cms/notification.php';
                     unset($_SESSION['create_success']);
                     unset($_SESSION['create_title']);
                 }
@@ -28,7 +28,7 @@
             <?php 
             foreach ($pages as $page) {
                 $title = $page['title'];
-                require __DIR__ . '/../components/page_item.php';
+                require __DIR__ . '/../partials/cms/page_item.php';
             } ?>
             </div>
         </div>
