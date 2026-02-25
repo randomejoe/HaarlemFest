@@ -16,14 +16,14 @@ class PageRepository
 
     public function getAllPages() 
     {
-        $stmt = $this->pdo->prepare('SELECT title FROM pages');
+        $stmt = $this->pdo->prepare('SELECT title, page_id AS id FROM pages');
         $stmt->execute();
         $pages = $stmt->fetchAll();
         return $pages;
     }
     public function getAllComponents() 
     {
-        $stmt = $this->pdo->prepare('SELECT component_name FROM page_components');
+        $stmt = $this->pdo->prepare('SELECT component_name, component_id AS id FROM page_components');
         $stmt->execute();
         $components = $stmt->fetchAll();
         return $components;

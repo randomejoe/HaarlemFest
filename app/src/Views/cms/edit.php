@@ -5,8 +5,7 @@
         <div class='cms-container'>
             <div class='cms-item-container'>
                 <form method="POST">
-                    <label for="name">Name:</label>
-                    <input type="text" id="name" name="name" value="<?= htmlspecialchars($item['item_name'], ENT_QUOTES) ?>" required>
+                    <input type="text" id="name" name="name" value="<?php echo $item['item_name'] ?>" required>
                     <button type="submit">Save</button>
                 </form>
             </div>

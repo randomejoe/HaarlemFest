@@ -2,12 +2,12 @@
     <div class='cms-item-content vertical-center'>
         <?php echo $name; ?>
         <div class='cms-item-buttons vertical-center'>
-            <button class='edit-btn button'>
+            <a class='edit-btn button' href=<?php echo '/cms/' . $item_type . 's/' . $id . '/edit'?>>
                 <p>Edit <?php echo $item_type ?></p>
-            </button>
-            <button class='delete-btn button'>
+            </a>
+            <a class='delete-btn button'>
                 <p>Delete <?php echo $item_type ?></p>
-            </button>
+            </a>
         </div>
         
     </div>

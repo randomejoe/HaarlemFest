@@ -29,6 +29,7 @@
             $item_type = 'page';
             foreach ($pages as $page) {
                 $name = $page['title'];
+                $id = $page['id'];
                 require __DIR__ . '/../partials/cms/cms_item.php';
             } ?>
             </div>

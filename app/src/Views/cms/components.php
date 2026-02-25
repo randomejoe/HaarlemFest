@@ -29,6 +29,7 @@
             $item_type = 'component';
             foreach ($components as $component) {
                 $name = $component['component_name'];
+                $id = $component['id'];
                 require __DIR__ . '/../partials/cms/cms_item.php';
             } ?>
             </div>
