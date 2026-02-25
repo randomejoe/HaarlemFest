@@ -25,4 +25,9 @@ class PageService
     public function getAllComponents() {
         return $this->repository->getAllComponents();
     }
+
+    public function createComponent(string $name): bool 
+    {
+        return $this->repository->createComponent($name);
+    }
 }

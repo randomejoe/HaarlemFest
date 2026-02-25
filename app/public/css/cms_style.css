@@ -62,10 +62,10 @@ a {
     justify-content: center;
 }
 
-.add-page-btn {
+.add-cms-item-btn {
     background-color: green;
 }
-.add-page-btn > p {
+.add-cms-item-btn > p {
     color: white;
 }
 
@@ -81,24 +81,24 @@ a {
     margin: 0px;
 }
 
-.page-item-container {
+.cms-item-container {
     gap: 10px;
     margin-top: 10px;
     display: flex;
     flex-direction: column;
 }
 
-.page-item {
+.cms-item {
     border: solid 2px #666666;
     padding: 20px 10px;
     border-radius: 10px;
 }
-.page-item-content {
+.cms-item-content {
     display: flex;
     flex-direction: row;
     justify-content: space-between;
 }
-.page-item-buttons {
+.cms-item-buttons {
     display: flex;
     flex-direction: row;
     gap: 10px;
@@ -133,6 +133,6 @@ a {
     border-color: #af6868;
 }
 
-.add-page-form {
+.add-cms-item-form {
     margin-top: 10px;
 }

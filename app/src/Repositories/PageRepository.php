@@ -27,23 +27,36 @@ class PageRepository
         return $page;
     }
 
-    public function getAllPages() {
+    public function getAllPages() 
+    {
         $stmt = $this->pdo->prepare('SELECT title FROM pages');
         $stmt->execute();
         $pages = $stmt->fetchAll();
         return $pages;
     }
 
-    public function createPage(string $title): bool {
+    public function createPage(string $title): bool 
+    {
         $stmt = $this->pdo->prepare('INSERT INTO pages (title) VALUES (:title)');
         $stmt->execute(['title' => $title]);
         return true;
     }
 
-    public function getAllComponents() {
+    public function getAllComponents() 
+    {
         $stmt = $this->pdo->prepare('SELECT component_name FROM page_components');
         $stmt->execute();
         $components = $stmt->fetchAll();
         return $components;
+    }
+
+    public function createComponent(string $name): bool 
+    {
+        $stmt = $this->pdo->prepare('INSERT INTO page_components (component_name, content) VALUES (:component_name, :content)');
+        $stmt->execute([
+            'component_name' => $name,
+            'content' => '<div></div>'
+        ]);
+        return true;
     }
 }

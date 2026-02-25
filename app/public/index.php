@@ -40,6 +40,7 @@ $dispatcher = simpleDispatcher(function (RouteCollector $r) {
     $r->addRoute('GET', '/cms/pages', ['App\Controllers\CmsController', 'showCmsPages']);
     $r->addRoute('POST', '/cms/pages', ['App\Controllers\CmsController', 'createPage']);
     $r->addRoute('GET', '/cms/components', ['App\Controllers\CmsController', 'showCmsComponents']);
+    $r->addRoute('POST', '/cms/components', ['App\Controllers\CmsController', 'createComponent']);
     $r->addRoute('GET', '/cms/events', ['App\Controllers\CmsController', 'showCmsEvents']);
     $r->addRoute('GET', '/cms/tickets', ['App\Controllers\CmsController', 'showCmsTickets']);
     $r->addRoute('GET', '/cms/users', ['App\Controllers\CmsController', 'showCmsUsers']);
