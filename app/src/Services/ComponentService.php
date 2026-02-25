@@ -4,7 +4,7 @@ namespace App\Services;
 
 use App\Repositories\PageRepository;
 
-class PageService
+class ComponentService
 {
     private PageRepository $repository;
 
@@ -14,16 +14,16 @@ class PageService
     }
 
     public function getAll() {
-        return $this->repository->getAllPages();
+        return $this->repository->getAllComponents();
     }
 
-    public function create(string $title): bool 
+    public function create(string $name): bool 
     {
-        return $this->repository->createPage($title);
+        return $this->repository->createComponent($name);
     }
 
     public function getById(int $id)
     {
-        return $this->repository->getPageById($id);
+        return $this->repository->getComponentById($id);
     }
 }

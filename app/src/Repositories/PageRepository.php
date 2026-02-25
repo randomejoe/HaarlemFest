@@ -14,19 +14,6 @@ class PageRepository
         $this->pdo = Connection::get();
     }
 
-    public function findByTitle(string $title) {
-        $stmt = $this->pdo->prepare('SELECT * FROM pages WHERE title = :title LIMIT 1');
-        $stmt->execute(['title' => $title]);
-        $page = $stmt->fetch();
-        return $page;
-    }
-    public function findById(int $id) {
-        $stmt = $this->pdo->prepare('SELECT * FROM pages WHERE page_id = :id LIMIT 1');
-        $stmt->execute(['id' => $id]);
-        $page = $stmt->fetch();
-        return $page;
-    }
-
     public function getAllPages() 
     {
         $stmt = $this->pdo->prepare('SELECT title FROM pages');
@@ -34,14 +21,6 @@ class PageRepository
         $pages = $stmt->fetchAll();
         return $pages;
     }
-
-    public function createPage(string $title): bool 
-    {
-        $stmt = $this->pdo->prepare('INSERT INTO pages (title) VALUES (:title)');
-        $stmt->execute(['title' => $title]);
-        return true;
-    }
-
     public function getAllComponents() 
     {
         $stmt = $this->pdo->prepare('SELECT component_name FROM page_components');
@@ -58,5 +37,25 @@ class PageRepository
             'content' => '<div></div>'
         ]);
         return true;
+    }
+    public function createPage(string $title): bool 
+    {
+        $stmt = $this->pdo->prepare('INSERT INTO pages (title) VALUES (:title)');
+        $stmt->execute(['title' => $title]);
+        return true;
+    }
+
+    public function getComponentById(int $id)
+    {
+        $stmt = $this->pdo->prepare('SELECT component_name AS item_name, content FROM page_components WHERE component_id = :id');
+        $stmt->execute(['id' => $id]);
+        $component = $stmt->fetch();
+        return $component;
+    }
+    public function getPageById(int $id) {
+        $stmt = $this->pdo->prepare('SELECT title AS item_name FROM pages WHERE page_id = :id LIMIT 1');
+        $stmt->execute(['id' => $id]);
+        $page = $stmt->fetch();
+        return $page;
     }
 }

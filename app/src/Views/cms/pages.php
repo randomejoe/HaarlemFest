@@ -37,8 +37,8 @@
 </div>
 
 <script>
-    const btn = document.getElementById('add-cms-cms-item-btn');
-    const form = document.getElementById('add-cms-cms-item-form');
+    const btn = document.getElementById('add-cms-item-btn');
+    const form = document.getElementById('add-cms-item-form');
 
     btn.addEventListener('click', () => {
     form.style.display = form.style.display === 'none' ? 'block' : 'none';

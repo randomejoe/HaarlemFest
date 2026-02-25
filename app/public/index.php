@@ -44,6 +44,7 @@ $dispatcher = simpleDispatcher(function (RouteCollector $r) {
     $r->addRoute('GET', '/cms/events', ['App\Controllers\CmsController', 'showCmsEvents']);
     $r->addRoute('GET', '/cms/tickets', ['App\Controllers\CmsController', 'showCmsTickets']);
     $r->addRoute('GET', '/cms/users', ['App\Controllers\CmsController', 'showCmsUsers']);
+    $r->addRoute('GET', '/cms/{type}/{id:\d+}/edit', ['App\Controllers\CmsController', 'showEdit']);
 });
 
 
@@ -85,11 +86,7 @@ switch ($routeInfo[0]) {
         $controller = new $controllerClass();
         $vars = $routeInfo[2] ?? [];
 
-        if (!empty($vars)) {
-            $controller->$method($vars);
-        } else {
-            $controller->$method();
-        }
+        $controller->$method(...array_values($vars));
 
         break;
 }

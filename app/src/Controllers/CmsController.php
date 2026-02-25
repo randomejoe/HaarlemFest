@@ -4,14 +4,28 @@ namespace App\Controllers;
 
 use App\View;
 use App\Services\PageService;
+use App\Services\ComponentService;
 
 class CmsController
 {
     private PageService $pageService;
+    private ComponentService $componentService;
 
     public function __construct()
     {
         $this->pageService = new PageService();
+        $this->componentService = new ComponentService();
+    }
+    public function resolveService(string $type)
+    {
+        switch ($type):
+            case 'components':
+                return $this->componentService;
+                break;
+            case 'pages':
+                return $this->pageService;
+                break;
+            endswitch;
     }
 
     public function showCmsDashboard(): void
@@ -20,13 +34,13 @@ class CmsController
     }
     public function showCmsPages(): void
     {
-        $pages = $this->pageService->getAllPages();
+        $pages = $this->pageService->getAll();
 
         echo View::render('cms/pages', ['pages' => $pages]);
     }
     public function createPage() {
         $title = $_POST['title'];
-        $success = $this->pageService->createPage($title);
+        $success = $this->pageService->create($title);
         
         if ($success) {
             $_SESSION['create_success'] = true;
@@ -36,13 +50,13 @@ class CmsController
     }
     public function showCmsComponents(): void
     {
-        $components = $this->pageService->getAllComponents();
+        $components = $this->componentService->getAll();
 
         echo View::render('cms/components', ['components' => $components]);
     }
     public function createComponent() {
         $name = $_POST['component_name'];
-        $success = $this->pageService->createComponent($name);
+        $success = $this->componentService->create($name);
         
         if ($success) {
             $_SESSION['create_success'] = true;
@@ -61,5 +75,12 @@ class CmsController
     public function showCmsEvents(): void
     {
         echo View::render('cms/events');
+    }
+
+    public function showEdit(string $type, int $id): void
+    {
+        $service = $this->resolveService($type);
+        $item = $service->getById($id);
+        require_once __DIR__ . '/../Views/cms/edit.php';
     }
 }
