@@ -14,7 +14,7 @@ use function FastRoute\simpleDispatcher;
 use App\Repositories\PageRepository;
 use App\Services\PageService;
 
-session_start();
+session_start(); ?> <!DOCTYPE html> <?php
 
 /**
  * Define the routes for the application.
@@ -91,3 +91,4 @@ switch ($routeInfo[0]) {
 
         break;
 }
+?>

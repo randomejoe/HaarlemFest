@@ -62,10 +62,11 @@ class PageRepository
 
     public function updateComponent(int $id, array $postData): bool
     {
-        $stmt = $this->pdo->prepare("UPDATE page_components SET component_name = :component_name WHERE component_id = :id");
+        $stmt = $this->pdo->prepare("UPDATE page_components SET component_name = :component_name, content = :content WHERE component_id = :id");
         $stmt->execute([
             'id' => $id,
-            'component_name' => $postData['name']
+            'component_name' => $postData['name'],
+            'content' => $postData['content'],
             ]);
         $page = $stmt->fetch();
         return true;

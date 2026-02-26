@@ -45,7 +45,9 @@ class CmsController
         if ($success) {
             $_SESSION['create_success'] = true;
             $_SESSION['create_title'] = $title;
-            header('Location: /cms/pages');
+            echo 
+            '<script src="/js/redirect.js"></script>
+            <script>redirectTo("/cms/pages");</script>';
         }
         require_once __DIR__ . '/../Views/cms/pages.php';
     }
@@ -63,10 +65,13 @@ class CmsController
         if ($success) {
             $_SESSION['create_success'] = true;
             $_SESSION['create_title'] = $name;
-            header('Location: /cms/components');
+            echo 
+            '<script src="/js/redirect.js"></script>
+            <script>redirectTo("/cms/components");</script>';
         }
-
-        require_once __DIR__ . '/../Views/cms/components.php';
+        else {
+            showCmsComponents();
+        }
     }
     public function showCmsTickets(): void
     {
@@ -90,14 +95,17 @@ class CmsController
     }
     public function editItem(string $type, int $id)
     {
+        var_dump($_POST);
         $service = $this->resolveService($type);
         $success = $service->update($id, $_POST);
 
         if ($success) {
-            header('Location: /cms/' . $type);
+            echo 
+            '<script src="/js/redirect.js"></script>
+            <script>redirectTo("/cms/' . $type . '");</script>';
         }
         else {
-            require_once __DIR__ . '/../Views/cms/edit.php';
+            showEdit($type, $id);
         }
     }
 }

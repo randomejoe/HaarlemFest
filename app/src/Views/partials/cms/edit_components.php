@@ -1,13 +1,15 @@
 <div>
+<script src="/js/tinymce/tinymce.min.js"></script>
 
-<textarea name="content" id="content"></textarea>
+<textarea name="content" id="content"  ><?php echo $item['content']; ?></textarea>
 
-<script src="https://cdn.tiny.cloud/1/no-api-key/tinymce/6/tinymce.min.js" referrerpolicy="origin"></script>
 <script>
 tinymce.init({
   selector: '#content',
   plugins: 'lists link image code',
   toolbar: 'undo redo | bold italic | bullist numlist | link image | code',
-  menubar: false
+  menubar: false,
+  license_key: 'gpl',
+  forced_root_block: 'div',
 });
 </script></div>
