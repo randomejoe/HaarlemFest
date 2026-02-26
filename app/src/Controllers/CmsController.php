@@ -65,7 +65,7 @@ class CmsController
             $_SESSION['create_title'] = $name;
             header('Location: /cms/components');
         }
-        
+
         require_once __DIR__ . '/../Views/cms/components.php';
     }
     public function showCmsTickets(): void
@@ -85,12 +85,14 @@ class CmsController
     {
         $service = $this->resolveService($type);
         $item = $service->getById($id);
+        
         require_once __DIR__ . '/../Views/cms/edit.php';
     }
     public function editItem(string $type, int $id)
     {
         $service = $this->resolveService($type);
         $success = $service->update($id, $_POST);
+
         if ($success) {
             header('Location: /cms/' . $type);
         }
