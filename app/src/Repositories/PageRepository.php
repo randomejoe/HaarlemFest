@@ -60,15 +60,46 @@ class PageRepository
         return $page;
     }
 
-    public function updateComponent(int $id, array $postData): bool
+    public function updateComponent(int $id, array $data): bool
     {
-        $stmt = $this->pdo->prepare("UPDATE page_components SET component_name = :component_name, content = :content WHERE component_id = :id");
-        $stmt->execute([
-            'id' => $id,
-            'component_name' => $postData['name'],
-            'content' => $postData['content'],
+        try {
+            $this->pdo->beginTransaction();
+            var_dump($data);
+            var_dump($data['keys']);
+            $placeholders = implode(',', array_fill(0, count($data['keys']), '?'));
+            $stmt = $this->pdo->prepare(
+                "DELETE FROM page_component_variable_keys 
+                WHERE component_id = ? 
+                AND variable_key NOT IN ($placeholders)");
+            $stmt->execute(array_merge([$id], $data['keys']));
+            
+            $stmt = $this->pdo->prepare(
+                "INSERT INTO page_component_variable_keys (component_id, variable_key)
+                VALUES (:id, :variable_key)
+                ON DUPLICATE KEY UPDATE variable_key = variable_key"
+            );
+
+            foreach ($data['keys'] as $key) {
+                $stmt->execute([
+                    'id' => $id,
+                    'variable_key' => $key
+                ]);
+            }
+
+            $stmt = $this->pdo->prepare("UPDATE page_components SET component_name = :component_name, content = :content WHERE component_id = :id");
+            $stmt->execute([
+                'id' => $id,
+                'component_name' => $data['name'],
+                'content' => $data['content'],
             ]);
-        $page = $stmt->fetch();
-        return true;
+
+            $this->pdo->commit();
+            return true;
+        }
+        catch (Exception $e) {
+            echo $e;
+            $this->pdo->rollback();
+            return false;
+        }
     }
 }

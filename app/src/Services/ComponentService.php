@@ -28,6 +28,11 @@ class ComponentService
     }
     public function update(int $id, array $postData): bool
     {
-        return $this->repository->updateComponent($id, $postData);
+        $content = $postData['content'];
+        preg_match_all('/\[(.*?)\]/', $content, $keys);
+        $data = $postData;
+        $data['keys'] = $keys[1];
+
+        return $this->repository->updateComponent($id, $data);
     }
 }

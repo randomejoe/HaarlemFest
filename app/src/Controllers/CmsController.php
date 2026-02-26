@@ -49,7 +49,9 @@ class CmsController
             '<script src="/js/redirect.js"></script>
             <script>redirectTo("/cms/pages");</script>';
         }
-        require_once __DIR__ . '/../Views/cms/pages.php';
+        else {
+            $this->showCmsPages();
+        }
     }
     public function showCmsComponents(): void
     {
@@ -70,7 +72,7 @@ class CmsController
             <script>redirectTo("/cms/components");</script>';
         }
         else {
-            showCmsComponents();
+            $this->showCmsComponents();
         }
     }
     public function showCmsTickets(): void
@@ -95,7 +97,6 @@ class CmsController
     }
     public function editItem(string $type, int $id)
     {
-        var_dump($_POST);
         $service = $this->resolveService($type);
         $success = $service->update($id, $_POST);
 
@@ -105,7 +106,7 @@ class CmsController
             <script>redirectTo("/cms/' . $type . '");</script>';
         }
         else {
-            showEdit($type, $id);
+            $this->showEdit($type, $id);
         }
     }
 }
