@@ -22,9 +22,9 @@ class ComponentService
         return $this->repository->createComponent($name);
     }
 
-    public function getById(int $id)
+    public function getForEdit(int $id)
     {
-        return $this->repository->getComponentById($id);
+        return $this->repository->getComponentForEdit($id);
     }
     public function update(int $id, array $postData): bool
     {

@@ -22,8 +22,8 @@ class PageService
         return $this->repository->createPage($title);
     }
 
-    public function getById(int $id)
+    public function getForEdit(int $id)
     {
-        return $this->repository->getPageById($id);
+        return $this->repository->getPageForEdit($id);
     }
 }

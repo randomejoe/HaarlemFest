@@ -45,14 +45,14 @@ class PageRepository
         return true;
     }
 
-    public function getComponentById(int $id)
+    public function getComponentForEdit(int $id)
     {
         $stmt = $this->pdo->prepare('SELECT component_name AS item_name, content FROM page_components WHERE component_id = :id');
         $stmt->execute(['id' => $id]);
         $component = $stmt->fetch();
         return $component;
     }
-    public function getPageById(int $id)
+    public function getPageForEdit(int $id)
     {
         $stmt = $this->pdo->prepare('SELECT title AS item_name FROM pages WHERE page_id = :id LIMIT 1');
         $stmt->execute(['id' => $id]);

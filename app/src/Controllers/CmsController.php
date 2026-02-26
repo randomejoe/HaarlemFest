@@ -84,8 +84,8 @@ class CmsController
     public function showEdit(string $type, int $id): void
     {
         $service = $this->resolveService($type);
-        $item = $service->getById($id);
-        
+        $item = $service->getForEdit($id);
+
         require_once __DIR__ . '/../Views/cms/edit.php';
     }
     public function editItem(string $type, int $id)
