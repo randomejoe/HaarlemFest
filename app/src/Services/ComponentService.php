@@ -26,4 +26,8 @@ class ComponentService
     {
         return $this->repository->getComponentById($id);
     }
+    public function update(int $id, array $postData): bool
+    {
+        return $this->repository->updateComponent($id, $postData);
+    }
 }

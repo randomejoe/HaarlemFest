@@ -83,4 +83,15 @@ class CmsController
         $item = $service->getById($id);
         require_once __DIR__ . '/../Views/cms/edit.php';
     }
+    public function editItem(string $type, int $id)
+    {
+        $service = $this->resolveService($type);
+        $success = $service->update($id, $_POST);
+        if ($success) {
+            header('Location: /cms/' . $type);
+        }
+        else {
+            require_once __DIR__ . '/../Views/cms/edit.php';
+        }
+    }
 }

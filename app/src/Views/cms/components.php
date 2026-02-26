@@ -18,11 +18,11 @@
                     unset($_SESSION['create_title']);
                 }
             ?>
-            <button id='add-cms-item-btn' class='add-cms-item-btn button'><p>Add component</p></button>
-            <form id='add-cms-item-form' style='display: none' class='add-cms-item-form' method="POST">
+            <button id='add-item-btn' class='add-item-btn button'><p>Add component</p></button>
+            <form id='add-item-form' style='display: none' class='add-item-form' method="POST">
                 <label for="component_name">Component Name:</label>
-                <input type="text" id="component_name" name="component_name" required>
-                <button type="submit">Create</button>
+                <input type="text" id="component_name" name="component_name" class="form-input" required>
+                <button type="submit" class="form-submit-button button">Create</button>
             </form>
             <div class='cms-item-container'>
             <?php 
@@ -38,8 +38,8 @@
 </div>
 
 <script>
-    const btn = document.getElementById('add-cms-item-btn');
-    const form = document.getElementById('add-cms-item-form');
+    const btn = document.getElementById('add-item-btn');
+    const form = document.getElementById('add-item-form');
 
     btn.addEventListener('click', () => {
     form.style.display = form.style.display === 'none' ? 'block' : 'none';

@@ -5,8 +5,11 @@
         <div class='cms-container'>
             <div class='cms-item-container'>
                 <form method="POST">
-                    <input type="text" id="name" name="name" value="<?php echo $item['item_name'] ?>" required>
-                    <button type="submit">Save</button>
+                    <div class="row">
+                        <input type="text" id="name" name="name" class="form-input" value="<?php echo $item['item_name'] ?>" required>
+                        <button type="submit" class="form-submit-button button">Save</button>
+                    </div>
+                    
                 </form>
             </div>
         </div>

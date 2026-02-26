@@ -52,10 +52,22 @@ class PageRepository
         $component = $stmt->fetch();
         return $component;
     }
-    public function getPageById(int $id) {
+    public function getPageById(int $id)
+    {
         $stmt = $this->pdo->prepare('SELECT title AS item_name FROM pages WHERE page_id = :id LIMIT 1');
         $stmt->execute(['id' => $id]);
         $page = $stmt->fetch();
         return $page;
+    }
+
+    public function updateComponent(int $id, array $postData): bool
+    {
+        $stmt = $this->pdo->prepare("UPDATE page_components SET component_name = :component_name WHERE component_id = :id");
+        $stmt->execute([
+            'id' => $id,
+            'component_name' => $postData['name']
+            ]);
+        $page = $stmt->fetch();
+        return true;
     }
 }

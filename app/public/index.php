@@ -45,6 +45,7 @@ $dispatcher = simpleDispatcher(function (RouteCollector $r) {
     $r->addRoute('GET', '/cms/tickets', ['App\Controllers\CmsController', 'showCmsTickets']);
     $r->addRoute('GET', '/cms/users', ['App\Controllers\CmsController', 'showCmsUsers']);
     $r->addRoute('GET', '/cms/{type}/{id:\d+}/edit', ['App\Controllers\CmsController', 'showEdit']);
+    $r->addRoute('POST', '/cms/{type}/{id:\d+}/edit', ['App\Controllers\CmsController', 'editItem']);
 });
 
 
