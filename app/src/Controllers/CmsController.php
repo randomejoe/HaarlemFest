@@ -36,7 +36,7 @@ class CmsController
     {
         $pages = $this->pageService->getAll();
 
-        echo View::render('cms/pages', ['pages' => $pages]);
+        require_once __DIR__ . '/../Views/cms/pages.php';
     }
     public function createPage() {
         $title = $_POST['title'];
@@ -47,12 +47,14 @@ class CmsController
             $_SESSION['create_title'] = $title;
             header('Location: /cms/pages');
         }
+        require_once __DIR__ . '/../Views/cms/pages.php';
     }
     public function showCmsComponents(): void
     {
         $components = $this->componentService->getAll();
 
-        echo View::render('cms/components', ['components' => $components]);
+        require_once __DIR__ . '/../Views/cms/components.php';
+
     }
     public function createComponent() {
         $name = $_POST['component_name'];
@@ -63,6 +65,8 @@ class CmsController
             $_SESSION['create_title'] = $name;
             header('Location: /cms/components');
         }
+        
+        require_once __DIR__ . '/../Views/cms/components.php';
     }
     public function showCmsTickets(): void
     {
