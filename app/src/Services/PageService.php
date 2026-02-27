@@ -46,7 +46,7 @@ class PageService
     }
 
     private function addContentToList(array &$returnData, array $currentContent, array $vars) {
-        $returnData['content'][] = ['component_name' => $currentContent['component_name'], 'id' => $currentContent['component_id'], 'variables' => $vars];
+        $returnData['content'][] = ['component_name' => $currentContent['component_name'], 'id' => $currentContent['content_id'], 'variables' => $vars];
     }
 
     public function update(int $id, array $postData) {

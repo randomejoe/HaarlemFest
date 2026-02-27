@@ -4,7 +4,7 @@ echo $contentItem['component_name'];
 
 ?><div class="row vertical-center"><?php
 foreach ($contentItem['variables'] as $variable) {
-    $name = 'components[' . $contentItem['id'] . '][' . $variable['key'] . ']';
+    $name = 'components[' . $contentItem['id'] . '][' . $variable['id'] . ']';
     ?>
     
     <label for=<?= $name; ?>><?php echo $variable['key'] ?> value:</label>

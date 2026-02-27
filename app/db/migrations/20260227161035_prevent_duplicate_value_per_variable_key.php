@@ -22,7 +22,7 @@ final class PreventDuplicateValuePerVariableKey extends AbstractMigration
         $table = $this->table('page_content_variables');
 
         $table->addIndex(
-            ['content_id', 'variable_key_id', 'value'], 
+            ['content_id', 'variable_key_id'], 
             ['unique' => true, 'name' => 'unique_value_per_key']
         )->update();
     }

@@ -55,7 +55,7 @@ class PageRepository
     public function getPageForEdit(int $id)
     {
         $stmt = $this->pdo->prepare(
-            "SELECT p.title as item_name, c.component_id, c.component_name, vk.variable_key, 
+            "SELECT p.title as item_name, pc.content_id, c.component_name, vk.variable_key, 
             vk.page_component_variable_key_id as variable_key_id, v.value as variable_value
             FROM pages p
             LEFT JOIN page_content pc ON p.page_id = pc.page_id
@@ -85,7 +85,7 @@ class PageRepository
             $stmt = $this->pdo->prepare(
                 "INSERT INTO page_component_variable_keys (component_id, variable_key)
                 VALUES (:id, :variable_key)
-                ON DUPLICATE KEY UPDATE variable_key = variable_key"
+                ON DUPLICATE KEY UPDATE variable_key = :variable_key"
             );
 
             foreach ($data['keys'] as $key) {
@@ -128,6 +128,20 @@ class PageRepository
             ]);
 
             // Update variable values
+            $stmt = $this->pdo->prepare(
+                "INSERT INTO page_content_variables (content_id, variable_key_id, value)
+                VALUES (:content_id, :variable_key_id, :value)
+                ON DUPLICATE KEY UPDATE value = :value"
+            );
+            foreach ($data['components'] as $content_id => $contentVariables) {
+                foreach ($contentVariables as $variable_id => $value) {
+                    $stmt->execute([
+                        'content_id' => $content_id,
+                        'variable_key_id' => $variable_id,
+                        'value' => $value,
+                    ]);
+                }
+            }
 
             $this->pdo->commit();
             return false;
