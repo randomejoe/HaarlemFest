@@ -54,9 +54,17 @@ class PageRepository
     }
     public function getPageForEdit(int $id)
     {
-        $stmt = $this->pdo->prepare('SELECT title AS item_name FROM pages WHERE page_id = :id LIMIT 1');
-        $stmt->execute(['id' => $id]);
-        $page = $stmt->fetch();
+        $stmt = $this->pdo->prepare(
+            "SELECT p.title as item_name, c.component_name, k.variable_key
+            FROM pages p
+            LEFT JOIN page_content pc ON p.page_id = pc.page_id
+            LEFT JOIN page_components c ON c.component_id = pc.component_id
+            LEFT JOIN page_component_variable_keys k 
+            ON k.component_id = c.component_id
+            WHERE p.page_id = :page_id"
+            );
+        $stmt->execute(['page_id' => $id]);
+        $page = $stmt->fetchAll();
         return $page;
     }
 
