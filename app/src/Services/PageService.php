@@ -13,12 +13,17 @@ class PageService
         $this->repository = new PageRepository();
     }
 
-    public function getAllPages() {
+    public function getAll() {
         return $this->repository->getAllPages();
     }
 
-    public function createPage(string $title): bool 
+    public function create(string $title): bool 
     {
         return $this->repository->createPage($title);
+    }
+
+    public function getForEdit(int $id)
+    {
+        return $this->repository->getPageForEdit($id);
     }
 }

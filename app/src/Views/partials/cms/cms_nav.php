@@ -1,4 +1,4 @@
-<link rel="stylesheet" href="../css/cms_style.css">
+<link rel="stylesheet" href='/css/cms_style.css'>
 <nav class='nav'><div class='navItemsContainer'>
     <a href="/cms" class='navItem'>
         <p>Dashboard</p>

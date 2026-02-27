@@ -1,3 +1,3 @@
 <div>
-    <?php include __DIR__ . '/../components/cms_nav.php'; ?>
+    <?php include __DIR__ . '/../partials/cms/cms_nav.php'; ?>
 </div>
