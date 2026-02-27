@@ -68,6 +68,10 @@ a {
     gap: 12px;
 }
 
+.between {
+    justify-content: space-between;
+}
+
 .add-item-btn {
     background-color: green;
 }

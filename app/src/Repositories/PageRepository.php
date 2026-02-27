@@ -55,12 +55,15 @@ class PageRepository
     public function getPageForEdit(int $id)
     {
         $stmt = $this->pdo->prepare(
-            "SELECT p.title as item_name, c.component_name, k.variable_key
+            "SELECT p.title as item_name, c.component_id, c.component_name, vk.variable_key, 
+            vk.page_component_variable_key_id as variable_key_id, v.value as variable_value
             FROM pages p
             LEFT JOIN page_content pc ON p.page_id = pc.page_id
             LEFT JOIN page_components c ON c.component_id = pc.component_id
-            LEFT JOIN page_component_variable_keys k 
-            ON k.component_id = c.component_id
+            LEFT JOIN page_component_variable_keys vk ON vk.component_id = c.component_id
+            LEFT JOIN page_content_variables v ON v.content_id = pc.content_id 
+            AND v.variable_key_id = vk.page_component_variable_key_id 
+            AND v.content_id = pc.content_id
             WHERE p.page_id = :page_id"
             );
         $stmt->execute(['page_id' => $id]);
@@ -72,8 +75,6 @@ class PageRepository
     {
         try {
             $this->pdo->beginTransaction();
-            var_dump($data);
-            var_dump($data['keys']);
             $placeholders = implode(',', array_fill(0, count($data['keys']), '?'));
             $stmt = $this->pdo->prepare(
                 "DELETE FROM page_component_variable_keys 
@@ -103,6 +104,33 @@ class PageRepository
 
             $this->pdo->commit();
             return true;
+        }
+        catch (Exception $e) {
+            echo $e;
+            $this->pdo->rollback();
+            return false;
+        }
+    }
+    public function updatePage(int $id, array $data): bool
+    {
+        try {
+            $this->pdo->beginTransaction();
+
+            echo '<pre>';
+            print_r($data);
+            echo '</pre>';
+
+            // Update page name
+            $stmt = $this->pdo->prepare("UPDATE pages SET title = :title WHERE page_id = :id");
+            $stmt->execute([
+                'id' => $id,
+                'title' => $data['name'],
+            ]);
+
+            // Update variable values
+
+            $this->pdo->commit();
+            return false;
         }
         catch (Exception $e) {
             echo $e;

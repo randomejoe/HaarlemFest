@@ -26,31 +26,30 @@ class PageService
     {
         $pageData = $this->repository->getPageForEdit($id);
         $returnData = ['item_name' => $pageData[0]['item_name']];
-        $currentContent = NULL;
-        $varKeys = [];
+        $currentContent = ['component_name' => NULL];
+        $vars = [];
         foreach ($pageData as $row) {
-            if ($currentContent != $row['component_name'] && $currentContent != NULL) {
-                $this->addContentToList($returnData, $currentContent, $varKeys);
-                $varKeys = [];
+            if ($currentContent['component_name'] != $row['component_name'] && $currentContent['component_name'] != NULL) {
+                $this->addContentToList($returnData, $currentContent, $vars);
+                $vars = [];
             }
 
-            $currentContent = $row['component_name'];
+            $currentContent = $row;
 
             if ($row['variable_key'] != NULL) {
-                $varKeys[] = $row['variable_key'];
+                $vars[] = ['key' => $row['variable_key'], 'id' => $row['variable_key_id'], 'value' => $row['variable_value']];
             }
         }
-        $this->addContentToList($returnData, $currentContent, $varKeys);
-
-        // echo '<pre>';
-        // print_r($returnData);
-        // echo '</pre>';
+        $this->addContentToList($returnData, $currentContent, $vars);
 
         return $returnData;
     }
 
+    private function addContentToList(array &$returnData, array $currentContent, array $vars) {
+        $returnData['content'][] = ['component_name' => $currentContent['component_name'], 'id' => $currentContent['component_id'], 'variables' => $vars];
+    }
 
-    private function addContentToList(array &$returnData, string $currentContent, array $varKeys) {
-        $returnData['content'][] = ['component_name' => $currentContent, 'keys' => $varKeys];
+    public function update(int $id, array $postData) {
+        return $this->repository->updatePage($id, $postData);
     }
 }
