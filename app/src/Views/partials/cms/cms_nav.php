@@ -6,9 +6,6 @@
     <a href="/cms/pages" class='navItem'>
         <p>Pages</p>
     </a>
-    <a href="/cms/components" class='navItem'>
-        <p>Components</p>
-    </a>
     <a href="/cms/events" class='navItem'>
         <p>Events</p>
     </a>
