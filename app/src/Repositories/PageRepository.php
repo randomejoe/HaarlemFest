@@ -75,12 +75,21 @@ class PageRepository
     {
         try {
             $this->pdo->beginTransaction();
-            $placeholders = implode(',', array_fill(0, count($data['keys']), '?'));
-            $stmt = $this->pdo->prepare(
-                "DELETE FROM page_component_variable_keys 
-                WHERE component_id = ? 
-                AND variable_key NOT IN ($placeholders)");
-            $stmt->execute(array_merge([$id], $data['keys']));
+            if (count($data['keys']) > 0) {
+                $placeholders = implode(',', array_fill(0, count($data['keys']), '?'));
+                $stmt = $this->pdo->prepare(
+                    "DELETE FROM page_component_variable_keys 
+                    WHERE component_id = ? 
+                    AND variable_key NOT IN ($placeholders)");
+                $stmt->execute(array_merge([$id], $data['keys']));
+            }
+            else {
+                $stmt = $this->pdo->prepare(
+                    "DELETE FROM page_component_variable_keys 
+                    WHERE component_id = :id");
+                $stmt->execute(['id' => $id]);
+            }
+            
             
             $stmt = $this->pdo->prepare(
                 "INSERT INTO page_component_variable_keys (component_id, variable_key)
