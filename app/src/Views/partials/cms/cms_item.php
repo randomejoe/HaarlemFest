@@ -1,12 +1,19 @@
 <div class='cms-item'>
     <div class='cms-item-content vertical-center'>
-        <?php echo $name; ?>
+        <?php echo $itemName; ?>
         <div class='cms-item-buttons vertical-center'>
-            <a class='edit-btn button' href=<?php echo '/cms/' . $item_type . 's/' . $id . '/edit'?>>
-                <p>Edit <?php echo $item_type ?></p>
+            <a class='edit-btn button' href=<?php echo '/cms/' . $itemType . 's/' . $itemId . '/edit'?>>
+                <p>Edit <?php echo $itemType ?></p>
             </a>
             <a class='delete-btn button'>
-                <p>Delete <?php echo $item_type ?></p>
+                <p><?php 
+                if (isset($remove) && $remove == true) 
+                { 
+                    echo 'Remove ';
+                } else { 
+                    echo 'Delete ';
+                } 
+                echo $itemType ?></p>
             </a>
         </div>
         

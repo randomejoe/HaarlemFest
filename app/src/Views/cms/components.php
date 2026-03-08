@@ -26,10 +26,10 @@
             </form>
             <div class='cms-item-container'>
             <?php 
-            $item_type = 'component';
+            $itemType = 'component';
             foreach ($components as $component) {
-                $name = $component['component_name'];
-                $id = $component['id'];
+                $itemName = $component['component_name'];
+                $itemId = $component['id'];
                 require __DIR__ . '/../partials/cms/cms_item.php';
             } ?>
             </div>

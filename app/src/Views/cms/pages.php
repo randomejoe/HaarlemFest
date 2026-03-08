@@ -25,10 +25,10 @@
             </form>
             <div class='cms-item-container'>
             <?php 
-            $item_type = 'page';
+            $itemType = 'page';
             foreach ($pages as $page) {
-                $name = $page['title'];
-                $id = $page['id'];
+                $itemName = $page['title'];
+                $itemId = $page['id'];
                 require __DIR__ . '/../partials/cms/cms_item.php';
             } ?>
             </div>

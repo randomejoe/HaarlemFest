@@ -6,7 +6,14 @@
             <div class='cms-item-container'>
                 <form method="POST">
                     <div class="row">
-                        <input type="text" id="name" name="name" class="form-input" value="<?php echo $item['item_name'] ?>" required>
+                        <input type="text" id="name" name="name" class="form-input" value="<?php 
+                        if (isset($item[0])) {
+                            $firstItem = $item[0];
+                        } else {
+                            $firstItem = $item;
+                        } 
+                        echo $firstItem['item_name']
+                        ?>" <?php if (!$editable) { echo 'readonly';} ?> required>
                         <button type="submit" class="form-submit-button button">Save</button>
                     </div>
                     <?php 
