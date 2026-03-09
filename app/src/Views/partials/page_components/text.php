@@ -1,1 +1,1 @@
-<p><?php $data['text'] ?></p>
+<p class="wysiwyg"><?php echo $data['text'] ?? '' ?></p>

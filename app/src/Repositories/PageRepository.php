@@ -27,6 +27,18 @@ class PageRepository
         $pageId = $stmt->fetch();
         return $pageId;
     }
+    public function getPageById(int $id) {
+        $stmt = $this->pdo->prepare('SELECT * FROM pages JOIN page_content pc ON pc.page_id = pages.page_id WHERE pages.page_id = :id');
+        $stmt->execute(['id' => $id]);
+        $pageContent = $stmt->fetch();
+        return $pageContent;
+    }
+    public function getPageByName(string $name) {
+        $stmt = $this->pdo->prepare('SELECT * FROM pages JOIN page_content pc ON pc.page_id = pages.page_id WHERE LOWER(title) = LOWER(:title)');
+        $stmt->execute(['title' => $name]);
+        $pageContent = $stmt->fetchAll();
+        return $pageContent;
+    }
 
     public function createPage(string $title): bool 
     {

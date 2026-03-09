@@ -11,8 +11,6 @@ require __DIR__ . '/../vendor/autoload.php';
 
 use FastRoute\RouteCollector;
 use function FastRoute\simpleDispatcher;
-use App\Repositories\PageRepository;
-use App\Services\PageService;
 
 session_start(); ?> <!DOCTYPE html> <?php
 
@@ -45,6 +43,7 @@ $dispatcher = simpleDispatcher(function (RouteCollector $r) {
     $r->addRoute('GET', '/cms/{type}/{id:\d+}/edit', ['App\Controllers\CmsController', 'showEdit']);
     $r->addRoute('POST', '/cms/{type}/{id:\d+}/edit', ['App\Controllers\CmsController', 'editItem']);
     $r->addRoute('POST', '/cms/{type}/{id:\d+}/delete', ['App\Controllers\CmsController', 'deleteItem']);
+    $r->addRoute('GET', '/{page}', ['App\Controllers\PageController', 'showPage']);
 });
 
 

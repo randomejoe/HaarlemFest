@@ -16,6 +16,15 @@ class PageService
     public function getAll() {
         return $this->repository->getAllPages();
     }
+    public function getPage($page) {
+        if (is_numeric($page)) {
+            return $this->repository->getPageById($page);
+        }
+        else {
+            $pageName = str_replace("_", " ", $page);
+            return $this->repository->getPageByName($pageName);
+        }
+    }
 
     public function create(string $title): bool 
     {
