@@ -36,4 +36,7 @@ class PageService
         }
         return $this->repository->updatePage($id, $postData);
     }
+    public function delete(int $id) {
+        return $this->repository->deletePage($id);
+    }
 }

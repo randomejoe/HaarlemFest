@@ -27,4 +27,7 @@ class ContentService
     {
         return $this->repository->updateContentItem($id, $postData);
     }
+    public function delete(int $id) {
+        return $this->repository->deleteContentItem($id);
+    }
 }

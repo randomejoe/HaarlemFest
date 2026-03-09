@@ -5,7 +5,10 @@
             <a class='edit-btn button' href=<?php echo '/cms/' . $itemType . 's/' . $itemId . '/edit'?>>
                 <p>Edit <?php echo $itemType ?></p>
             </a>
-            <a class='delete-btn button'>
+            <form method="POST" 
+            action=<?php echo '/cms/' . $itemType . 's/' . $itemId . '/delete'?>>
+                <input type="hidden" name="return_url" value="<?php echo $_SERVER['REQUEST_URI'] ?>">
+                <button type="submit" class='delete-btn button'>
                 <p><?php 
                 if (isset($remove) && $remove == true) 
                 { 
@@ -14,7 +17,8 @@
                     echo 'Delete ';
                 } 
                 echo $itemType ?></p>
-            </a>
+            </button>
+            </form>
         </div>
         
     </div>

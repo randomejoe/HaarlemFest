@@ -1,6 +1,6 @@
 <div class='horizontal-center btn'>
     <?php require __DIR__ . '/component_registry.php'; ?>
-    <button type="button" class="button" id="addComponentBtn"><div class="row vertical-center"><h2 class="no-margin">+</h2>Add content</div></button>
+    <button type="button" class="button" id="addComponentBtn"><div class="row vertical-center"><h2 class="no-margin">+</h2><p class="no-margin">Add content</p></div></button>
 
     <div id="componentModal" class="modal" style="display: none">
         <div class="modal-content">

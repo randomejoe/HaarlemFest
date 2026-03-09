@@ -102,21 +102,35 @@ class CmsController
         $success = $service->update($item_id, $_POST);
 
         if ($success) {
-            if ($type == 'contents') {
-                $pageId = $service->getPageId($item_id);
+            if ($type == 'contents' || isset($_POST['newContent'])) {
+                if ($type == 'contents') {
+                    $pageId = $service->getPageId($item_id);
+                }
+                else {
+                    $pageId = $item_id;
+                }
                 echo 
                 '<script src="/js/redirect.js"></script>
                 <script>redirectTo("/cms/pages/' . $pageId . '/edit");</script>';
             } 
             else {
                 echo 
-            '<script src="/js/redirect.js"></script>
-            <script>redirectTo("/cms/' . $type . '");</script>';
+                '<script src="/js/redirect.js"></script>
+                <script>redirectTo("/cms/' . $type . '");</script>';
             }
             
         }
         else {
             $this->showEdit($type, $item_id);
         }
+    }
+    public function deleteItem(string $type, int $item_id) 
+    {
+        $service = $this->resolveService($type);
+        $success = $service->delete($item_id);
+        
+        echo 
+        '<script src="/js/redirect.js"></script>
+        <script>redirectTo("' . $_POST['return_url'] . '");</script>';
     }
 }

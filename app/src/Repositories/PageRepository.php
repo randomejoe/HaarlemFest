@@ -98,4 +98,18 @@ class PageRepository
             return false;
         }
     }
+    public function deletePage(int $pageId) {
+        $stmt = $this->pdo->prepare("DELETE FROM pages WHERE page_id = :page_id");
+        $stmt->execute([
+            'page_id' => $pageId
+        ]);
+        return true;
+    }
+    public function deleteContentItem(int $contentId) {
+        $stmt = $this->pdo->prepare("DELETE FROM page_content WHERE content_id = :content_id");
+        $stmt->execute([
+            'content_id' => $contentId
+        ]);
+        return true;
+    }
 }
