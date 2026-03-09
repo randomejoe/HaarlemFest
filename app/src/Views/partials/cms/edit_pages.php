@@ -1,4 +1,4 @@
-<div class="cms-item-container">
+<div class="cms-item-container column">
 
     <?php 
     $remove = true;
@@ -9,5 +9,6 @@
         $itemId = $contentItem['content_id'];
         require __DIR__ . '/cms_item.php';
     }
+    require __DIR__ . '/add_page_content.php'
     ?>
 </div>

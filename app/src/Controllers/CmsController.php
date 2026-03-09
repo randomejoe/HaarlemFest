@@ -102,9 +102,18 @@ class CmsController
         $success = $service->update($item_id, $_POST);
 
         if ($success) {
-            echo 
+            if ($type == 'contents') {
+                $pageId = $service->getPageId($item_id);
+                echo 
+                '<script src="/js/redirect.js"></script>
+                <script>redirectTo("/cms/pages/' . $pageId . '/edit");</script>';
+            } 
+            else {
+                echo 
             '<script src="/js/redirect.js"></script>
             <script>redirectTo("/cms/' . $type . '");</script>';
+            }
+            
         }
         else {
             $this->showEdit($type, $item_id);

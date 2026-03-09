@@ -68,8 +68,17 @@ a {
     gap: 12px;
 }
 
+.column {
+    display: flex;
+    flex-direction: column;
+}
+
 .between {
     justify-content: space-between;
+}
+
+.max-width {
+    width: 100%;
 }
 
 .add-item-btn {
@@ -94,8 +103,6 @@ a {
 .cms-item-container {
     gap: 10px;
     margin-top: 10px;
-    display: flex;
-    flex-direction: column;
 }
 
 .cms-item {

@@ -23,7 +23,7 @@
                 <input type="text" id="title" name="title" class="form-input" required>
                 <button type="submit" class="form-submit-button button">Create</button>
             </form>
-            <div class='cms-item-container'>
+            <div class='cms-item-container column'>
             <?php 
             $itemType = 'page';
             foreach ($pages as $page) {

@@ -3,7 +3,7 @@
     ?>
     <div class='horizontal-center vertical-center'>
         <div class='cms-container'>
-            <div class='cms-item-container'>
+            <div class='cms-item-container column'>
                 <form method="POST">
                     <div class="row">
                         <input type="text" id="name" name="name" class="form-input" value="<?php 

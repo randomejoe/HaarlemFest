@@ -21,6 +21,12 @@ class PageRepository
         $pages = $stmt->fetchAll();
         return $pages;
     }
+    public function getContentPageId(int $id) {
+        $stmt = $this->pdo->prepare('SELECT page_id FROM page_content WHERE content_id = :content_id');
+        $stmt->execute(['content_id' => $id]);
+        $pageId = $stmt->fetch();
+        return $pageId;
+    }
 
     public function createPage(string $title): bool 
     {
@@ -44,7 +50,7 @@ class PageRepository
     public function getContentForEdit(int $id)
     {
         $stmt = $this->pdo->prepare(
-            "SELECT content_id, component_name as item_name, data
+            "SELECT content_id, page_id, component_name as item_name, data
             FROM page_content pc
             WHERE pc.content_id = :content_id"
             );
@@ -72,7 +78,29 @@ class PageRepository
             // Update data
 
             $this->pdo->commit();
+            return true;
+        }
+        catch (Exception $e) {
+            echo $e;
+            $this->pdo->rollback();
             return false;
+        }
+    }
+    public function updateContent(int $id, array $data): bool
+    {
+        try {
+            $this->pdo->beginTransaction();
+            unset($data['name']);
+
+            // Update content data
+            $stmt = $this->pdo->prepare("UPDATE page_content SET data = :data WHERE content_id = :id");
+            $stmt->execute([
+                'id' => $id,
+                'data' => strip_tags(json_encode($data)),
+            ]);
+
+            $this->pdo->commit();
+            return true;
         }
         catch (Exception $e) {
             echo $e;

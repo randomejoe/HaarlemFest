@@ -1,5 +1,5 @@
-<div class="cms-item between row vertical-center">
-    <div class="row vertical-center">
+<div class="cms-item-container vertical-center row">
+    <div class="row between vertical-center">
         <?php
             require __DIR__ . '/component_registry.php';
             $fields = $components[$item['item_name']]['fields'];
@@ -16,8 +16,7 @@
                     echo $field['name'];
                     if ($field['type'] == 'text') {
                         ?>
-                        <script src="/js/tinymce/tinymce.min.js"></script>
-                        <textarea name="content" id="content">
+                        <textarea name="<?php echo $field['name'] ?>" id="textField">
                             <?php echo '<' . $field['element'] . '>' . $data[$field['name']] . '</' . $field['element'] . '>'; ?>
                         </textarea>
                         <?php    
@@ -27,9 +26,10 @@
                 <?php
             }
         ?>
+        <script src="/js/tinymce/tinymce.min.js"></script>
         <script>
             tinymce.init({
-            selector: '#content',
+            selector: '#textField',
             plugins: 'lists link image code',
             toolbar: 'undo redo | bold italic | bullist numlist | link image | code',
             menubar: false,

@@ -5,5 +5,10 @@
             ['name'=>'text','type'=>'text', 'element'=>'p'],
         ],
     ],
+    'image' => [
+        'fields' => [
+            ['name'=>'imgSource', 'type' => 'image'],
+        ]
+    ]
 ]
 ?>
