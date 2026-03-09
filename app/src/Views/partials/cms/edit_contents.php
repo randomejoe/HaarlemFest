@@ -17,7 +17,11 @@
                     if ($field['type'] == 'text') {
                         ?>
                         <textarea name="<?php echo $field['name'] ?>" id="textField">
-                            <?php echo '<' . $field['element'] . '>' . $data[$field['name']] . '</' . $field['element'] . '>'; ?>
+                            <?php if (isset($data)) {
+                                echo '<' . $field['element'] . '>' . $data[$field['name']] . '</' . $field['element'] . '>';
+                            } else {
+                                echo '<' . $field['element'] . '></' . $field['element'] . '>';
+                            } ?>
                         </textarea>
                         <?php    
                     }

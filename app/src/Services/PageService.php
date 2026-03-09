@@ -31,6 +31,9 @@ class PageService
     }
 
     public function update(int $id, array $postData) {
+        if (isset($postData['newContent'])) {
+            $this->repository->addContentItemToPage($id, $postData['newContent']);
+        }
         return $this->repository->updatePage($id, $postData);
     }
 }

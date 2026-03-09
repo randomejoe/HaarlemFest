@@ -25,6 +25,6 @@ class ContentService
 
     public function update(int $id, array $postData): bool
     {
-        return $this->repository->updateContent($id, $postData);
+        return $this->repository->updateContentItem($id, $postData);
     }
 }

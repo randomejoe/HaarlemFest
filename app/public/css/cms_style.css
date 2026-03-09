@@ -52,35 +52,6 @@ a {
     padding: 10px
 }
 
-.vertical-center {
-    display: flex;
-    align-items: center;
-}
-
-.horizontal-center {
-    display: flex;
-    justify-content: center;
-}
-
-.row {
-    display: flex;
-    flex-direction: row;
-    gap: 12px;
-}
-
-.column {
-    display: flex;
-    flex-direction: column;
-}
-
-.between {
-    justify-content: space-between;
-}
-
-.max-width {
-    width: 100%;
-}
-
 .add-item-btn {
     background-color: green;
 }
@@ -94,6 +65,10 @@ a {
     display:block;
     border-radius: 10px;
     border: none;
+    cursor: pointer;
+}
+.button:hover {
+    background-color: #e0e0e0;
 }
 .button > p {
     width: fit-content;
@@ -124,8 +99,14 @@ a {
 .edit-btn {
     background-color: orange;
 }
+.edit-btn:hover {
+    background-color: #e68900;
+}
 .delete-btn {
     background-color: red;
+}
+.delete-btn:hover {
+    background-color: #b52f26;
 }
 .edit-btn > p, .delete-btn > p {
     color: white;
@@ -189,4 +170,65 @@ input[readonly] {
 
 .form-submit-button-success:hover {
     background-color: #0f8f0f;
+}
+
+.component-list {
+    max-height: 50vh;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+.component-item {
+    padding: 10px;
+    text-align: left;
+}
+
+.vertical-center {
+    display: flex;
+    align-items: center;
+}
+
+.horizontal-center {
+    display: flex;
+    justify-content: center;
+}
+
+.row {
+    display: flex;
+    flex-direction: row;
+    gap: 12px;
+}
+
+.column {
+    display: flex;
+    flex-direction: column;
+}
+
+.between {
+    justify-content: space-between;
+}
+
+.max-width {
+    width: 100%;
+}
+
+.no-margin {
+    margin: 0px;
+}
+
+.modal {
+    position: fixed;
+    justify-content: center;
+    align-items: center;
+    inset: 0;
+}
+
+.modal-content {
+    border: solid black 2px;
+    background: white;
+    padding: 20px;
+    width: 400px;
+    max-height: 70vh;
+    border-radius: 8px;
 }

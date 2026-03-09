@@ -61,32 +61,22 @@ class PageRepository
 
     public function updatePage(int $id, array $data): bool
     {
-        try {
-            $this->pdo->beginTransaction();
-
-            echo '<pre>';
-            print_r($data);
-            echo '</pre>';
-
             // Update page name
             $stmt = $this->pdo->prepare("UPDATE pages SET title = :title WHERE page_id = :id");
             $stmt->execute([
                 'id' => $id,
                 'title' => $data['name'],
             ]);
-
-            // Update data
-
-            $this->pdo->commit();
             return true;
-        }
-        catch (Exception $e) {
-            echo $e;
-            $this->pdo->rollback();
-            return false;
-        }
     }
-    public function updateContent(int $id, array $data): bool
+    public function addContentItemToPage(int $pageId, string $componentName) {
+        $stmt = $this->pdo->prepare("INSERT INTO page_content (page_id, component_name) VALUES (:page_id, :component_name)");
+        $stmt->execute([
+            'page_id' => $pageId,
+            'component_name' => $componentName,
+        ]);
+    }
+    public function updateContentItem(int $id, array $data): bool
     {
         try {
             $this->pdo->beginTransaction();
