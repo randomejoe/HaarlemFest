@@ -41,9 +41,11 @@ class PageService
 
     public function update(int $id, array $postData) {
         if (isset($postData['newContent'])) {
-            $this->repository->addContentItemToPage($id, $postData['newContent']);
+            return $this->repository->addContentItemToPage($id, $postData['newContent']);
         }
-        return $this->repository->updatePage($id, $postData);
+        else  {
+            return $this->repository->updatePage($id, $postData);
+        }
     }
     public function delete(int $id) {
         return $this->repository->deletePage($id);

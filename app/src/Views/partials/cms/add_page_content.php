@@ -6,14 +6,14 @@
         <div class="modal-content">
 
             <div class="row between vertical-center"><h2>Add component</h2><button class="button delete-btn" type="button" id="closeModalBtn"><p><strong>X</strong></p></button></div>
-            
-
             <div class="component-list">
                 <?php foreach ($components as $key => $component): ?>
-                    <button name="newContent" value="<?php echo $key ?>" class="component-item button max-width"
-                            data-component="<?= $key ?>">
-                        <?= htmlspecialchars($key) ?>
-                    </button>
+                    <form method="POST">
+                        <button name="newContent" value="<?php echo $key ?>" class="component-item button max-width"
+                                data-component="<?= $key ?>">
+                            <?= htmlspecialchars($key) ?>
+                        </button>
+                    </form>
                 <?php endforeach; ?>
             </div>
 

@@ -18,9 +18,14 @@
                         <button type="submit" class="form-submit-button button">Save</button>
                     </div>
                     <?php 
-                        require(__DIR__ . '/../partials/cms/edit_' . $type . '.php');
+                        if ($type == 'contents') {
+                            require(__DIR__ . '/../partials/cms/edit_' . $type . '.php');
+                        }
+                        ?></form><?php
+                        if ($type != 'contents') {
+                            require(__DIR__ . '/../partials/cms/edit_' . $type . '.php');
+                        }
                     ?>
-                </form>
             </div>
         </div>
     </div>
