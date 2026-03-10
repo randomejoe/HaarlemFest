@@ -28,14 +28,14 @@ class OrdersController
             exit;
         }
 
-        $user = $this->users->findById((int) $sessionUser['user_id']);
+        $user = $this->users->findById($sessionUser->id());
         if ($user === null) {
             $this->auth->logout();
             header('Location: /login?redirect=' . urlencode('/orders'));
             exit;
         }
 
-        $orders = $this->orders->findByUserId((int) $user['user_id']);
+        $orders = $this->orders->findByUserId($user->id());
 
         echo View::render('orders', [
             'orders' => $orders,

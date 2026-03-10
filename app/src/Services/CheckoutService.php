@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\User;
 use App\Repositories\CheckoutRepository;
 use App\Repositories\EventRepository;
 use App\Repositories\TicketHoldRepository;
@@ -109,7 +110,7 @@ class CheckoutService
         return $response;
     }
 
-    public function confirmCheckout(array $user, string $postedIdempotencyKey, bool $simulateFailure = false): array
+    public function confirmCheckout(User $user, string $postedIdempotencyKey, bool $simulateFailure = false): array
     {
         if ($this->planner->isLocked()) {
             return [
@@ -149,7 +150,7 @@ class CheckoutService
         $attemptId = (int) ($attemptData['attempt_id'] ?? 0);
         $handoff = $this->paymentGateway->createTransaction([
             'checkout_attempt_id' => $attemptId,
-            'user_id' => (int) ($user['user_id'] ?? 0),
+            'user_id' => $user->id(),
             'planner_token' => $this->planner->getPlannerToken(),
             'amount' => (float) $planner['total_price_value'],
             'currency' => 'EUR',
@@ -172,9 +173,9 @@ class CheckoutService
         ];
     }
 
-    public function confirmPendingPayment(int $checkoutAttemptId, array $user): array
+    public function confirmPendingPayment(int $checkoutAttemptId, User $user): array
     {
-        $userId = (int) ($user['user_id'] ?? 0);
+        $userId = $user->id();
 
         if ($checkoutAttemptId <= 0) {
             return [
@@ -365,7 +366,7 @@ class CheckoutService
         ];
     }
 
-    private function createPendingCheckoutAttempt(array $user, array $planner, array $items, string $postedIdempotencyKey): array
+    private function createPendingCheckoutAttempt(User $user, array $planner, array $items, string $postedIdempotencyKey): array
     {
         return $this->transaction(function () use ($user, $planner, $items, $postedIdempotencyKey): array {
             $failedEventIds = $this->reserveStockForItems($items);
@@ -384,7 +385,7 @@ class CheckoutService
 
             $expiresAt = $this->formatTimestamp($this->currentTimestamp() + self::HOLD_DURATION_SECONDS);
             $attemptId = $this->checkoutAttempts->createAttempt([
-                'user_id' => (int) ($user['user_id'] ?? 0),
+                'user_id' => $user->id(),
                 'planner_token' => $this->planner->getPlannerToken(),
                 'status' => 'initiated',
                 'total_price' => (float) ($planner['total_price_value'] ?? 0),
@@ -401,7 +402,7 @@ class CheckoutService
             $this->checkoutAttempts->createAttemptItems($attemptId, $attemptItems);
             $this->ticketHolds->createHolds(
                 $attemptId,
-                (int) ($user['user_id'] ?? 0),
+                $user->id(),
                 $this->planner->getPlannerToken(),
                 $attemptItems,
                 $expiresAt

@@ -1,4 +1,5 @@
 <?php require __DIR__ . '/partials/header.php'; ?>
+<?php $old = $old ?? []; ?>
 
 <main>
     <section class="section auth-section">
@@ -27,7 +28,7 @@
                                     class="account-input"
                                     type="text"
                                     name="identifier"
-                                    value="<?php echo htmlspecialchars((string) ($_POST['identifier'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>"
+                                    value="<?php echo htmlspecialchars((string) ($old['identifier'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>"
                                     required
                                 >
                             </div>

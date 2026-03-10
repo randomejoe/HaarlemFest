@@ -10,6 +10,7 @@ use App\Controllers\HelloController;
 use App\Controllers\HomeController;
 use App\Controllers\JazzController;
 use App\Controllers\OrdersController;
+use App\Controllers\PageController;
 use App\Controllers\PasswordController;
 use App\Controllers\PlannerController;
 use App\Database\Connection;
@@ -22,6 +23,7 @@ use App\Repositories\UserRepository;
 use App\Services\AuthService;
 use App\Services\CaptchaService;
 use App\Services\CheckoutService;
+use App\Services\ContentService;
 use App\Services\CsrfService;
 use App\Services\InvoicePdfService;
 use App\Services\Mailer;
@@ -118,14 +120,21 @@ class Container
         ));
         $this->singleton(PasswordResetService::class, fn (self $c): PasswordResetService => new PasswordResetService(
             $c->get(UserRepository::class),
-            $c->get(Mailer::class)
+            $c->get(Mailer::class),
+            $c->get(AuthService::class)
         ));
         $this->singleton(PageService::class, fn (self $c): PageService => new PageService(
+            $c->get(PageRepository::class)
+        ));
+        $this->singleton(ContentService::class, fn (self $c): ContentService => new ContentService(
             $c->get(PageRepository::class)
         ));
 
         $this->transient(HomeController::class, static fn (self $c): HomeController => new HomeController());
         $this->transient(HelloController::class, static fn (self $c): HelloController => new HelloController());
+        $this->transient(PageController::class, fn (self $c): PageController => new PageController(
+            $c->get(PageService::class)
+        ));
         $this->transient(CheckoutController::class, fn (self $c): CheckoutController => new CheckoutController(
             $c->get(PlannerService::class),
             $c->get(CheckoutService::class),
@@ -154,7 +163,8 @@ class Container
             $c->get(PasswordResetService::class)
         ));
         $this->transient(CmsController::class, fn (self $c): CmsController => new CmsController(
-            $c->get(PageService::class)
+            $c->get(PageService::class),
+            $c->get(ContentService::class)
         ));
         $this->transient(JazzController::class, fn (self $c): JazzController => new JazzController(
             $c->get(EventRepository::class),

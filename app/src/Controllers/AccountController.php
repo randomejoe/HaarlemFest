@@ -3,6 +3,7 @@
 namespace App\Controllers;
 
 use App\Exceptions\UserConflictException;
+use App\Models\User;
 use App\Repositories\UserRepository;
 use App\Services\AuthService;
 use App\View;
@@ -26,14 +27,17 @@ class AccountController
             exit;
         }
 
-        $user = $this->users->findById((int) $sessionUser['user_id']);
+        $user = $this->users->findById($sessionUser->id());
         if ($user === null) {
             $this->auth->logout();
             header('Location: /login');
             exit;
         }
 
-        echo View::render('account', ['user' => $user]);
+        echo View::render('account', [
+            'user' => $user,
+            'updated' => isset($_GET['updated']),
+        ]);
     }
 
     public function update(): void
@@ -44,7 +48,7 @@ class AccountController
             exit;
         }
 
-        $userId = (int) $sessionUser['user_id'];
+        $userId = $sessionUser->id();
 
         $username = trim($_POST['username'] ?? '');
         $firstName = trim($_POST['first_name'] ?? '');
@@ -63,8 +67,9 @@ class AccountController
             'phone_number' => $phoneNumber,
         ]);
 
-        if ($username === '') {
-            $this->renderAccountError($submittedUser, 'Username is required.');
+        $errors = User::validateProfileUpdate($username);
+        if ($errors !== []) {
+            $this->renderAccountError($submittedUser, $errors[0]);
             return;
         }
 
@@ -75,7 +80,7 @@ class AccountController
         }
 
         $existing = $this->users->findByUsername($username);
-        if ($existing !== null && (int) $existing['user_id'] !== $userId) {
+        if ($existing !== null && $existing->id() !== $userId) {
             $this->renderAccountError($submittedUser, 'Username is already in use.');
             return;
         }
@@ -95,13 +100,16 @@ class AccountController
             return;
         }
 
-        $_SESSION['username'] = $username;
+        $updatedUser = $this->users->findById($userId);
+        if ($updatedUser !== null) {
+            $this->auth->syncCurrentUser($updatedUser);
+        }
 
         header('Location: /account?updated=1');
         exit;
     }
 
-    private function renderAccountError(array $user, string $message): void
+    private function renderAccountError(User $user, string $message): void
     {
         echo View::render('account', [
             'user' => $user,
@@ -109,22 +117,23 @@ class AccountController
         ]);
     }
 
-    private function buildSubmittedUser(int $userId, array $sessionUser, array $submitted): array
+    private function buildSubmittedUser(int $userId, User $sessionUser, array $submitted): User
     {
-        return [
-            'user_id' => $userId,
-            'email' => (string) ($sessionUser['email'] ?? ''),
-            'username' => (string) ($submitted['username'] ?? ''),
-            'first_name' => $submitted['first_name'] !== '' ? $submitted['first_name'] : null,
-            'last_name' => $submitted['last_name'] !== '' ? $submitted['last_name'] : null,
-            'address' => $submitted['address'] !== '' ? $submitted['address'] : null,
-            'city' => $submitted['city'] !== '' ? $submitted['city'] : null,
-            'country' => $submitted['country'] !== '' ? $submitted['country'] : null,
-            'phone_number' => $submitted['phone_number'] !== '' ? $submitted['phone_number'] : null,
-        ];
+        return new User(
+            id: $userId,
+            username: (string) ($submitted['username'] ?? ''),
+            email: $sessionUser->email(),
+            role: $sessionUser->role(),
+            firstName: $submitted['first_name'] !== '' ? $submitted['first_name'] : null,
+            lastName: $submitted['last_name'] !== '' ? $submitted['last_name'] : null,
+            address: $submitted['address'] !== '' ? $submitted['address'] : null,
+            city: $submitted['city'] !== '' ? $submitted['city'] : null,
+            country: $submitted['country'] !== '' ? $submitted['country'] : null,
+            phoneNumber: $submitted['phone_number'] !== '' ? $submitted['phone_number'] : null,
+        );
     }
 
-    private function validateProfileLengths(array $user): ?string
+    private function validateProfileLengths(User $user): ?string
     {
         $limits = [
             'username' => UserRepository::USERNAME_MAX_LENGTH,
@@ -147,7 +156,15 @@ class AccountController
         ];
 
         foreach ($limits as $field => $limit) {
-            $value = trim((string) ($user[$field] ?? ''));
+            $value = trim((string) match ($field) {
+                'username' => $user->username(),
+                'first_name' => $user->firstName(),
+                'last_name' => $user->lastName(),
+                'address' => $user->address(),
+                'city' => $user->city(),
+                'country' => $user->country(),
+                'phone_number' => $user->phoneNumber(),
+            });
             if ($value !== '' && $this->textLength($value) > $limit) {
                 return $labels[$field] . ' must be ' . $limit . ' characters or fewer.';
             }

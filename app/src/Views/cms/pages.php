@@ -1,5 +1,5 @@
 <div>
-    <?php include __DIR__ . '/../components/cms_nav.php';?>
+    <?php include __DIR__ . '/../partials/cms/cms_nav.php';?>
     <div class='horizontal-center vertical-center'>
         <div class='cms-container'>
             <?php 
@@ -11,25 +11,26 @@
                     else {
                         $message = 'Failed to add page ' . $_SESSION['create_title'];
                         $notification_type = 'failure';
-                        
                     }
-                    require __DIR__ . '/../components/notification.php';
+                    require __DIR__ . '/../partials/cms/notification.php';
                     unset($_SESSION['create_success']);
                     unset($_SESSION['create_title']);
                 }
             ?>
-            <button id='add-page-btn' class='add-page-btn button'><p>Add page</p></button>
-            <form id='add-page-form' style='display: none' class='add-page-form' method="POST" action="/cms/pages">
+            <button id='add-item-btn' class='add-item-btn button'><p>Add page</p></button>
+            <form id='add-item-form' style='display: none' class='add-item-form' method="POST" action="/cms/pages">
                 <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars((string) ($csrf_token ?? ''), ENT_QUOTES, 'UTF-8'); ?>">
                 <label for="title">Page Name:</label>
-                <input type="text" id="title" name="title" required>
-                <button type="submit">Create</button>
+                <input type="text" id="title" name="title" class="form-input" required>
+                <button type="submit" class="form-submit-button button">Create</button>
             </form>
-            <div class='page-item-container'>
+            <div class='cms-item-container column'>
             <?php 
+            $itemType = 'page';
             foreach ($pages as $page) {
-                $title = $page['title'];
-                require __DIR__ . '/../components/page_item.php';
+                $itemName = $page['title'];
+                $itemId = $page['id'];
+                require __DIR__ . '/../partials/cms/cms_item.php';
             } ?>
             </div>
         </div>
@@ -37,8 +38,8 @@
 </div>
 
 <script>
-    const btn = document.getElementById('add-page-btn');
-    const form = document.getElementById('add-page-form');
+    const btn = document.getElementById('add-item-btn');
+    const form = document.getElementById('add-item-form');
 
     btn.addEventListener('click', () => {
     form.style.display = form.style.display === 'none' ? 'block' : 'none';

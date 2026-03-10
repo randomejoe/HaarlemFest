@@ -2,9 +2,22 @@
     font-family: Arial, Helvetica, sans-serif;
 }
 
+p {
+    font-size: 16px;
+}
+
 nav {
     height: 10vh;
     background-color: #555;
+}
+
+body {
+    margin: 0;
+}
+
+a {
+    color: inherit;
+    text-decoration: none;
 }
 
 .navItemsContainer {
@@ -32,15 +45,6 @@ nav {
     color: white;
 }
 
-body {
-    margin: 0;
-}
-
-a {
-    color: inherit;
-    text-decoration: none;
-}
-
 /* CMS area components */ 
 
 .cms-container {
@@ -52,53 +56,45 @@ a {
     padding: 10px
 }
 
-.vertical-center {
-    display: flex;
-    align-items: center;
-}
-
-.horizontal-center {
-    display: flex;
-    justify-content: center;
-}
-
-.add-page-btn {
+.add-item-btn {
     background-color: green;
 }
-.add-page-btn > p {
+.add-item-btn > p {
     color: white;
 }
 
 .button {
-    padding: 1em;
+    padding: 16px;
     width: fit-content;
     display:block;
     border-radius: 10px;
     border: none;
+    cursor: pointer;
+}
+.button:hover {
+    background-color: #e0e0e0;
 }
 .button > p {
     width: fit-content;
     margin: 0px;
 }
 
-.page-item-container {
+.cms-item-container {
     gap: 10px;
     margin-top: 10px;
-    display: flex;
-    flex-direction: column;
 }
 
-.page-item {
+.cms-item {
     border: solid 2px #666666;
     padding: 20px 10px;
     border-radius: 10px;
 }
-.page-item-content {
+.cms-item-content {
     display: flex;
     flex-direction: row;
     justify-content: space-between;
 }
-.page-item-buttons {
+.cms-item-buttons {
     display: flex;
     flex-direction: row;
     gap: 10px;
@@ -107,8 +103,14 @@ a {
 .edit-btn {
     background-color: orange;
 }
+.edit-btn:hover {
+    background-color: #e68900;
+}
 .delete-btn {
     background-color: red;
+}
+.delete-btn:hover {
+    background-color: #b52f26;
 }
 .edit-btn > p, .delete-btn > p {
     color: white;
@@ -133,6 +135,104 @@ a {
     border-color: #af6868;
 }
 
-.add-page-form {
+.add-item-form {
     margin-top: 10px;
+    gap: 12px;
+}
+
+input[readonly] {
+    cursor: default;
+}
+
+.form-input {
+    padding: 10px 12px;
+    border-radius: 8px;
+    border: 2px solid #666;
+    font-size: 1rem;
+    outline: none;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.form-input:focus {
+    border-color: #444;
+    box-shadow: 0 0 5px rgba(0,0,0,0.2);
+}
+
+.form-submit-button {
+    background-color: #4a79d8;
+    color: white;
+}
+
+.form-submit-button:hover {
+    background-color: #3b63b5;
+}
+
+.form-submit-button-success {
+    background-color: green;
+    color: white;
+}
+
+.form-submit-button-success:hover {
+    background-color: #0f8f0f;
+}
+
+.component-list {
+    max-height: 50vh;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+.component-item {
+    padding: 10px;
+    text-align: left;
+}
+
+.vertical-center {
+    display: flex;
+    align-items: center;
+}
+
+.horizontal-center {
+    display: flex;
+    justify-content: center;
+}
+
+.row {
+    display: flex;
+    flex-direction: row;
+    gap: 12px;
+}
+
+.column {
+    display: flex;
+    flex-direction: column;
+}
+
+.between {
+    justify-content: space-between;
+}
+
+.max-width {
+    width: 100%;
+}
+
+.no-margin {
+    margin: 0px;
+}
+
+.modal {
+    position: fixed;
+    justify-content: center;
+    align-items: center;
+    inset: 0;
+}
+
+.modal-content {
+    border: solid black 2px;
+    background: white;
+    padding: 20px;
+    width: 400px;
+    max-height: 70vh;
+    border-radius: 8px;
 }

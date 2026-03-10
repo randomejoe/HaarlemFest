@@ -52,9 +52,8 @@ class PlannerController
         exit;
     }
 
-    public function updateItemQuantity(array $vars): void
+    public function updateItemQuantity(int $eventId): void
     {
-        $eventId = (int) ($vars['eventId'] ?? 0);
         $quantity = (int) ($_POST['quantity'] ?? 0);
 
         try {
@@ -68,10 +67,8 @@ class PlannerController
         exit;
     }
 
-    public function removeItem(array $vars): void
+    public function removeItem(int $eventId): void
     {
-        $eventId = (int) ($vars['eventId'] ?? 0);
-
         try {
             $this->planner->removeItem($eventId);
             $this->planner->setFlash('success', 'Event removed from your planner.');

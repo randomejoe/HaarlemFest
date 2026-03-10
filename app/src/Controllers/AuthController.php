@@ -3,6 +3,8 @@
 namespace App\Controllers;
 
 use App\Exceptions\UserConflictException;
+use App\Models\UserRole;
+use App\Models\User;
 use App\Repositories\UserRepository;
 use App\Services\AuthService;
 use App\Services\CaptchaService;
@@ -34,50 +36,47 @@ class AuthController
         $password = $_POST['password'] ?? '';
         $captchaPayload = $_POST['altcha'] ?? '';
         $redirect = $this->sanitizeRedirect((string) ($_POST['redirect'] ?? '/'));
+        $old = [
+            'username' => $username,
+            'email' => $email,
+        ];
 
-        if ($username === '' || $email === '' || $password === '') {
-            echo View::render('register', [
-                'error' => 'All fields are required.',
-                'redirect' => $redirect,
-            ]);
-            return;
-        }
-
-        if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-            $this->renderRegisterError($redirect, 'Please provide a valid email address.');
+        $errors = User::validateRegistration($username, $email, $password);
+        if ($errors !== []) {
+            $this->renderRegisterError($redirect, $errors[0], $old);
             return;
         }
 
         $lengthError = $this->validateRegistrationLengths($username, $email);
         if ($lengthError !== null) {
-            $this->renderRegisterError($redirect, $lengthError);
+            $this->renderRegisterError($redirect, $lengthError, $old);
             return;
         }
 
         if (!$this->captcha->verify($captchaPayload)) {
-            $this->renderRegisterError($redirect, 'Captcha verification failed.');
+            $this->renderRegisterError($redirect, 'Captcha verification failed.', $old);
             return;
         }
 
         if ($this->users->findByEmail($email) || $this->users->findByUsername($username)) {
-            $this->renderRegisterError($redirect, 'That email or username is already in use.');
+            $this->renderRegisterError($redirect, 'That email or username is already in use.', $old);
             return;
         }
 
-        $passwordHash = password_hash($password, PASSWORD_DEFAULT);
+        $passwordHash = $this->auth->hashPassword($password);
         try {
             $userId = $this->users->create($username, $email, $passwordHash);
         } catch (UserConflictException $e) {
-            $this->renderRegisterError($redirect, $e->getMessage());
+            $this->renderRegisterError($redirect, $e->getMessage(), $old);
             return;
         }
 
-        $this->auth->login([
-            'user_id' => $userId,
-            'username' => $username,
-            'email' => $email,
-            'role' => 'user',
-        ]);
+        $this->auth->login(new User(
+            id: $userId,
+            username: $username,
+            email: $email,
+            role: UserRole::User
+        ));
         header('Location: ' . $redirect);
         exit;
     }
@@ -93,12 +92,10 @@ class AuthController
         $identifier = trim($_POST['identifier'] ?? '');
         $password = $_POST['password'] ?? '';
         $redirect = $this->sanitizeRedirect((string) ($_POST['redirect'] ?? '/'));
+        $old = ['identifier' => $identifier];
 
         if ($identifier === '' || $password === '') {
-            echo View::render('login', [
-                'error' => 'Email/username and password are required.',
-                'redirect' => $redirect,
-            ]);
+            $this->renderLoginError($redirect, 'Email/username and password are required.', $old);
             return;
         }
 
@@ -109,11 +106,8 @@ class AuthController
             $user = $this->users->findByUsername($identifier);
         }
 
-        if (!$user || !password_verify($password, $user['password_hash'] ?? '')) {
-            echo View::render('login', [
-                'error' => 'Invalid credentials.',
-                'redirect' => $redirect,
-            ]);
+        if (!$user || !$this->auth->verifyPassword($password, $user->passwordHash() ?? '')) {
+            $this->renderLoginError($redirect, 'Invalid credentials.', $old);
             return;
         }
 
@@ -124,9 +118,15 @@ class AuthController
 
     public function logout(): void
     {
-        $this->auth->logout();
-        header('Location: /login');
-        exit;
+        try {
+            $this->auth->logout();
+            header('Location: /login');
+            exit;
+        } catch (\Throwable $e) {
+            http_response_code(500);
+            error_log('AuthController::logout error: ' . $e->getMessage());
+            require(__DIR__ . '/../Views/error.php');
+        }
     }
 
     public function altchaChallenge(): void
@@ -172,10 +172,20 @@ class AuthController
         return $redirect;
     }
 
-    private function renderRegisterError(string $redirect, string $message): void
+    private function renderRegisterError(string $redirect, string $message, array $old = []): void
     {
         echo View::render('register', [
             'error' => $message,
+            'old' => $old,
+            'redirect' => $redirect,
+        ]);
+    }
+
+    private function renderLoginError(string $redirect, string $message, array $old = []): void
+    {
+        echo View::render('login', [
+            'error' => $message,
+            'old' => $old,
             'redirect' => $redirect,
         ]);
     }

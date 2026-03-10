@@ -2,6 +2,7 @@
 
 namespace App\Controllers;
 
+use App\Models\User;
 use App\Repositories\CheckoutRepository;
 use App\Repositories\UserRepository;
 use App\Services\AuthService;
@@ -67,7 +68,7 @@ class CheckoutController
             }
         }
 
-        $this->users->updateCheckoutDetails((int) $user['user_id'], $details);
+        $this->users->updateCheckoutDetails($user->id(), $details);
         $this->planner->setFlash('success', 'Your checkout details were saved.');
 
         $this->redirect(self::CHECKOUT_PATH);
@@ -109,13 +110,12 @@ class CheckoutController
         $this->redirect(self::CHECKOUT_PATH);
     }
 
-    public function pending(array $vars): void
+    public function pending(int $checkoutAttemptId): void
     {
         $this->releaseExpiredHoldsAndUnlockIfNeeded(true);
 
         $sessionUser = $this->requireSessionUser();
 
-        $checkoutAttemptId = (int) ($vars['checkoutId'] ?? 0);
         if ($checkoutAttemptId <= 0) {
             http_response_code(404);
             echo 'Checkout attempt not found.';
@@ -129,7 +129,7 @@ class CheckoutController
             return;
         }
 
-        if ((int) ($attempt['user_id'] ?? 0) !== (int) $sessionUser['user_id']) {
+        if ((int) ($attempt['user_id'] ?? 0) !== $sessionUser->id()) {
             http_response_code(403);
             echo 'Forbidden';
             return;
@@ -163,19 +163,18 @@ class CheckoutController
         ]);
     }
 
-    public function confirmPendingPayment(array $vars): void
+    public function confirmPendingPayment(int $checkoutAttemptId): void
     {
         $this->releaseExpiredHoldsAndUnlockIfNeeded(true);
 
         $sessionUser = $this->requireSessionUser();
 
-        $checkoutAttemptId = (int) ($vars['checkoutId'] ?? 0);
         if ($checkoutAttemptId <= 0) {
             $this->planner->setFlash('error', 'Checkout attempt not found.');
             $this->redirect(self::CHECKOUT_PATH);
         }
 
-        $user = $this->requireCheckoutUser((int) $sessionUser['user_id']);
+        $user = $this->requireCheckoutUser($sessionUser->id());
 
         $result = $this->checkout->confirmPendingPayment($checkoutAttemptId, $user);
         $status = (string) ($result['status'] ?? 'unknown');
@@ -206,12 +205,19 @@ class CheckoutController
         }
     }
 
-    private function missingRequiredDetails(array $user): array
+    private function missingRequiredDetails(User $user): array
     {
         $missing = [];
 
         foreach (self::REQUIRED_FIELDS as $field) {
-            $value = trim((string) ($user[$field] ?? ''));
+            $value = trim((string) match ($field) {
+                'first_name' => $user->firstName(),
+                'last_name' => $user->lastName(),
+                'address' => $user->address(),
+                'city' => $user->city(),
+                'country' => $user->country(),
+                'phone_number' => $user->phoneNumber(),
+            });
             if ($value === '') {
                 $missing[] = $field;
             }
@@ -220,7 +226,7 @@ class CheckoutController
         return $missing;
     }
 
-    private function requireSessionUser(): array
+    private function requireSessionUser(): User
     {
         $sessionUser = $this->auth->currentUser();
         if ($sessionUser === null) {
@@ -230,11 +236,11 @@ class CheckoutController
         return $sessionUser;
     }
 
-    private function requireCheckoutUser(?int $userId = null): array
+    private function requireCheckoutUser(?int $userId = null): User
     {
         if ($userId === null) {
             $sessionUser = $this->requireSessionUser();
-            $userId = (int) ($sessionUser['user_id'] ?? 0);
+            $userId = $sessionUser->id();
         }
 
         $user = $this->users->findById($userId);

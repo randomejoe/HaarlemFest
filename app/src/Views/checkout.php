@@ -84,27 +84,27 @@
                                         <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars((string) ($csrf_token ?? ''), ENT_QUOTES, 'UTF-8'); ?>">
                                         <div class="col-12 col-md-6">
                                             <label class="form-label fw-semibold" for="checkout-first-name">First name</label>
-                                            <input id="checkout-first-name" class="form-control" type="text" name="first_name" value="<?php echo htmlspecialchars((string) ($user['first_name'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>" required>
+                                            <input id="checkout-first-name" class="form-control" type="text" name="first_name" value="<?php echo htmlspecialchars((string) ($user->firstName() ?? ''), ENT_QUOTES, 'UTF-8'); ?>" required>
                                         </div>
                                         <div class="col-12 col-md-6">
                                             <label class="form-label fw-semibold" for="checkout-last-name">Last name</label>
-                                            <input id="checkout-last-name" class="form-control" type="text" name="last_name" value="<?php echo htmlspecialchars((string) ($user['last_name'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>" required>
+                                            <input id="checkout-last-name" class="form-control" type="text" name="last_name" value="<?php echo htmlspecialchars((string) ($user->lastName() ?? ''), ENT_QUOTES, 'UTF-8'); ?>" required>
                                         </div>
                                         <div class="col-12">
                                             <label class="form-label fw-semibold" for="checkout-address">Address</label>
-                                            <input id="checkout-address" class="form-control" type="text" name="address" value="<?php echo htmlspecialchars((string) ($user['address'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>" required>
+                                            <input id="checkout-address" class="form-control" type="text" name="address" value="<?php echo htmlspecialchars((string) ($user->address() ?? ''), ENT_QUOTES, 'UTF-8'); ?>" required>
                                         </div>
                                         <div class="col-12 col-md-6">
                                             <label class="form-label fw-semibold" for="checkout-city">City</label>
-                                            <input id="checkout-city" class="form-control" type="text" name="city" value="<?php echo htmlspecialchars((string) ($user['city'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>" required>
+                                            <input id="checkout-city" class="form-control" type="text" name="city" value="<?php echo htmlspecialchars((string) ($user->city() ?? ''), ENT_QUOTES, 'UTF-8'); ?>" required>
                                         </div>
                                         <div class="col-12 col-md-6">
                                             <label class="form-label fw-semibold" for="checkout-country">Country</label>
-                                            <input id="checkout-country" class="form-control" type="text" name="country" value="<?php echo htmlspecialchars((string) ($user['country'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>" required>
+                                            <input id="checkout-country" class="form-control" type="text" name="country" value="<?php echo htmlspecialchars((string) ($user->country() ?? ''), ENT_QUOTES, 'UTF-8'); ?>" required>
                                         </div>
                                         <div class="col-12">
                                             <label class="form-label fw-semibold" for="checkout-phone">Phone number</label>
-                                            <input id="checkout-phone" class="form-control" type="text" name="phone_number" value="<?php echo htmlspecialchars((string) ($user['phone_number'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>" required>
+                                            <input id="checkout-phone" class="form-control" type="text" name="phone_number" value="<?php echo htmlspecialchars((string) ($user->phoneNumber() ?? ''), ENT_QUOTES, 'UTF-8'); ?>" required>
                                         </div>
                                         <div class="col-12 d-grid">
                                             <button type="submit" class="btn cta-btn">Save Details</button>

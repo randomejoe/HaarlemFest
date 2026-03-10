@@ -2,6 +2,8 @@
 
 namespace App\Services;
 
+use App\Models\User;
+
 class TicketDeliveryService
 {
     private Mailer $mailer;
@@ -19,9 +21,9 @@ class TicketDeliveryService
         $this->invoicePdfService = $invoicePdfService;
     }
 
-    public function sendPurchasedTicketsEmail(array $user, array $attempt, array $tickets): void
+    public function sendPurchasedTicketsEmail(User $user, array $attempt, array $tickets): void
     {
-        $toEmail = (string) ($user['email'] ?? '');
+        $toEmail = $user->email();
         if ($toEmail === '') {
             throw new \RuntimeException('User email is missing.');
         }
@@ -59,9 +61,9 @@ class TicketDeliveryService
         );
     }
 
-    public function sendInvoiceEmail(array $user, array $attempt, array $invoice): void
+    public function sendInvoiceEmail(User $user, array $attempt, array $invoice): void
     {
-        $toEmail = (string) ($user['email'] ?? '');
+        $toEmail = $user->email();
         if ($toEmail === '') {
             throw new \RuntimeException('User email is missing.');
         }
@@ -75,8 +77,8 @@ class TicketDeliveryService
             'issued_at' => (string) ($invoice['issued_at'] ?? date('Y-m-d H:i:s')),
             'customer_name' => $toName,
             'customer_email' => $toEmail,
-            'customer_address' => trim((string) ($user['address'] ?? '')),
-            'customer_phone' => trim((string) ($user['phone_number'] ?? '')),
+            'customer_address' => trim((string) ($user->address() ?? '')),
+            'customer_phone' => trim((string) ($user->phoneNumber() ?? '')),
             'currency' => (string) ($invoice['currency'] ?? 'EUR'),
             'total_price' => (float) ($invoice['total_price_value'] ?? 0),
             'total_tickets' => (int) ($invoice['total_tickets'] ?? 0),
@@ -107,22 +109,22 @@ class TicketDeliveryService
         );
     }
 
-    private function resolveCustomerName(array $user): string
+    private function resolveCustomerName(User $user): string
     {
-        $firstName = trim((string) ($user['first_name'] ?? ''));
-        $lastName = trim((string) ($user['last_name'] ?? ''));
+        $firstName = trim((string) ($user->firstName() ?? ''));
+        $lastName = trim((string) ($user->lastName() ?? ''));
 
         $fullName = trim($firstName . ' ' . $lastName);
         if ($fullName !== '') {
             return $fullName;
         }
 
-        $username = trim((string) ($user['username'] ?? ''));
+        $username = trim($user->username());
         if ($username !== '') {
             return $username;
         }
 
-        return trim((string) ($user['email'] ?? 'Customer'));
+        return trim($user->email() !== '' ? $user->email() : 'Customer');
     }
 
     private function buildTicketEmailBody(string $customerName, int $attemptId, array $tickets): string
@@ -161,15 +163,15 @@ class TicketDeliveryService
             . '</div>';
     }
 
-    private function buildInvoiceEmailBody(array $user, string $customerName, int $attemptId, array $invoice): string
+    private function buildInvoiceEmailBody(User $user, string $customerName, int $attemptId, array $invoice): string
     {
         $safeName = htmlspecialchars($customerName, ENT_QUOTES, 'UTF-8');
         $invoiceId = (int) ($invoice['invoice_id'] ?? 0);
         $total = number_format((float) ($invoice['total_price_value'] ?? 0), 2);
         $currency = htmlspecialchars((string) ($invoice['currency'] ?? 'EUR'), ENT_QUOTES, 'UTF-8');
         $totalTickets = (int) ($invoice['total_tickets'] ?? 0);
-        $address = htmlspecialchars(trim((string) ($user['address'] ?? '')), ENT_QUOTES, 'UTF-8');
-        $phone = htmlspecialchars(trim((string) ($user['phone_number'] ?? '')), ENT_QUOTES, 'UTF-8');
+        $address = htmlspecialchars(trim((string) ($user->address() ?? '')), ENT_QUOTES, 'UTF-8');
+        $phone = htmlspecialchars(trim((string) ($user->phoneNumber() ?? '')), ENT_QUOTES, 'UTF-8');
 
         $lineItems = '';
         foreach ((array) ($invoice['items'] ?? []) as $item) {

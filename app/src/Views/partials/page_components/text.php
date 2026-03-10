@@ -1,0 +1,1 @@
+<p class="wysiwyg"><?php echo $data['text'] ?? '' ?></p>

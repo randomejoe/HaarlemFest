@@ -2,8 +2,8 @@
 
 namespace App\Controllers;
 
+use App\Models\User;
 use App\Services\PasswordResetService;
-use App\View;
 
 class PasswordController
 {
@@ -16,43 +16,78 @@ class PasswordController
 
     public function showForgot(): void
     {
-        echo View::render('forgot');
+        try {
+            require(__DIR__ . '/../Views/forgot.php');
+        } catch (\Throwable $e) {
+            http_response_code(500);
+            error_log('PasswordController::showForgot error: ' . $e->getMessage());
+            require(__DIR__ . '/../Views/error.php');
+        }
     }
 
     public function sendReset(): void
     {
-        $email = trim($_POST['email'] ?? '');
-        if ($email !== '') {
-            $this->reset->requestReset($email);
-        }
+        try {
+            $email = trim($_POST['email'] ?? '');
+            if ($email !== '') {
+                $this->reset->requestReset($email);
+            }
 
-        echo View::render('forgot', [
-            'message' => 'If that address is in our system, you will receive a reset link shortly.'
-        ]);
+            extract([
+                'message' => 'If that address is in our system, you will receive a reset link shortly.',
+                'old' => ['email' => $email],
+            ], EXTR_SKIP);
+            require(__DIR__ . '/../Views/forgot.php');
+        } catch (\Throwable $e) {
+            http_response_code(500);
+            error_log('PasswordController::sendReset error: ' . $e->getMessage());
+            require(__DIR__ . '/../Views/error.php');
+        }
     }
 
-    public function showReset(array $vars = []): void
+    public function showReset(string $token = ''): void
     {
-        $token = $vars['token'] ?? '';
-        echo View::render('reset', ['token' => $token]);
+        try {
+            extract(['token' => $token], EXTR_SKIP);
+            require(__DIR__ . '/../Views/reset.php');
+        } catch (\Throwable $e) {
+            http_response_code(500);
+            error_log('PasswordController::showReset error: ' . $e->getMessage());
+            require(__DIR__ . '/../Views/error.php');
+        }
     }
 
-    public function reset(array $vars = []): void
+    public function reset(string $token = ''): void
     {
-        $token = $vars['token'] ?? '';
-        $password = $_POST['password'] ?? '';
+        try {
+            $password = $_POST['password'] ?? '';
 
-        if ($token === '' || $password === '') {
-            echo View::render('reset', ['token' => $token, 'error' => 'Password is required.']);
-            return;
+            if ($token === '' || $password === '') {
+                extract(['token' => $token, 'error' => 'Password is required.'], EXTR_SKIP);
+                require(__DIR__ . '/../Views/reset.php');
+                return;
+            }
+
+            $errors = User::validatePassword($password);
+            if ($errors !== []) {
+                extract(['token' => $token, 'error' => $errors[0]], EXTR_SKIP);
+                require(__DIR__ . '/../Views/reset.php');
+                return;
+            }
+
+            $ok = $this->reset->resetPassword($token, $password);
+            if (!$ok) {
+                extract(['token' => $token, 'error' => 'Invalid or expired reset link.'], EXTR_SKIP);
+                require(__DIR__ . '/../Views/reset.php');
+                return;
+            }
+
+            extract(['message' => 'Password updated. Please log in.'], EXTR_SKIP);
+            require(__DIR__ . '/../Views/login.php');
+        } catch (\Throwable $e) {
+            http_response_code(500);
+            error_log('PasswordController::reset error: ' . $e->getMessage());
+            require(__DIR__ . '/../Views/error.php');
         }
-
-        $ok = $this->reset->resetPassword($token, $password);
-        if (!$ok) {
-            echo View::render('reset', ['token' => $token, 'error' => 'Invalid or expired reset link.']);
-            return;
-        }
-
-        echo View::render('login', ['message' => 'Password updated. Please log in.']);
     }
 }
