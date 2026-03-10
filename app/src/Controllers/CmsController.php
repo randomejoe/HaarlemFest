@@ -39,6 +39,14 @@ class CmsController
 
         echo View::render('/../Views/cms/item_list', ['items' => $items, 'type'=>$type]);
     }
+    public function showCmsItemsInCategory(string $type, string $category): void
+    {
+        $type = CmsType::convertToType($type);
+        $service = $this->resolveService($type);
+        $items = $service->getAllInCategory($category);
+
+        echo View::render('/../Views/cms/item_list', ['items' => $items, 'type'=>$type]);
+    }
 
     public function createCmsItem(string $type): void
     {

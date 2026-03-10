@@ -33,4 +33,7 @@ class EventService implements CMSService
     public function getAll() {
         return $this->repository->getAllEvents();
     }
+    public function getAllInCategory(string $category) {
+        return $this->repository->getAllEventsInCategory($category);
+    }
 }

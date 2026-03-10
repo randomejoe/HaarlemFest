@@ -171,8 +171,15 @@ class EventRepository extends BaseRepository
     }
     public function getAllEvents() 
     {
-        $stmt = $this->pdo->prepare('SELECT name, event_id AS id FROM events');
+        $stmt = $this->pdo->prepare('SELECT name as item_name, event_id AS item_id FROM events');
         $stmt->execute();
+        $events = $stmt->fetchAll();
+        return $events;
+    }
+    public function getAllEventsInCategory(string $category) 
+    {
+        $stmt = $this->pdo->prepare('SELECT name as item_name, event_id AS item_id FROM events WHERE category = :category');
+        $stmt->execute(['category'=> $category]);
         $events = $stmt->fetchAll();
         return $events;
     }
