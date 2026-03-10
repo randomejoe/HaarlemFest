@@ -3,16 +3,19 @@
 namespace App\Controllers;
 
 use App\Repositories\EventRepository;
+use App\Services\PlannerService;
 use App\View;
 use DateTimeImmutable;
 
 class JazzController
 {
     private EventRepository $events;
+    private PlannerService $planner;
 
-    public function __construct()
+    public function __construct(EventRepository $events, PlannerService $planner)
     {
-        $this->events = new EventRepository();
+        $this->events = $events;
+        $this->planner = $planner;
     }
 
     public function showProgram(): void
@@ -24,8 +27,26 @@ class JazzController
             $startsAt = new DateTimeImmutable((string) $row['start_time']);
             $endsAt = new DateTimeImmutable((string) $row['end_time']);
             $dayKey = $startsAt->format('Y-m-d');
-            $seatCount = max(0, (int) ($row['ticket_amount'] ?? 0));
+            $hasTrackedStock = $row['ticket_amount'] !== null;
+            $seatCount = $hasTrackedStock ? max(0, (int) $row['ticket_amount']) : null;
             $price = isset($row['ticket_price']) ? (float) $row['ticket_price'] : 0.0;
+            $isFree = $price <= 0.0;
+            $availabilityLabel = null;
+            $status = null;
+            $statusClass = '';
+
+            if ($hasTrackedStock) {
+                if ($seatCount > 0) {
+                    $availabilityLabel = sprintf(
+                        '%d %s available',
+                        $seatCount,
+                        $seatCount === 1 ? 'seat' : 'seats'
+                    );
+                } else {
+                    $status = 'Sold out';
+                    $statusClass = 'sold-out';
+                }
+            }
 
             if (!isset($programByDay[$dayKey])) {
                 $programByDay[$dayKey] = [];
@@ -37,9 +58,12 @@ class JazzController
                 'time' => $startsAt->format('H:i') . ' - ' . $endsAt->format('H:i'),
                 'venue' => (string) ($row['venue_location'] ?? 'Venue to be announced'),
                 'description' => (string) ($row['description'] ?? ''),
+                'availability_label' => $availabilityLabel,
                 'seat_count' => $seatCount,
-                'status' => $seatCount > 0 ? 'Available' : 'Sold out',
-                'status_class' => $seatCount > 0 ? 'available' : 'sold-out',
+                'status' => $status,
+                'status_class' => $statusClass,
+                'is_free' => $isFree,
+                'can_add_to_planner' => !$isFree && (!$hasTrackedStock || $seatCount > 0),
                 'price_value' => $price,
                 'price' => number_format($price, 2),
             ];
@@ -61,19 +85,17 @@ class JazzController
         }
 
         $selectedEvents = $selectedDay !== '' ? ($programByDay[$selectedDay] ?? []) : [];
-        $plannerCount = count($selectedEvents);
-        $plannerTotal = 0.0;
-
-        foreach ($selectedEvents as $event) {
-            $plannerTotal += (float) $event['price_value'];
-        }
+        $plannerDetails = $this->planner->getDetailedPlanner();
+        $plannerFlash = $this->planner->consumeFlash();
 
         echo View::render('jazz', [
             'days' => $days,
             'selected_day' => $selectedDay,
             'events' => $selectedEvents,
-            'planner_count' => $plannerCount,
-            'planner_total' => number_format($plannerTotal, 2),
+            'planner_count' => (int) $plannerDetails['total_quantity'],
+            'planner_total' => (string) $plannerDetails['total_price'],
+            'planner_locked' => (bool) $plannerDetails['is_locked'],
+            'planner_flash' => $plannerFlash,
         ]);
     }
 }

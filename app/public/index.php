@@ -9,12 +9,20 @@
 
 require __DIR__ . '/../vendor/autoload.php';
 
+use App\Container;
+use App\View;
+use App\Services\CsrfService;
 use FastRoute\RouteCollector;
 use function FastRoute\simpleDispatcher;
-use App\Repositories\PageRepository;
-use App\Services\PageService;
 
 session_start();
+
+$container = new Container();
+View::setCsrfTokenResolver(static function () use ($container): string {
+    /** @var CsrfService $csrf */
+    $csrf = $container->get(CsrfService::class);
+    return $csrf->getToken();
+});
 
 /**
  * Define the routes for the application.
@@ -22,6 +30,16 @@ session_start();
 $dispatcher = simpleDispatcher(function (RouteCollector $r) {
     $r->addRoute('GET', '/', ['App\Controllers\HomeController', 'home']);
     $r->addRoute('GET', '/jazz', ['App\Controllers\JazzController', 'showProgram']);
+    $r->addRoute('GET', '/planner', ['App\Controllers\PlannerController', 'show']);
+    $r->addRoute('POST', '/planner/items', ['App\Controllers\PlannerController', 'addItem']);
+    $r->addRoute('POST', '/planner/items/{eventId}/quantity', ['App\Controllers\PlannerController', 'updateItemQuantity']);
+    $r->addRoute('POST', '/planner/items/{eventId}/remove', ['App\Controllers\PlannerController', 'removeItem']);
+    $r->addRoute('POST', '/planner/clear', ['App\Controllers\PlannerController', 'clear']);
+    $r->addRoute('GET', '/checkout', ['App\Controllers\CheckoutController', 'show']);
+    $r->addRoute('POST', '/checkout/details', ['App\Controllers\CheckoutController', 'saveDetails']);
+    $r->addRoute('POST', '/checkout/confirm', ['App\Controllers\CheckoutController', 'confirm']);
+    $r->addRoute('GET', '/checkout/pending/{checkoutId}', ['App\Controllers\CheckoutController', 'pending']);
+    $r->addRoute('POST', '/checkout/pending/{checkoutId}/confirm', ['App\Controllers\CheckoutController', 'confirmPendingPayment']);
     $r->addRoute('GET', '/hello/{name}', ['App\Controllers\HelloController', 'greet']);
     $r->addRoute('GET', '/register', ['App\Controllers\AuthController', 'showRegister']);
     $r->addRoute('POST', '/register', ['App\Controllers\AuthController', 'register']);
@@ -30,6 +48,7 @@ $dispatcher = simpleDispatcher(function (RouteCollector $r) {
     $r->addRoute('POST', '/logout', ['App\Controllers\AuthController', 'logout']);
     $r->addRoute('GET', '/account', ['App\Controllers\AccountController', 'show']);
     $r->addRoute('POST', '/account', ['App\Controllers\AccountController', 'update']);
+    $r->addRoute('GET', '/orders', ['App\Controllers\OrdersController', 'show']);
     $r->addRoute('GET', '/password/forgot', ['App\Controllers\PasswordController', 'showForgot']);
     $r->addRoute('POST', '/password/forgot', ['App\Controllers\PasswordController', 'sendReset']);
     $r->addRoute('GET', '/password/reset/{token}', ['App\Controllers\PasswordController', 'showReset']);
@@ -81,7 +100,17 @@ switch ($routeInfo[0]) {
          */
 
         [$controllerClass, $method] = $routeInfo[1];
-        $controller = new $controllerClass();
+        if ($httpMethod === 'POST' && !in_array($uri, ['/altcha'], true)) {
+            /** @var CsrfService $csrf */
+            $csrf = $container->get(CsrfService::class);
+            if (!$csrf->validate($_POST['csrf_token'] ?? null)) {
+                http_response_code(403);
+                echo 'Forbidden';
+                break;
+            }
+        }
+
+        $controller = $container->get($controllerClass);
         $vars = $routeInfo[2] ?? [];
 
         if (!empty($vars)) {

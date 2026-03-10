@@ -1,0 +1,21 @@
+<?php
+
+declare(strict_types=1);
+
+use App\Container;
+use App\Services\CheckoutService;
+
+require __DIR__ . '/../vendor/autoload.php';
+
+if (session_status() !== PHP_SESSION_ACTIVE) {
+    session_start();
+}
+
+/** @var CheckoutService $checkout */
+$checkout = (new Container())->get(CheckoutService::class);
+$result = $checkout->releaseExpiredHolds();
+
+fwrite(STDOUT, json_encode([
+    'released_count' => (int) ($result['released_count'] ?? 0),
+    'expired_attempt_ids' => array_values(array_map('intval', (array) ($result['expired_attempt_ids'] ?? []))),
+], JSON_PRETTY_PRINT) . PHP_EOL);

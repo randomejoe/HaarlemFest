@@ -2,16 +2,26 @@
 
 namespace App\Repositories;
 
-use App\Database\Connection;
+use App\Exceptions\UserConflictException;
 use PDO;
+use PDOException;
 
 class UserRepository
 {
+    public const USERNAME_MAX_LENGTH = 255;
+    public const EMAIL_MAX_LENGTH = 255;
+    public const FIRST_NAME_MAX_LENGTH = 100;
+    public const LAST_NAME_MAX_LENGTH = 100;
+    public const ADDRESS_MAX_LENGTH = 255;
+    public const CITY_MAX_LENGTH = 120;
+    public const COUNTRY_MAX_LENGTH = 120;
+    public const PHONE_NUMBER_MAX_LENGTH = 40;
+
     private PDO $pdo;
 
-    public function __construct()
+    public function __construct(PDO $pdo)
     {
-        $this->pdo = Connection::get();
+        $this->pdo = $pdo;
     }
 
     public function findByEmail(string $email): ?array
@@ -40,15 +50,23 @@ class UserRepository
 
     public function create(string $username, string $email, string $passwordHash): int
     {
-        $stmt = $this->pdo->prepare(
-            'INSERT INTO users (role, username, email, password_hash, created_at) VALUES (:role, :username, :email, :password_hash, NOW())'
-        );
-        $stmt->execute([
-            'role' => 'user',
-            'username' => $username,
-            'email' => $email,
-            'password_hash' => $passwordHash,
-        ]);
+        try {
+            $stmt = $this->pdo->prepare(
+                'INSERT INTO users (role, username, email, password_hash, created_at) VALUES (:role, :username, :email, :password_hash, NOW())'
+            );
+            $stmt->execute([
+                'role' => 'user',
+                'username' => $username,
+                'email' => $email,
+                'password_hash' => $passwordHash,
+            ]);
+        } catch (PDOException $e) {
+            if ($this->isUniqueConstraintViolation($e)) {
+                throw new UserConflictException('That email or username is already in use.', 0, $e);
+            }
+
+            throw $e;
+        }
 
         return (int) $this->pdo->lastInsertId();
     }
@@ -88,10 +106,43 @@ class UserRepository
 
     public function updateProfile(int $userId, array $profileData): void
     {
+        try {
+            $stmt = $this->pdo->prepare(
+                'UPDATE users
+                 SET username = :username,
+                     first_name = :first_name,
+                     last_name = :last_name,
+                     address = :address,
+                     city = :city,
+                     country = :country,
+                     phone_number = :phone_number
+                 WHERE user_id = :id'
+            );
+
+            $stmt->execute([
+                'username' => (string) ($profileData['username'] ?? ''),
+                'first_name' => $profileData['first_name'] ?? null,
+                'last_name' => $profileData['last_name'] ?? null,
+                'address' => $profileData['address'] ?? null,
+                'city' => $profileData['city'] ?? null,
+                'country' => $profileData['country'] ?? null,
+                'phone_number' => $profileData['phone_number'] ?? null,
+                'id' => $userId,
+            ]);
+        } catch (PDOException $e) {
+            if ($this->isUniqueConstraintViolation($e)) {
+                throw new UserConflictException('Username is already in use.', 0, $e);
+            }
+
+            throw $e;
+        }
+    }
+
+    public function updateCheckoutDetails(int $userId, array $details): void
+    {
         $stmt = $this->pdo->prepare(
             'UPDATE users
-             SET username = :username,
-                 first_name = :first_name,
+             SET first_name = :first_name,
                  last_name = :last_name,
                  address = :address,
                  city = :city,
@@ -101,14 +152,21 @@ class UserRepository
         );
 
         $stmt->execute([
-            'username' => (string) ($profileData['username'] ?? ''),
-            'first_name' => $profileData['first_name'] ?? null,
-            'last_name' => $profileData['last_name'] ?? null,
-            'address' => $profileData['address'] ?? null,
-            'city' => $profileData['city'] ?? null,
-            'country' => $profileData['country'] ?? null,
-            'phone_number' => $profileData['phone_number'] ?? null,
+            'first_name' => $details['first_name'] ?? null,
+            'last_name' => $details['last_name'] ?? null,
+            'address' => $details['address'] ?? null,
+            'city' => $details['city'] ?? null,
+            'country' => $details['country'] ?? null,
+            'phone_number' => $details['phone_number'] ?? null,
             'id' => $userId,
         ]);
+    }
+
+    private function isUniqueConstraintViolation(PDOException $e): bool
+    {
+        $sqlState = (string) ($e->errorInfo[0] ?? $e->getCode());
+        $driverCode = (int) ($e->errorInfo[1] ?? 0);
+
+        return $sqlState === '23000' || $driverCode === 1062;
     }
 }

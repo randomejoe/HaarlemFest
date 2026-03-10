@@ -41,11 +41,11 @@ if ($displayName === '') {
                     </ul>
                     <ul class="navbar-nav navbar-tools flex-row align-items-center gap-2 mt-2 mt-lg-0 ms-lg-3">
                         <li class="nav-item">
-                            <button type="button" class="icon-btn" aria-label="Calendar">
+                            <a href="/planner" class="icon-btn" aria-label="Planner">
                                 <svg viewBox="0 0 24 24" aria-hidden="true">
                                     <path d="M7 2v3M17 2v3M3 9h18M5 5h14a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2Z" />
                                 </svg>
-                            </button>
+                            </a>
                         </li>
                         <?php if ($isLoggedIn): ?>
                             <li class="nav-item user-menu">
@@ -56,6 +56,7 @@ if ($displayName === '') {
                                     <a href="/account" class="user-menu-item">Account</a>
                                     <a href="/orders" class="user-menu-item">Orders</a>
                                     <form method="post" action="/logout" class="m-0">
+                                        <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars((string) ($csrf_token ?? ''), ENT_QUOTES, 'UTF-8'); ?>">
                                         <button type="submit" class="user-menu-item user-menu-logout">Logout</button>
                                     </form>
                                 </div>
