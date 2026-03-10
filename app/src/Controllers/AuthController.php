@@ -2,11 +2,13 @@
 
 namespace App\Controllers;
 
+use App\Exceptions\UserConflictException;
 use App\Models\UserRole;
 use App\Models\User;
 use App\Repositories\UserRepository;
 use App\Services\AuthService;
 use App\Services\CaptchaService;
+use App\View;
 
 class AuthController
 {
@@ -14,120 +16,104 @@ class AuthController
     private AuthService $auth;
     private CaptchaService $captcha;
 
-    public function __construct()
+    public function __construct(UserRepository $users, AuthService $auth, CaptchaService $captcha)
     {
-        $this->users = new UserRepository();
-        $this->auth = new AuthService();
-        $this->captcha = new CaptchaService();
+        $this->users = $users;
+        $this->auth = $auth;
+        $this->captcha = $captcha;
     }
 
     public function showRegister(): void
     {
-        try {
-            require(__DIR__ . '/../Views/register.php');
-        } catch (\Throwable $e) {
-            http_response_code(500);
-            error_log('AuthController::showRegister error: ' . $e->getMessage());
-            require(__DIR__ . '/../Views/error.php');
-        }
+        $redirect = $this->sanitizeRedirect((string) ($_GET['redirect'] ?? '/'));
+        echo View::render('register', ['redirect' => $redirect]);
     }
 
     public function register(): void
     {
-        try {
-            $username = trim($_POST['username'] ?? '');
-            $email = trim($_POST['email'] ?? '');
-            $password = $_POST['password'] ?? '';
-            $captchaPayload = $_POST['altcha'] ?? '';
-            $old = [
-                'username' => $username,
-                'email' => $email,
-            ];
+        $username = trim($_POST['username'] ?? '');
+        $email = trim($_POST['email'] ?? '');
+        $password = $_POST['password'] ?? '';
+        $captchaPayload = $_POST['altcha'] ?? '';
+        $redirect = $this->sanitizeRedirect((string) ($_POST['redirect'] ?? '/'));
+        $old = [
+            'username' => $username,
+            'email' => $email,
+        ];
 
-            $errors = User::validateRegistration($username, $email, $password);
-            if ($errors !== []) {
-                extract(['error' => $errors[0], 'old' => $old], EXTR_SKIP);
-                require(__DIR__ . '/../Views/register.php');
-                return;
-            }
-
-            if (!$this->captcha->verify($captchaPayload)) {
-                extract(['error' => 'Captcha verification failed.', 'old' => $old], EXTR_SKIP);
-                require(__DIR__ . '/../Views/register.php');
-                return;
-            }
-
-            if ($this->users->findByEmail($email) || $this->users->findByUsername($username)) {
-                extract(['error' => 'That email or username is already in use.', 'old' => $old], EXTR_SKIP);
-                require(__DIR__ . '/../Views/register.php');
-                return;
-            }
-
-            $passwordHash = $this->auth->hashPassword($password);
-            $userId = $this->users->create($username, $email, $passwordHash);
-
-            $this->auth->login(new User(
-                id: $userId,
-                username: $username,
-                email: $email,
-                role: UserRole::User
-            ));
-            header('Location: /');
-            exit;
-        } catch (\Throwable $e) {
-            http_response_code(500);
-            error_log('AuthController::register error: ' . $e->getMessage());
-            require(__DIR__ . '/../Views/error.php');
+        $errors = User::validateRegistration($username, $email, $password);
+        if ($errors !== []) {
+            $this->renderRegisterError($redirect, $errors[0], $old);
+            return;
         }
+
+        $lengthError = $this->validateRegistrationLengths($username, $email);
+        if ($lengthError !== null) {
+            $this->renderRegisterError($redirect, $lengthError, $old);
+            return;
+        }
+
+        if (!$this->captcha->verify($captchaPayload)) {
+            $this->renderRegisterError($redirect, 'Captcha verification failed.', $old);
+            return;
+        }
+
+        if ($this->users->findByEmail($email) || $this->users->findByUsername($username)) {
+            $this->renderRegisterError($redirect, 'That email or username is already in use.', $old);
+            return;
+        }
+
+        $passwordHash = $this->auth->hashPassword($password);
+        try {
+            $userId = $this->users->create($username, $email, $passwordHash);
+        } catch (UserConflictException $e) {
+            $this->renderRegisterError($redirect, $e->getMessage(), $old);
+            return;
+        }
+
+        $this->auth->login(new User(
+            id: $userId,
+            username: $username,
+            email: $email,
+            role: UserRole::User
+        ));
+        header('Location: ' . $redirect);
+        exit;
     }
 
     public function showLogin(): void
     {
-        try {
-            require(__DIR__ . '/../Views/login.php');
-        } catch (\Throwable $e) {
-            http_response_code(500);
-            error_log('AuthController::showLogin error: ' . $e->getMessage());
-            require(__DIR__ . '/../Views/error.php');
-        }
+        $redirect = $this->sanitizeRedirect((string) ($_GET['redirect'] ?? '/'));
+        echo View::render('login', ['redirect' => $redirect]);
     }
 
     public function login(): void
     {
-        try {
-            $identifier = trim($_POST['identifier'] ?? '');
-            $password = $_POST['password'] ?? '';
-            $old = [
-                'identifier' => $identifier,
-            ];
+        $identifier = trim($_POST['identifier'] ?? '');
+        $password = $_POST['password'] ?? '';
+        $redirect = $this->sanitizeRedirect((string) ($_POST['redirect'] ?? '/'));
+        $old = ['identifier' => $identifier];
 
-            if ($identifier === '' || $password === '') {
-                extract(['error' => 'Email/username and password are required.', 'old' => $old], EXTR_SKIP);
-                require(__DIR__ . '/../Views/login.php');
-                return;
-            }
-
-            $user = null;
-            if (str_contains($identifier, '@')) {
-                $user = $this->users->findByEmail($identifier);
-            } else {
-                $user = $this->users->findByUsername($identifier);
-            }
-
-            if (!$user || !$this->auth->verifyPassword($password, $user->passwordHash() ?? '')) {
-                extract(['error' => 'Invalid credentials.', 'old' => $old], EXTR_SKIP);
-                require(__DIR__ . '/../Views/login.php');
-                return;
-            }
-
-            $this->auth->login($user);
-            header('Location: /');
-            exit;
-        } catch (\Throwable $e) {
-            http_response_code(500);
-            error_log('AuthController::login error: ' . $e->getMessage());
-            require(__DIR__ . '/../Views/error.php');
+        if ($identifier === '' || $password === '') {
+            $this->renderLoginError($redirect, 'Email/username and password are required.', $old);
+            return;
         }
+
+        $user = null;
+        if (str_contains($identifier, '@')) {
+            $user = $this->users->findByEmail($identifier);
+        } else {
+            $user = $this->users->findByUsername($identifier);
+        }
+
+        if (!$user || !$this->auth->verifyPassword($password, $user->passwordHash() ?? '')) {
+            $this->renderLoginError($redirect, 'Invalid credentials.', $old);
+            return;
+        }
+
+        $this->auth->login($user);
+        header('Location: ' . $redirect);
+        exit;
     }
 
     public function logout(): void
@@ -167,4 +153,62 @@ class AuthController
         exit;
     }
 
+    private function sanitizeRedirect(string $redirect): string
+    {
+        $redirect = trim($redirect);
+
+        if ($redirect === '' || $redirect[0] !== '/') {
+            return '/';
+        }
+
+        if (str_starts_with($redirect, '//')) {
+            return '/';
+        }
+
+        if (str_contains($redirect, "\n") || str_contains($redirect, "\r")) {
+            return '/';
+        }
+
+        return $redirect;
+    }
+
+    private function renderRegisterError(string $redirect, string $message, array $old = []): void
+    {
+        echo View::render('register', [
+            'error' => $message,
+            'old' => $old,
+            'redirect' => $redirect,
+        ]);
+    }
+
+    private function renderLoginError(string $redirect, string $message, array $old = []): void
+    {
+        echo View::render('login', [
+            'error' => $message,
+            'old' => $old,
+            'redirect' => $redirect,
+        ]);
+    }
+
+    private function validateRegistrationLengths(string $username, string $email): ?string
+    {
+        if ($this->textLength($username) > UserRepository::USERNAME_MAX_LENGTH) {
+            return 'Username must be ' . UserRepository::USERNAME_MAX_LENGTH . ' characters or fewer.';
+        }
+
+        if ($this->textLength($email) > UserRepository::EMAIL_MAX_LENGTH) {
+            return 'Email must be ' . UserRepository::EMAIL_MAX_LENGTH . ' characters or fewer.';
+        }
+
+        return null;
+    }
+
+    private function textLength(string $value): int
+    {
+        if (function_exists('mb_strlen')) {
+            return mb_strlen($value, 'UTF-8');
+        }
+
+        return strlen($value);
+    }
 }

@@ -17,6 +17,7 @@
                 <?php endif; ?>
 
                 <form method="post" action="/account" class="account-form">
+                    <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars((string) ($csrf_token ?? ''), ENT_QUOTES, 'UTF-8'); ?>">
                     <div class="row g-3">
                         <div class="col-12 col-md-6">
                             <label class="account-label" for="account-email">Email</label>

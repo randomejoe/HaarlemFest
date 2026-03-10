@@ -8,7 +8,7 @@ use PHPMailer\PHPMailer\SMTP;
 
 class Mailer
 {
-    public function send(string $toEmail, string $toName, string $subject, string $htmlBody): void
+    public function send(string $toEmail, string $toName, string $subject, string $htmlBody, array $attachments = []): void
     {
         $mail = new PHPMailer(true);
         $mail->isSMTP();
@@ -38,6 +38,13 @@ class Mailer
         $mail->isHTML(true);
         $mail->Subject = $subject;
         $mail->Body = $htmlBody;
+
+        foreach ($attachments as $attachment) {
+            $content = (string) ($attachment['content'] ?? '');
+            $filename = (string) ($attachment['filename'] ?? 'attachment.bin');
+            $mime = (string) ($attachment['mime'] ?? 'application/octet-stream');
+            $mail->addStringAttachment($content, $filename, PHPMailer::ENCODING_BASE64, $mime);
+        }
 
         $mail->send();
     }

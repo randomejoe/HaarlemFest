@@ -9,9 +9,9 @@ class PasswordController
 {
     private PasswordResetService $reset;
 
-    public function __construct()
+    public function __construct(PasswordResetService $reset)
     {
-        $this->reset = new PasswordResetService();
+        $this->reset = $reset;
     }
 
     public function showForgot(): void
@@ -45,10 +45,9 @@ class PasswordController
         }
     }
 
-    public function showReset(array $vars = []): void
+    public function showReset(string $token = ''): void
     {
         try {
-            $token = $vars['token'] ?? '';
             extract(['token' => $token], EXTR_SKIP);
             require(__DIR__ . '/../Views/reset.php');
         } catch (\Throwable $e) {
@@ -58,10 +57,9 @@ class PasswordController
         }
     }
 
-    public function reset(array $vars = []): void
+    public function reset(string $token = ''): void
     {
         try {
-            $token = $vars['token'] ?? '';
             $password = $_POST['password'] ?? '';
 
             if ($token === '' || $password === '') {
