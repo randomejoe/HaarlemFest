@@ -5,7 +5,7 @@
             <?php 
                 if (isset($_SESSION['create_success']) && isset($_SESSION['create_title'])) {
                     if ($_SESSION['create_success']) {
-                        $message = 'Successfully added page ' . $_SESSION['create_title'];
+                        $message = 'Successfully added ' . $type->value . ' ' . $_SESSION['create_title'];
                         $notification_type = 'success';
                     }
                     else {
@@ -17,19 +17,19 @@
                     unset($_SESSION['create_title']);
                 }
             ?>
-            <button id='add-item-btn' class='add-item-btn button'><p>Add page</p></button>
+            <button id='add-item-btn' class='add-item-btn button'><p>Add <?php echo $type->value; ?></p></button>
             <form id='add-item-form' style='display: none' class='add-item-form' method="POST" action="/cms/pages">
                 <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars((string) ($csrf_token ?? ''), ENT_QUOTES, 'UTF-8'); ?>">
-                <label for="title">Page Name:</label>
-                <input type="text" id="title" name="title" class="form-input" required>
+                <label for="item_name"><?php echo ucfirst($type->value); ?> name:</label>
+                <input type="text" id="item_name" name="item_name" class="form-input" required>
                 <button type="submit" class="form-submit-button button">Create</button>
             </form>
             <div class='cms-item-container column'>
             <?php 
             $itemType = 'page';
-            foreach ($pages as $page) {
-                $itemName = $page['title'];
-                $itemId = $page['id'];
+            foreach ($items as $item) {
+                $itemName = $item['item_name'];
+                $itemId = $item['item_id'];
                 require __DIR__ . '/../partials/cms/cms_item.php';
             } ?>
             </div>

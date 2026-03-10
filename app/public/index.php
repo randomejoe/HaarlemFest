@@ -56,11 +56,8 @@ $dispatcher = simpleDispatcher(function (RouteCollector $r) {
     $r->addRoute('GET', '/altcha', ['App\Controllers\AuthController', 'altchaChallenge']);
     $r->addRoute('POST', '/altcha', ['App\Controllers\AuthController', 'altchaChallenge']);
     $r->addRoute('GET', '/cms', ['App\Controllers\CmsController', 'showCmsDashboard']);
-    $r->addRoute('GET', '/cms/pages', ['App\Controllers\CmsController', 'showCmsPages']);
-    $r->addRoute('POST', '/cms/pages', ['App\Controllers\CmsController', 'createPage']);
-    $r->addRoute('GET', '/cms/events', ['App\Controllers\CmsController', 'showCmsEvents']);
-    $r->addRoute('GET', '/cms/tickets', ['App\Controllers\CmsController', 'showCmsTickets']);
-    $r->addRoute('GET', '/cms/users', ['App\Controllers\CmsController', 'showCmsUsers']);
+    $r->addRoute('GET', '/cms/{type}', ['App\Controllers\CmsController', 'showCmsItems']);
+    $r->addRoute('POST', '/cms/{type}', ['App\Controllers\CmsController', 'createCmsItem']);
     $r->addRoute('GET', '/cms/{type}/{id:\d+}/edit', ['App\Controllers\CmsController', 'showEdit']);
     $r->addRoute('POST', '/cms/{type}/{id:\d+}/edit', ['App\Controllers\CmsController', 'editItem']);
     $r->addRoute('POST', '/cms/{type}/{id:\d+}/delete', ['App\Controllers\CmsController', 'deleteItem']);

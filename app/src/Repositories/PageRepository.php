@@ -4,7 +4,7 @@ namespace App\Repositories;
 
 use PDO;
 
-class PageRepository extends RepositoryBase
+class PageRepository extends BaseRepository
 {
     private PDO $pdo;
 
@@ -15,7 +15,7 @@ class PageRepository extends RepositoryBase
 
     public function getAllPages() 
     {
-        $stmt = $this->pdo->prepare('SELECT title, page_id AS id FROM pages');
+        $stmt = $this->pdo->prepare('SELECT title as item_name, page_id AS item_id FROM pages');
         $stmt->execute();
         $pages = $stmt->fetchAll();
         return $pages;
@@ -96,6 +96,7 @@ class PageRepository extends RepositoryBase
             'page_id' => $pageId,
             'component_name' => $componentName,
         ]);
+        return true;
     }
     public function updateContentItem(int $id, array $data): bool
     {

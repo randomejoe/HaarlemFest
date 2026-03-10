@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+<?php use App\Models\CmsType; ?>
 <div>
     <?php include __DIR__ . '/../partials/cms/cms_nav.php';
     ?>
@@ -19,12 +20,12 @@
                         <button type="submit" class="form-submit-button button">Save</button>
                     </div>
                     <?php 
-                        if ($type == 'contents') {
-                            require(__DIR__ . '/../partials/cms/edit_' . $type . '.php');
+                        if ($type == CmsType::Content) {
+                            require(__DIR__ . '/../partials/cms/edit_' . $type->value . '.php');
                         }
                         ?></form><?php
-                        if ($type != 'contents') {
-                            require(__DIR__ . '/../partials/cms/edit_' . $type . '.php');
+                        if ($type != CmsType::Content) {
+                            require(__DIR__ . '/../partials/cms/edit_' . $type->value . '.php');
                         }
                     ?>
             </div>

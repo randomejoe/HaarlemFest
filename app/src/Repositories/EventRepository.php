@@ -5,7 +5,7 @@ namespace App\Repositories;
 use PDO;
 use RuntimeException;
 
-class EventRepository
+class EventRepository extends BaseRepository
 {
     private PDO $pdo;
 
@@ -168,5 +168,19 @@ class EventRepository
             'event_id' => $eventId,
             'quantity' => $quantity,
         ]);
+    }
+    public function getAllEvents() 
+    {
+        $stmt = $this->pdo->prepare('SELECT name, event_id AS id FROM events');
+        $stmt->execute();
+        $events = $stmt->fetchAll();
+        return $events;
+    }
+    public function getAllEventCategories()
+    {
+        $stmt = $this->pdo->prepare('SELECT DISTINCT category FROM events');
+        $stmt->execute();
+        $events = $stmt->fetchAll();
+        return $events;
     }
 }

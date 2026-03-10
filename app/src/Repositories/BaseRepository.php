@@ -5,7 +5,7 @@ namespace App\Repositories;
 use PDO;
 use App\Models\UserRole;
 
-class RepositoryBase
+class BaseRepository
 {
 
     protected function isAdmin() {

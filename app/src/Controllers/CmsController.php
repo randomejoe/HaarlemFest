@@ -4,18 +4,22 @@ namespace App\Controllers;
 
 use App\Services\ContentService;
 use App\Services\PageService;
+use App\Services\EventService;
 use App\View;
 use App\Models\UserRole;
+use App\Models\CmsType;
 
 class CmsController
 {
     private PageService $pageService;
     private ContentService $contentService;
+    private EventService $eventService;
 
-    public function __construct(PageService $pageService, ContentService $contentService)
+    public function __construct(PageService $pageService, ContentService $contentService, EventService $eventService)
     {
         $this->pageService = $pageService;
         $this->contentService = $contentService;
+        $this->eventService = $eventService;
         $role = UserRole::from($_SESSION['role']);
         if (!$role->isAdmin()) {
             header('Location: /');   
@@ -27,45 +31,35 @@ class CmsController
         echo View::render('/../Views/cms/index');
     }
 
-    public function showCmsPages(): void
+    public function showCmsItems(string $type): void
     {
-        $pages = $this->pageService->getAll();
+        $type = CmsType::convertToType($type);
+        $service = $this->resolveService($type);
+        $items = $service->getAll();
 
-        echo View::render('/../Views/cms/pages', ['pages' => $pages]);
+        echo View::render('/../Views/cms/item_list', ['items' => $items, 'type'=>$type]);
     }
 
-    public function createPage(): void
+    public function createCmsItem(string $type): void
     {
-        $title = trim((string) ($_POST['title'] ?? ''));
-        $success = $this->pageService->create($title);
+        $type = CmsType::convertToType($type);
+        $service = $this->resolveService($type);
+
+        $success = $service->create($_POST);
         
         if ($success) {
             $_SESSION['create_success'] = true;
-            $_SESSION['create_title'] = $title;
-            header('Location: /cms/pages');
+            $_SESSION['create_title'] = $_POST['item_name'];
+            header('Location: /cms/' . $type->value);
         }
         else {
             $this->showCmsPages();
         }
     }
 
-    public function showCmsTickets(): void
-    {
-        echo View::render('/../Views/cms/tickets');
-    }
-
-    public function showCmsUsers(): void
-    {
-        echo View::render('/../Views/cms/users');
-    }
-
-    public function showCmsEvents(): void
-    {
-        echo View::render('/../Views/cms/events');
-    }
-
     public function showEdit(string $type, int $item_id): void
     {
+        $type = CmsType::convertToType($type);
         $service = $this->resolveService($type);
         $item = $service->getForEdit($item_id);
         $editable = $service->isNameEditable();
@@ -74,12 +68,13 @@ class CmsController
     }
     public function editItem(string $type, int $item_id)
     {
+        $type = CmsType::convertToType($type);
         $service = $this->resolveService($type);
         $success = $service->update($item_id, $_POST);
 
         if ($success) {
-            if ($type == 'contents' || isset($_POST['newContent'])) {
-                if ($type == 'contents') {
+            if ($type == CmsType::Content || isset($_POST['newContent'])) {
+                if ($type == CmsType::Content) {
                     $pageId = $service->getPageId($item_id);
                 }
                 else {
@@ -88,7 +83,7 @@ class CmsController
                 header('Location: /cms/pages/' . $pageId . '/edit');
             } 
             else {
-                header('Location: /cms/' . $type);
+                header('Location: /cms/' . $type->value);
             }
             
         }
@@ -98,17 +93,19 @@ class CmsController
     }
     public function deleteItem(string $type, int $item_id) 
     {
+        $type = CmsType::convertToType($type);
         $service = $this->resolveService($type);
         $service->delete($item_id);
 
         header('Location: ' . $_POST['return_url']);
     }
 
-    private function resolveService(string $type): PageService|ContentService
+    private function resolveService(CmsType $type): PageService|ContentService|EventService
     {
         return match ($type) {
-            'pages' => $this->pageService,
-            'contents' => $this->contentService,
+            CmsType::Page => $this->pageService,
+            CmsType::Content => $this->contentService,
+            CmsType::Event=>$this->eventService,
             default => throw new \InvalidArgumentException('Unknown CMS type.'),
         };
     }

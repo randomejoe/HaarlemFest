@@ -25,6 +25,7 @@ use App\Services\CaptchaService;
 use App\Services\CheckoutService;
 use App\Services\ContentService;
 use App\Services\CsrfService;
+use App\Services\EventService;
 use App\Services\InvoicePdfService;
 use App\Services\Mailer;
 use App\Services\PageService;
@@ -126,6 +127,9 @@ class Container
         $this->singleton(PageService::class, fn (self $c): PageService => new PageService(
             $c->get(PageRepository::class)
         ));
+        $this->singleton(EventService::class, fn (self $c): EventService => new EventService(
+            $c->get(EventRepository::class)
+        ));
         $this->singleton(ContentService::class, fn (self $c): ContentService => new ContentService(
             $c->get(PageRepository::class)
         ));
@@ -164,7 +168,8 @@ class Container
         ));
         $this->transient(CmsController::class, fn (self $c): CmsController => new CmsController(
             $c->get(PageService::class),
-            $c->get(ContentService::class)
+            $c->get(ContentService::class),
+            $c->get(EventService::class)
         ));
         $this->transient(JazzController::class, fn (self $c): JazzController => new JazzController(
             $c->get(EventRepository::class),
