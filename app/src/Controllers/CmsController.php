@@ -4,6 +4,7 @@ namespace App\Controllers;
 
 use App\Services\ContentService;
 use App\Services\PageService;
+use App\View;
 
 class CmsController
 {
@@ -18,14 +19,14 @@ class CmsController
 
     public function showCmsDashboard(): void
     {
-        require(__DIR__ . '/../Views/cms/index.php');
+        echo View::render('/../Views/cms/index');
     }
 
     public function showCmsPages(): void
     {
         $pages = $this->pageService->getAll();
 
-        require_once __DIR__ . '/../Views/cms/pages.php';
+        echo View::render('/../Views/cms/pages', ['pages' => $pages]);
     }
 
     public function createPage(): void
@@ -43,25 +44,19 @@ class CmsController
         }
     }
 
-    public function showCmsComponents(): void
-    {
-        $components = [];
-        require_once __DIR__ . '/../Views/cms/components.php';
-    }
-
     public function showCmsTickets(): void
     {
-        require(__DIR__ . '/../Views/cms/tickets.php');
+        echo View::render('/../Views/cms/tickets');
     }
 
     public function showCmsUsers(): void
     {
-        require(__DIR__ . '/../Views/cms/users.php');
+        echo View::render('/../Views/cms/users');
     }
 
     public function showCmsEvents(): void
     {
-        require(__DIR__ . '/../Views/cms/events.php');
+        echo View::render('/../Views/cms/events');
     }
 
     public function showEdit(string $type, int $item_id): void
@@ -70,7 +65,7 @@ class CmsController
         $item = $service->getForEdit($item_id);
         $editable = $service->isNameEditable();
 
-        require_once __DIR__ . '/../Views/cms/edit.php';
+        echo View::render('/../Views/cms/edit', ['type'=>$type, 'item'=>$item, 'editable'=>$editable]);
     }
     public function editItem(string $type, int $item_id)
     {
