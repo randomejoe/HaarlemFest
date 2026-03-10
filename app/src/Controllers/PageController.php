@@ -16,8 +16,8 @@ class PageController
     public function showPage($page): void
     {
         $page = $this->pageService->getPage($page);
-
-        foreach ($page as $pageContentItem) {
+        if (isset($page['page_id'])) {
+            $pageContentItem = $page;
             if (isset($pageContentItem['data'])) {
                 $data = json_decode($pageContentItem['data'], true);
             }
@@ -26,5 +26,19 @@ class PageController
             }
             require __DIR__ . '/../Views/partials/page_components/' . $pageContentItem['component_name'] . '.php';
         }
+        else {
+            foreach ($page as $pageContentItem) {
+            print_r($pageContentItem);
+            if (isset($pageContentItem['data'])) {
+                $data = json_decode($pageContentItem['data'], true);
+            }
+            else {
+                $data = null;
+            }
+            require __DIR__ . '/../Views/partials/page_components/' . $pageContentItem['component_name'] . '.php';
+        }
+        }
+
+        
     }
 }
