@@ -9,9 +9,9 @@ class CmsController
 {
     private PageService $pageService;
 
-    public function __construct()
+    public function __construct(PageService $pageService)
     {
-        $this->pageService = new PageService();
+        $this->pageService = $pageService;
     }
 
     public function showCmsDashboard(): void

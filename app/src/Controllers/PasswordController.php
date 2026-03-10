@@ -9,9 +9,9 @@ class PasswordController
 {
     private PasswordResetService $reset;
 
-    public function __construct()
+    public function __construct(PasswordResetService $reset)
     {
-        $this->reset = new PasswordResetService();
+        $this->reset = $reset;
     }
 
     public function showForgot(): void

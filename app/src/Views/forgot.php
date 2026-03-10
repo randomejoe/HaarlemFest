@@ -18,6 +18,7 @@
                         <?php endif; ?>
 
                         <form method="post" action="/password/forgot" class="account-form auth-form">
+                            <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars((string) ($csrf_token ?? ''), ENT_QUOTES, 'UTF-8'); ?>">
                             <div>
                                 <label class="account-label" for="forgot-email">Email</label>
                                 <input
