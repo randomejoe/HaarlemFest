@@ -6,6 +6,7 @@ use App\Config;
 use App\Exceptions\AuthException;
 use App\Repositories\UserRepository;
 use DateTime;
+use Throwable;
 
 class PasswordResetService
 {
@@ -13,11 +14,11 @@ class PasswordResetService
     private Mailer $mailer;
     private AuthService $auth;
 
-    public function __construct()
+    public function __construct(UserRepository $users, Mailer $mailer, AuthService $auth)
     {
-        $this->users = new UserRepository();
-        $this->mailer = new Mailer();
-        $this->auth = new AuthService();
+        $this->users = $users;
+        $this->mailer = $mailer;
+        $this->auth = $auth;
     }
 
     public function requestReset(string $email): void
@@ -45,7 +46,11 @@ class PasswordResetService
             . '<p><a href="' . htmlspecialchars($resetUrl, ENT_QUOTES, 'UTF-8') . '">Reset password</a></p>'
             . '<p>This link expires in 1 hour.</p>';
 
-        $this->mailer->send($user->email(), $user->username(), $subject, $body);
+        try {
+            $this->mailer->send($user->email(), $user->username(), $subject, $body);
+        } catch (Throwable $e) {
+            error_log('Password reset email delivery failed for user ' . $user->id() . ': ' . $e->getMessage());
+        }
     }
 
     public function resetPassword(string $token, string $newPassword): bool

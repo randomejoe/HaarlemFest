@@ -8,9 +8,9 @@ class PageService
 {
     private PageRepository $repository;
 
-    public function __construct()
+    public function __construct(PageRepository $repository)
     {
-        $this->repository = new PageRepository();
+        $this->repository = $repository;
     }
 
     public function getAll() {

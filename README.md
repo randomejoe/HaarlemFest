@@ -21,3 +21,19 @@ Note you may need to create the migration directory manually: `app\db\migrations
 Referencing Phinx docs create a migration (change "CreateUserTable" to a name that makes sense for your migration): `docker compose run --rm php vendor/bin/phinx create CreateUserTable`
 
 Run migration(s): `docker compose run --rm php vendor/bin/phinx migrate`
+
+## Expired Hold Cleanup
+
+Expired ticket holds are now cleaned up on checkout-critical requests only:
+
+- `GET /checkout` runs at most once per session minute
+- checkout confirmation and pending-payment routes force a fresh cleanup
+- planner and jazz browsing no longer run expiry cleanup on every request
+
+For near-real-time stock recovery outside user traffic, schedule the shared CLI task:
+
+`php app/bin/release_expired_holds.php`
+
+Example cron entry:
+
+`*/5 * * * * cd /path/to/HaarlemFest && php app/bin/release_expired_holds.php >> /var/log/haarlemfest-expiry-cleanup.log 2>&1`

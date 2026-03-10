@@ -2,16 +2,15 @@
 
 namespace App\Repositories;
 
-use App\Database\Connection;
 use PDO;
 
 class PageRepository
 {
     private PDO $pdo;
 
-    public function __construct()
+    public function __construct(PDO $pdo)
     {
-        $this->pdo = Connection::get();
+        $this->pdo = $pdo;
     }
 
     public function getAllPages() 

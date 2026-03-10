@@ -17,6 +17,8 @@
                         <?php endif; ?>
 
                         <form method="post" action="/register" class="account-form auth-form">
+                            <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars((string) ($csrf_token ?? ''), ENT_QUOTES, 'UTF-8'); ?>">
+                            <input type="hidden" name="redirect" value="<?php echo htmlspecialchars((string) ($redirect ?? '/'), ENT_QUOTES, 'UTF-8'); ?>">
                             <div>
                                 <label class="account-label" for="register-username">Username</label>
                                 <input
@@ -51,7 +53,7 @@
                         </form>
 
                         <div class="auth-links">
-                            <a href="/login">Already have an account? Log in</a>
+                            <a href="/login?redirect=<?php echo urlencode((string) ($redirect ?? '/')); ?>">Already have an account? Log in</a>
                         </div>
                     </div>
                 </div>

@@ -12,6 +12,7 @@
                     <h4>Newsletter</h4>
                     <p class="mb-1">Get updates and line-up announcements.</p>
                     <form class="newsletter" action="#" method="post">
+                        <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars((string) ($csrf_token ?? ''), ENT_QUOTES, 'UTF-8'); ?>">
                         <label class="sr-only" for="newsletter-email">Email</label>
                         <div class="input-group">
                             <input id="newsletter-email" class="form-control" type="email" name="email" placeholder="Email address">

@@ -2,29 +2,18 @@
 
 namespace App\Controllers;
 
-use App\Services\PageService;
 use App\Services\ContentService;
+use App\Services\PageService;
 
 class CmsController
 {
     private PageService $pageService;
     private ContentService $contentService;
 
-    public function __construct()
+    public function __construct(PageService $pageService, ContentService $contentService)
     {
-        $this->pageService = new PageService();
-        $this->contentService = new ContentService();
-    }
-    public function resolveService(string $type)
-    {
-        switch ($type):
-            case 'pages':
-                return $this->pageService;
-                break;
-            case 'contents':
-                return $this->contentService;
-                break;
-            endswitch;
+        $this->pageService = $pageService;
+        $this->contentService = $contentService;
     }
 
     public function showCmsDashboard(): void
@@ -41,7 +30,7 @@ class CmsController
 
     public function createPage(): void
     {
-        $title = $_POST['title'];
+        $title = trim((string) ($_POST['title'] ?? ''));
         $success = $this->pageService->create($title);
         
         if ($success) {
@@ -56,10 +45,8 @@ class CmsController
 
     public function showCmsComponents(): void
     {
-        $components = $this->componentService->getAll();
-
+        $components = [];
         require_once __DIR__ . '/../Views/cms/components.php';
-
     }
 
     public function showCmsTickets(): void
@@ -112,8 +99,17 @@ class CmsController
     public function deleteItem(string $type, int $item_id) 
     {
         $service = $this->resolveService($type);
-        $success = $service->delete($item_id);
+        $service->delete($item_id);
 
         header('Location: ' . $_POST['return_url']);
+    }
+
+    private function resolveService(string $type): PageService|ContentService
+    {
+        return match ($type) {
+            'pages' => $this->pageService,
+            'contents' => $this->contentService,
+            default => throw new \InvalidArgumentException('Unknown CMS type.'),
+        };
     }
 }

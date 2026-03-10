@@ -14,6 +14,7 @@
                         <?php endif; ?>
 
                         <form method="post" action="/password/reset/<?php echo htmlspecialchars($token ?? '', ENT_QUOTES, 'UTF-8'); ?>" class="account-form auth-form">
+                            <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars((string) ($csrf_token ?? ''), ENT_QUOTES, 'UTF-8'); ?>">
                             <div>
                                 <label class="account-label" for="reset-password">New Password</label>
                                 <input id="reset-password" class="account-input" type="password" name="password" minlength="12" required>

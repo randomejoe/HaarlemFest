@@ -18,7 +18,8 @@
                 }
             ?>
             <button id='add-item-btn' class='add-item-btn button'><p>Add page</p></button>
-            <form id='add-item-form' style='display: none' class='add-item-form' method="POST">
+            <form id='add-item-form' style='display: none' class='add-item-form' method="POST" action="/cms/pages">
+                <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars((string) ($csrf_token ?? ''), ENT_QUOTES, 'UTF-8'); ?>">
                 <label for="title">Page Name:</label>
                 <input type="text" id="title" name="title" class="form-input" required>
                 <button type="submit" class="form-submit-button button">Create</button>

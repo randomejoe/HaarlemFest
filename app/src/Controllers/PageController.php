@@ -2,16 +2,15 @@
 
 namespace App\Controllers;
 
-use App\View;
 use App\Services\PageService;
 
 class PageController
 {
     private PageService $pageService;
 
-    public function __construct()
+    public function __construct(PageService $pageService)
     {
-        $this->pageService = new PageService();
+        $this->pageService = $pageService;
     }
 
     public function showPage($page): void
