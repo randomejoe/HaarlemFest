@@ -5,6 +5,7 @@ namespace App\Controllers;
 use App\Services\ContentService;
 use App\Services\PageService;
 use App\View;
+use App\Models\UserRole;
 
 class CmsController
 {
@@ -15,6 +16,10 @@ class CmsController
     {
         $this->pageService = $pageService;
         $this->contentService = $contentService;
+        $role = UserRole::from($_SESSION['role']);
+        if (!$role->isAdmin()) {
+            header('Location: /');   
+        }
     }
 
     public function showCmsDashboard(): void

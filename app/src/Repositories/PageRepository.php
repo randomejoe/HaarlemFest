@@ -4,7 +4,7 @@ namespace App\Repositories;
 
 use PDO;
 
-class PageRepository
+class PageRepository extends RepositoryBase
 {
     private PDO $pdo;
 
@@ -41,6 +41,8 @@ class PageRepository
 
     public function createPage(string $title): bool 
     {
+        $this->requireAdmin();
+        
         $stmt = $this->pdo->prepare('INSERT INTO pages (title) VALUES (:title)');
         $stmt->execute(['title' => $title]);
         return true;
@@ -48,6 +50,8 @@ class PageRepository
 
     public function getPageForEdit(int $id)
     {
+        $this->requireAdmin();
+
         $stmt = $this->pdo->prepare(
             "SELECT p.title as item_name, pc.content_id, pc.component_name, pc.data
             FROM pages p
@@ -60,6 +64,8 @@ class PageRepository
     }
     public function getContentForEdit(int $id)
     {
+        $this->requireAdmin();
+
         $stmt = $this->pdo->prepare(
             "SELECT content_id, page_id, component_name as item_name, data
             FROM page_content pc
@@ -72,15 +78,19 @@ class PageRepository
 
     public function updatePage(int $id, array $data): bool
     {
-            // Update page name
-            $stmt = $this->pdo->prepare("UPDATE pages SET title = :title WHERE page_id = :id");
-            $stmt->execute([
-                'id' => $id,
-                'title' => $data['name'],
-            ]);
-            return true;
+        $this->requireAdmin();
+
+        // Update page name
+        $stmt = $this->pdo->prepare("UPDATE pages SET title = :title WHERE page_id = :id");
+        $stmt->execute([
+            'id' => $id,
+            'title' => $data['name'],
+        ]);
+        return true;
     }
     public function addContentItemToPage(int $pageId, string $componentName) {
+        $this->requireAdmin();
+
         $stmt = $this->pdo->prepare("INSERT INTO page_content (page_id, component_name) VALUES (:page_id, :component_name)");
         $stmt->execute([
             'page_id' => $pageId,
@@ -89,6 +99,8 @@ class PageRepository
     }
     public function updateContentItem(int $id, array $data): bool
     {
+        $this->requireAdmin();
+
         try {
             $this->pdo->beginTransaction();
             unset($data['name']);
@@ -110,6 +122,8 @@ class PageRepository
         }
     }
     public function deletePage(int $pageId) {
+        $this->requireAdmin();
+
         $stmt = $this->pdo->prepare("DELETE FROM pages WHERE page_id = :page_id");
         $stmt->execute([
             'page_id' => $pageId
@@ -117,6 +131,8 @@ class PageRepository
         return true;
     }
     public function deleteContentItem(int $contentId) {
+        $this->requireAdmin();
+        
         $stmt = $this->pdo->prepare("DELETE FROM page_content WHERE content_id = :content_id");
         $stmt->execute([
             'content_id' => $contentId
