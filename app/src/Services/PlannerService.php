@@ -2,6 +2,9 @@
 
 namespace App\Services;
 
+use App\Models\Event;
+use App\Models\PlannerItem;
+use App\Models\PlannerSummary;
 use App\Repositories\EventRepository;
 use DateTimeImmutable;
 use InvalidArgumentException;
@@ -210,22 +213,30 @@ class PlannerService
         $items = $this->getItems();
         $eventIds = array_map('intval', array_keys($items));
         $eventsById = $this->events->findByIds($eventIds);
-        $summary = $this->summarizePlannerItems($items, $eventsById);
+        $summary = PlannerSummary::fromRawItems($items, $eventsById);
         $lockedCheckoutAttemptId = $this->getLockedCheckoutAttemptId();
 
+        // Convert PlannerItem objects to plain arrays so that views and
+        // downstream services (CheckoutService) continue to receive the same
+        // flat array shape they already rely on.
+        $itemArrays = array_map(
+            static fn(PlannerItem $p): array => $p->toArray(),
+            $summary->plannerItems()
+        );
+
         return [
-            'items' => $summary['items'],
+            'items' => $itemArrays,
             'items_map' => $items,
-            'total_quantity' => $summary['total_quantity'],
-            'total_price_value' => $summary['total_price_value'],
-            'total_price' => number_format((float) $summary['total_price_value'], 2),
-            'is_empty' => (int) $summary['total_quantity'] === 0,
-            'has_invalid_items' => $summary['invalid_item_ids'] !== [],
-            'invalid_item_ids' => $summary['invalid_item_ids'],
+            'total_quantity' => $summary->totalQuantity(),
+            'total_price_value' => $summary->totalPriceValue(),
+            'total_price' => $summary->formattedTotalPrice(),
+            'is_empty' => $summary->isEmpty(),
+            'has_invalid_items' => $summary->hasInvalidItems(),
+            'invalid_item_ids' => $summary->invalidItemIds(),
             'locked_checkout_attempt_id' => $lockedCheckoutAttemptId,
             'is_locked' => $lockedCheckoutAttemptId !== null,
             'idempotency_key' => $this->getIdempotencyKey(),
-            'time_conflicts' => $this->detectTimeConflicts($summary['conflict_items']),
+            'time_conflicts' => $this->detectTimeConflicts($summary->conflictItems()),
         ];
     }
 
@@ -307,42 +318,6 @@ class PlannerService
         $this->persistPlanner($planner);
     }
 
-    private function summarizePlannerItems(array $items, array $eventsById): array
-    {
-        $summary = [
-            'items' => [],
-            'invalid_item_ids' => [],
-            'total_quantity' => 0,
-            'total_price_value' => 0.0,
-            'conflict_items' => [],
-        ];
-
-        foreach ($items as $eventIdRaw => $quantityRaw) {
-            $eventId = (int) $eventIdRaw;
-            $quantity = max(0, (int) $quantityRaw);
-
-            if ($eventId <= 0 || $quantity <= 0) {
-                continue;
-            }
-
-            $summary['total_quantity'] += $quantity;
-
-            $event = $eventsById[$eventId] ?? null;
-            if ($event === null) {
-                $summary['invalid_item_ids'][] = $eventId;
-                $summary['items'][] = $this->buildUnavailablePlannerItem($eventId, $quantity);
-                continue;
-            }
-
-            $plannerItem = $this->buildPlannerItem($eventId, $quantity, $event);
-            $summary['items'][] = $plannerItem;
-            $summary['total_price_value'] += (float) $plannerItem['line_total_value'];
-            $summary['conflict_items'][] = $this->buildConflictItem($eventId, $event);
-        }
-
-        return $summary;
-    }
-
     private function assertCheckoutAttemptId(int $checkoutAttemptId): void
     {
         if ($checkoutAttemptId <= 0) {
@@ -403,7 +378,7 @@ class PlannerService
             $eventId = (int) $eventIdRaw;
             $event = $eventsById[$eventId] ?? null;
 
-            if ($event !== null && $this->isFreeEvent($event)) {
+            if ($event !== null && $event->isFree()) {
                 continue;
             }
 
@@ -420,76 +395,13 @@ class PlannerService
             throw new RuntimeException('This event is no longer available.');
         }
 
-        if ($this->isFreeEvent($event)) {
+        if ($event->isFree()) {
             throw new RuntimeException('Free events are not added to the planner.');
         }
 
-        if ($event['ticket_amount'] !== null && (int) $event['ticket_amount'] <= 0) {
+        if ($event->isSoldOut()) {
             throw new RuntimeException('This event is sold out.');
         }
-    }
-
-    private function isFreeEvent(array $event): bool
-    {
-        return (float) ($event['ticket_price'] ?? 0) <= 0.0;
-    }
-
-    private function buildUnavailablePlannerItem(int $eventId, int $quantity): array
-    {
-        return [
-            'event_id' => $eventId,
-            'quantity' => $quantity,
-            'is_valid' => false,
-            'invalid_reason' => 'This event is no longer available.',
-            'name' => 'Event unavailable',
-            'venue' => 'Unknown venue',
-            'time' => 'Unknown time',
-            'unit_price_value' => 0.0,
-            'unit_price' => number_format(0, 2),
-            'line_total_value' => 0.0,
-            'line_total' => number_format(0, 2),
-            'seat_count' => 0,
-        ];
-    }
-
-    private function buildPlannerItem(int $eventId, int $quantity, array $event): array
-    {
-        $startsAt = new DateTimeImmutable((string) $event['start_time']);
-        $endsAt = new DateTimeImmutable((string) $event['end_time']);
-        $unitPrice = isset($event['ticket_price']) ? (float) $event['ticket_price'] : 0.0;
-        $lineTotal = $unitPrice * $quantity;
-
-        return [
-            'event_id' => $eventId,
-            'quantity' => $quantity,
-            'is_valid' => true,
-            'invalid_reason' => null,
-            'name' => (string) $event['name'],
-            'venue' => (string) ($event['venue_location'] ?? 'Venue to be announced'),
-            'time' => $this->formatPlannerTime($startsAt, $endsAt),
-            'start_time' => (string) $event['start_time'],
-            'end_time' => (string) $event['end_time'],
-            'unit_price_value' => $unitPrice,
-            'unit_price' => number_format($unitPrice, 2),
-            'line_total_value' => $lineTotal,
-            'line_total' => number_format($lineTotal, 2),
-            'seat_count' => max(0, (int) ($event['ticket_amount'] ?? 0)),
-        ];
-    }
-
-    private function buildConflictItem(int $eventId, array $event): array
-    {
-        return [
-            'event_id' => $eventId,
-            'name' => (string) $event['name'],
-            'start_time' => (string) $event['start_time'],
-            'end_time' => (string) $event['end_time'],
-        ];
-    }
-
-    private function formatPlannerTime(DateTimeImmutable $startsAt, DateTimeImmutable $endsAt): string
-    {
-        return $startsAt->format('D j M H:i') . ' - ' . $endsAt->format('H:i');
     }
 
     private function detectTimeConflicts(array $items): array

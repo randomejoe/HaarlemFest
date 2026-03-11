@@ -2,6 +2,8 @@
 
 namespace App\Services;
 
+use App\Models\CheckoutItem;
+use App\Models\Event;
 use App\Models\User;
 use App\Repositories\CheckoutRepository;
 use App\Repositories\EventRepository;
@@ -95,10 +97,10 @@ class CheckoutService
         $this->planner->markExpiryCleanupRun();
 
         $response = [
-            'released_count' => (int) ($result['released_count'] ?? 0),
-            'expired_attempt_ids' => array_values(array_unique(array_map('intval', (array) ($result['expired_attempt_ids'] ?? [])))),
-            'was_executed' => true,
-            'skip_reason' => null,
+            'released_count'      => $result['released_count'],
+            'expired_attempt_ids' => $result['expired_attempt_ids'],
+            'was_executed'        => true,
+            'skip_reason'         => null,
         ];
 
         $this->logExpiryCleanup('executed', [
@@ -137,12 +139,12 @@ class CheckoutService
             return $checkoutPayload['error'];
         }
 
-        $planner = (array) $checkoutPayload['planner'];
-        $items = (array) $checkoutPayload['items'];
+        $planner = $checkoutPayload['planner'];
+        $items   = $checkoutPayload['items'];
 
         $this->planner->resetExpiryCleanupRun();
 
-        $attemptData = $this->createPendingCheckoutAttempt($user, $planner, $items, $postedIdempotencyKey);
+        $attemptData = $this->createPendingCheckoutAttempt($user, (float) $planner['total_price_value'], $items, $postedIdempotencyKey);
         if ($attemptData['error'] !== null) {
             return $attemptData['error'];
         }
@@ -291,10 +293,7 @@ class CheckoutService
             ];
         }
 
-        $items = array_values(array_filter(
-            (array) ($planner['items'] ?? []),
-            static fn(array $item): bool => (bool) ($item['is_valid'] ?? false)
-        ));
+        $items = $this->extractValidPlannerItems($planner);
 
         if ($items === []) {
             return [
@@ -307,15 +306,29 @@ class CheckoutService
             ];
         }
 
-        usort($items, static function (array $left, array $right): int {
-            return (int) $left['event_id'] <=> (int) $right['event_id'];
-        });
-
         return [
             'planner' => $planner,
             'items' => $items,
             'error' => null,
         ];
+    }
+
+    /**
+     * Return only the valid planner-item arrays, sorted by event_id for stable DB ordering.
+     *
+     * @param  array $planner  Return value of PlannerService::getDetailedPlanner()
+     * @return array[]
+     */
+    private function extractValidPlannerItems(array $planner): array
+    {
+        $items = array_values(array_filter(
+            (array) ($planner['items'] ?? []),
+            static fn(array $item): bool => (bool) ($item['is_valid'] ?? false)
+        ));
+
+        usort($items, static fn(array $a, array $b): int => $a['event_id'] <=> $b['event_id']);
+
+        return $items;
     }
 
     private function isValidIdempotencyKey(string $postedIdempotencyKey): bool
@@ -366,10 +379,13 @@ class CheckoutService
         ];
     }
 
-    private function createPendingCheckoutAttempt(User $user, array $planner, array $items, string $postedIdempotencyKey): array
+    private function createPendingCheckoutAttempt(User $user, float $totalPrice, array $items, string $postedIdempotencyKey): array
     {
-        return $this->transaction(function () use ($user, $planner, $items, $postedIdempotencyKey): array {
-            $failedEventIds = $this->reserveStockForItems($items);
+        return $this->transaction(function () use ($user, $totalPrice, $items, $postedIdempotencyKey): array {
+            // Convert planner arrays to typed objects for stock reservation and persistence.
+            $checkoutItems = $this->toCheckoutItems($items);
+
+            $failedEventIds = $this->reserveStockForItems($checkoutItems);
             if ($failedEventIds !== []) {
                 $this->pdo->rollBack();
 
@@ -378,6 +394,7 @@ class CheckoutService
                     'error' => [
                         'status' => 'out_of_stock',
                         'message' => 'Some items are no longer available in the requested quantities.',
+                        // Original planner arrays are still needed here for event names.
                         'conflicts' => $this->buildOutOfStockConflicts($items),
                     ],
                 ];
@@ -385,26 +402,27 @@ class CheckoutService
 
             $expiresAt = $this->formatTimestamp($this->currentTimestamp() + self::HOLD_DURATION_SECONDS);
             $attemptId = $this->checkoutAttempts->createAttempt([
-                'user_id' => $user->id(),
-                'planner_token' => $this->planner->getPlannerToken(),
-                'status' => 'initiated',
-                'total_price' => (float) ($planner['total_price_value'] ?? 0),
-                'currency' => 'EUR',
-                'hold_expires_at' => $expiresAt,
-                'idempotency_key' => $postedIdempotencyKey,
+                'user_id'          => $user->id(),
+                'planner_token'    => $this->planner->getPlannerToken(),
+                'status'           => 'initiated',
+                'total_price'      => $totalPrice,
+                'currency'         => 'EUR',
+                'hold_expires_at'  => $expiresAt,
+                'idempotency_key'  => $postedIdempotencyKey,
                 'payment_provider' => null,
                 'payment_reference' => null,
-                'error_code' => null,
-                'error_message' => null,
+                'error_code'       => null,
+                'error_message'    => null,
             ]);
 
-            $attemptItems = $this->buildAttemptItems($items);
-            $this->checkoutAttempts->createAttemptItems($attemptId, $attemptItems);
+            // Repositories expect plain arrays; convert once here at the boundary.
+            $attemptItemArrays = array_map(static fn(CheckoutItem $ci): array => $ci->toArray(), $checkoutItems);
+            $this->checkoutAttempts->createAttemptItems($attemptId, $attemptItemArrays);
             $this->ticketHolds->createHolds(
                 $attemptId,
                 $user->id(),
                 $this->planner->getPlannerToken(),
-                $attemptItems,
+                $attemptItemArrays,
                 $expiresAt
             );
 
@@ -415,34 +433,37 @@ class CheckoutService
         });
     }
 
-    private function reserveStockForItems(array $items): array
+    /**
+     * @param  CheckoutItem[] $checkoutItems
+     * @return int[]  IDs of events whose stock could not be reserved
+     */
+    private function reserveStockForItems(array $checkoutItems): array
     {
         $failedEventIds = [];
 
-        foreach ($items as $item) {
-            $reserved = $this->events->decrementTicketAmountIfAvailable((int) $item['event_id'], (int) $item['quantity']);
+        foreach ($checkoutItems as $item) {
+            $reserved = $this->events->decrementTicketAmountIfAvailable($item->eventId(), $item->quantity());
             if (!$reserved) {
-                $failedEventIds[] = (int) $item['event_id'];
+                $failedEventIds[] = $item->eventId();
             }
         }
 
         return $failedEventIds;
     }
 
-    private function buildAttemptItems(array $items): array
+    /**
+     * Convert the flat planner-item arrays from getDetailedPlanner() into
+     * typed CheckoutItem objects for the rest of the checkout flow.
+     *
+     * @param  array[]         $items  Planner-item arrays (PlannerItem::toArray() shape)
+     * @return CheckoutItem[]
+     */
+    private function toCheckoutItems(array $items): array
     {
-        $attemptItems = [];
-
-        foreach ($items as $item) {
-            $attemptItems[] = [
-                'event_id' => (int) $item['event_id'],
-                'quantity' => (int) $item['quantity'],
-                'unit_price' => (float) $item['unit_price_value'],
-                'line_total' => (float) $item['line_total_value'],
-            ];
-        }
-
-        return $attemptItems;
+        return array_map(
+            static fn(array $item): CheckoutItem => CheckoutItem::fromPlannerArray($item),
+            $items
+        );
     }
 
     private function handleFailedHandoff(int $attemptId, array $handoff): array
@@ -530,8 +551,10 @@ class CheckoutService
             return [];
         }
 
-        $eventIds = array_map(static fn(array $ticket): int => (int) ($ticket['event_id'] ?? 0), $createdTickets);
-        $eventIds = array_values(array_unique(array_filter($eventIds, static fn(int $id): bool => $id > 0)));
+        $eventIds = array_values(array_unique(array_filter(
+            array_map('intval', array_column($createdTickets, 'event_id')),
+            static fn(int $id): bool => $id > 0
+        )));
         $eventsById = $this->events->findByIds($eventIds);
 
         $deliverable = [];
@@ -543,7 +566,7 @@ class CheckoutService
         return $deliverable;
     }
 
-    private function buildDeliverableTicket(array $ticket, ?array $event): array
+    private function buildDeliverableTicket(array $ticket, ?Event $event): array
     {
         $eventId = (int) ($ticket['event_id'] ?? 0);
         $ticketPriceValue = (float) ($ticket['ticket_price'] ?? 0);
@@ -562,17 +585,14 @@ class CheckoutService
             ];
         }
 
-        $start = (string) ($event['start_time'] ?? '');
-        $end = (string) ($event['end_time'] ?? '');
-
         return [
             'ticket_id' => (int) ($ticket['ticket_id'] ?? 0),
             'event_id' => $eventId,
             'verification_code' => (string) ($ticket['verification_code'] ?? ''),
-            'event_name' => (string) ($event['name'] ?? 'Event'),
-            'event_date' => $this->formatDate($start),
-            'event_time' => $this->formatTimeRange($start, $end),
-            'venue' => (string) ($event['venue_location'] ?? 'Venue to be announced'),
+            'event_name' => $event->name(),
+            'event_date' => $event->startsAt()->format('D j M Y'),
+            'event_time' => $event->formattedTimeRange(),
+            'venue' => $event->venue(),
             'ticket_price_value' => $ticketPriceValue,
             'ticket_price' => number_format($ticketPriceValue, 2),
         ];
@@ -612,31 +632,6 @@ class CheckoutService
             'total_tickets' => count($tickets),
             'items' => array_values($linesByKey),
         ];
-    }
-
-    private function formatDate(string $datetime): string
-    {
-        if ($datetime === '' || strtotime($datetime) === false) {
-            return '-';
-        }
-
-        return date('D j M Y', strtotime($datetime));
-    }
-
-    private function formatTimeRange(string $start, string $end): string
-    {
-        if ($start === '' || strtotime($start) === false) {
-            return '-';
-        }
-
-        $startText = date('H:i', strtotime($start));
-        $endText = ($end !== '' && strtotime($end) !== false) ? date('H:i', strtotime($end)) : '';
-
-        if ($endText === '') {
-            return $startText;
-        }
-
-        return $startText . ' - ' . $endText;
     }
 
     private function releaseAttemptHoldsAndRestoreStock(int $checkoutAttemptId, string $reason): void

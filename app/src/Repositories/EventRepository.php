@@ -2,6 +2,7 @@
 
 namespace App\Repositories;
 
+use App\Models\Event;
 use PDO;
 use RuntimeException;
 
@@ -14,6 +15,9 @@ class EventRepository
         $this->pdo = $pdo;
     }
 
+    /**
+     * @return Event[]
+     */
     public function findByCategory(string $category): array
     {
         $stmt = $this->pdo->prepare(
@@ -26,18 +30,21 @@ class EventRepository
                 e.ticket_price,
                 e.ticket_amount,
                 e.description,
-                COALESCE(NULLIF(e.location, \'\'), v.location) AS venue_location
+                e.category,
+                COALESCE(NULLIF(e.location, \"\"), v.location) AS venue_location
             FROM events e
             LEFT JOIN venues v ON v.venue_id = e.venue_id
-            WHERE LOWER(COALESCE(e.category, \'\')) = LOWER(:category)
+            WHERE LOWER(COALESCE(e.category, \"\")) = LOWER(:category)
             ORDER BY e.start_time ASC, e.name ASC'
         );
 
         $stmt->execute(['category' => $category]);
-        return $stmt->fetchAll() ?: [];
+        $rows = $stmt->fetchAll() ?: [];
+
+        return array_map(fn (array $row): Event => $this->hydrateEvent($row), $rows);
     }
 
-    public function findById(int $eventId): ?array
+    public function findById(int $eventId): ?Event
     {
         $stmt = $this->pdo->prepare(
             'SELECT
@@ -50,7 +57,7 @@ class EventRepository
                 e.ticket_amount,
                 e.description,
                 e.category,
-                COALESCE(NULLIF(e.location, \'\'), v.location) AS venue_location
+                COALESCE(NULLIF(e.location, \"\"), v.location) AS venue_location
             FROM events e
             LEFT JOIN venues v ON v.venue_id = e.venue_id
             WHERE e.event_id = :event_id
@@ -59,9 +66,12 @@ class EventRepository
 
         $stmt->execute(['event_id' => $eventId]);
         $row = $stmt->fetch();
-        return $row ?: null;
+        return $row ? $this->hydrateEvent($row) : null;
     }
 
+    /**
+     * @return array<int, Event>
+     */
     public function findByIds(array $eventIds): array
     {
         $ids = array_values(array_unique(array_map('intval', $eventIds)));
@@ -82,7 +92,7 @@ class EventRepository
                 e.ticket_amount,
                 e.description,
                 e.category,
-                COALESCE(NULLIF(e.location, \'\'), v.location) AS venue_location
+                COALESCE(NULLIF(e.location, \"\"), v.location) AS venue_location
             FROM events e
             LEFT JOIN venues v ON v.venue_id = e.venue_id
             WHERE e.event_id IN (' . $placeholders . ')';
@@ -94,7 +104,8 @@ class EventRepository
         $byId = [];
 
         foreach ($rows as $row) {
-            $byId[(int) $row['event_id']] = $row;
+            $event = $this->hydrateEvent($row);
+            $byId[$event->id()] = $event;
         }
 
         return $byId;
@@ -168,5 +179,21 @@ class EventRepository
             'event_id' => $eventId,
             'quantity' => $quantity,
         ]);
+    }
+
+    private function hydrateEvent(array $row): Event
+    {
+        return new Event(
+            (int) ($row['event_id'] ?? 0),
+            (string) ($row['name'] ?? ''),
+            isset($row['location']) ? (string) $row['location'] : null,
+            (string) ($row['start_time'] ?? ''),
+            (string) ($row['end_time'] ?? ''),
+            isset($row['ticket_price']) ? (float) $row['ticket_price'] : 0.0,
+            isset($row['ticket_amount']) ? ($row['ticket_amount'] !== null ? (int) $row['ticket_amount'] : null) : null,
+            (string) ($row['description'] ?? ''),
+            isset($row['category']) && $row['category'] !== null ? (string) $row['category'] : null,
+            (string) ($row['venue_location'] ?? 'Venue to be announced'),
+        );
     }
 }
