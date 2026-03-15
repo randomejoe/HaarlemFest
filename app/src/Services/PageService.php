@@ -29,7 +29,7 @@ class PageService implements CMSService
     public function create(array $postData): bool 
     {
         $title = trim((string) ($postData['item_name'] ?? ''));
-        $isMainEvent = $postData['is_main_event'] == "on" ? 1 : 0;
+        $isMainEvent = ($postData['is_main_event'] ?? "off") == "on" ? 1 : 0;
         return $this->repository->createPage($title, $isMainEvent);
     }
     public function isNameEditable(): bool {

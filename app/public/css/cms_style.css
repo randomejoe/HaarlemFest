@@ -56,13 +56,6 @@ a {
     padding: 10px
 }
 
-.add-item-btn {
-    background-color: green;
-}
-.add-item-btn > p {
-    color: white;
-}
-
 .button {
     padding: 16px;
     width: fit-content;
@@ -77,6 +70,16 @@ a {
 .button > p {
     width: fit-content;
     margin: 0px;
+}
+
+.add-item-btn {
+    background-color: green;
+}
+.add-item-btn:hover {
+    background-color: rgb(2, 89, 2);
+}
+.add-item-btn > p {
+    color: white;
 }
 
 .cms-item-container {
@@ -159,6 +162,13 @@ input[readonly] {
     box-shadow: 0 0 5px rgba(0,0,0,0.2);
 }
 
+.form-input-container {
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+    gap: 10px;
+}
+
 .form-submit-button {
     background-color: #4a79d8;
     color: white;
@@ -167,14 +177,8 @@ input[readonly] {
 .form-submit-button:hover {
     background-color: #3b63b5;
 }
-
-.form-submit-button-success {
-    background-color: green;
-    color: white;
-}
-
-.form-submit-button-success:hover {
-    background-color: #0f8f0f;
+.checkbox-input {
+    width: 65%;
 }
 
 .category-selector, .category-selector-item-container {
@@ -248,6 +252,10 @@ input[readonly] {
 }
 .fit-content {
     width: fit-content;
+}
+.fill-flex {
+    flex: auto;
+    padding: 0px 2em;
 }
 
 .modal {

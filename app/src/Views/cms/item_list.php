@@ -29,22 +29,55 @@
                 ?>
             </div>
             <form id='add-item-form' style='display: none' class='add-item-form column' method="POST" action="<?php echo "/cms/" . $type->value; ?>">
-                <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars((string) ($csrf_token ?? ''), ENT_QUOTES, 'UTF-8'); ?>">
-                <div>
-                    <label for="item_name"><?php if (isset($currentCategory) || $type != CmsType::Event) {echo ucfirst($type->value);} else {
-                    echo 'Main event';
-                    } ?> name:</label>
-                    <input type="text" id="item_name" name="item_name" class="form-input" required>
-                </div>
-                <?php if ($type == CmsType::Page) {
-                    ?> 
-                        <div class="vertical-center">
-                            <label for="main_event">Is main event:</label>
-                            <input type="checkbox" id="main_event" name="is_main_event"> 
+                <div class="row">
+                    <div>
+                        <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars((string) ($csrf_token ?? ''), ENT_QUOTES, 'UTF-8'); ?>">
+                        <div class="vertical-center form-input-container">
+                            <label for="item_name"><?php if (isset($currentCategory) || $type != CmsType::Event) {echo ucfirst($type->value);} else {
+                            echo 'Main event';
+                            } ?> name:</label>
+                            <input type="text" id="item_name" name="item_name" class="form-input" required>
+                        </div>
+                        <?php 
+                        if ($type == CmsType::Page) {
+                            ?> 
+                                <div class="vertical-center">
+                                    <label for="main_event">Is main event:</label>
+                                    <input type="checkbox" id="main_event" name="is_main_event" class="checkbox-input"> 
+                                </div>
+                            <?php
+                        }
+                        else if (isset($currentCategory)) {
+                        ?>
+                        <div class="vertical-center form-input-container">
+                            <label for="start_time">Start time:</label>
+                            <input type="datetime-local" id="start_time" name="start_time" class="form-input" required> 
+                        </div>
+                        <div class="vertical-center form-input-container">
+                            <label for="end_time">End time:</label>
+                            <input type="datetime-local" id="end_time" name="end_time" class="form-input" required> 
+                        </div>
+                    </div>
+                    <div>
+                        <!-- TODO: change to selector for location -->
+                        <div class="vertical-center form-input-container">
+                            <label for="location">Location:</label>
+                            <input type="text" id="location" name="location" class="form-input" required> 
+                        </div>
+                        <!-- TODO: change to use selected location ticket count -->
+                        <div class="vertical-center form-input-container">
+                            <label for="amount">Ticket amount:</label>
+                            <input type="number" id="amount" name="ticket_amount" class="form-input" required> 
+                        </div>
+                        <div class="vertical-center form-input-container">
+                            <label for="price">Ticket price:</label>
+                            <input type="number" id="price" name="ticket_price" class="form-input" required> 
                         </div>
                     <?php
-                }
-                ?>
+                    }
+                    ?>
+                    </div>
+                </div>
                 <button type="submit" class="form-submit-button button"><p>Create</p></button>
             </form>
             <div class='cms-item-container column'>

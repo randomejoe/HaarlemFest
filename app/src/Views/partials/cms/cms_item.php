@@ -1,6 +1,6 @@
 <div class='cms-item'>
     <div class='cms-item-content vertical-center'>
-        <?php echo $itemName; 
+        <p><?php echo $itemName; ?></p><?php
         if (isset($extraFields)) {
             require __DIR__ . '/' . $extraFields;
         }
