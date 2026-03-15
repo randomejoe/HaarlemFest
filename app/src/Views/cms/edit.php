@@ -20,11 +20,11 @@
                         <button type="submit" class="form-submit-button button">Save</button>
                     </div>
                     <?php 
-                        if ($type == CmsType::Content) {
+                        if ($type != CmsType::Page ) {
                             require(__DIR__ . '/../partials/cms/edit_' . $type->value . '.php');
                         }
                         ?></form><?php
-                        if ($type != CmsType::Content) {
+                        if ($type == CmsType::Page) {
                             require(__DIR__ . '/../partials/cms/edit_' . $type->value . '.php');
                         }
                     ?>

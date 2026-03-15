@@ -28,7 +28,7 @@
                     }
                 ?>
             </div>
-            <form id='add-item-form' style='display: none' class='add-item-form column' method="POST" action="<?php echo "/cms/" . $type->value; ?>">
+            <form id='add-item-form' style='display: none' class='add-item-form column' method="POST">
                 <div class="row">
                     <div>
                         <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars((string) ($csrf_token ?? ''), ENT_QUOTES, 'UTF-8'); ?>">
@@ -57,6 +57,10 @@
                             <label for="end_time">End time:</label>
                             <input type="datetime-local" id="end_time" name="end_time" class="form-input" required> 
                         </div>
+                        <div class="vertical-center form-input-container">
+                            <label for="language">Language:</label>
+                            <input type="text" id="language" name="language" class="form-input"> 
+                        </div>
                     </div>
                     <div>
                         <!-- TODO: change to selector for location -->
@@ -67,22 +71,32 @@
                         <!-- TODO: change to use selected location ticket count -->
                         <div class="vertical-center form-input-container">
                             <label for="amount">Ticket amount:</label>
-                            <input type="number" id="amount" name="ticket_amount" class="form-input" required> 
+                            <input type="number" id="amount" name="ticket_amount" class="form-input" min="0" required> 
                         </div>
                         <div class="vertical-center form-input-container">
                             <label for="price">Ticket price:</label>
-                            <input type="number" id="price" name="ticket_price" class="form-input" required> 
+                            <input type="number" id="price" name="ticket_price" class="form-input" step="0.01" min="0" required> 
                         </div>
                     <?php
                     }
                     ?>
                     </div>
                 </div>
+                <?php 
+                if (isset($currentCategory)) {
+                    ?>
+                        <div class="vertical-center form-input-container description-container">
+                            <label for="description">Description:</label>
+                            <input type="text" id="description" name="description" class="form-input half-width"> 
+                        </div>
+                    <?php
+                } 
+                ?>
                 <button type="submit" class="form-submit-button button"><p>Create</p></button>
             </form>
             <div class='cms-item-container column'>
             <?php 
-            $itemType = 'page';
+            $itemType = $type->value;
             foreach ($items as $item) {
                 $itemName = $item['item_name'];
                 $itemId = $item['item_id'];
@@ -102,8 +116,17 @@
 <script>
     const btn = document.getElementById('add-item-btn');
     const form = document.getElementById('add-item-form');
+    const start = document.getElementById("start_time");
+    const end = document.getElementById("end_time");
 
     btn.addEventListener('click', () => {
     form.style.display = form.style.display === 'none' ? 'flex' : 'none';
     });
+
+    form.addEventListener('submit', (e) => {
+        if (new Date(end.value) < new Date(start.value)) {
+            e.preventDefault();
+            alert('temporary alert to notify that event starts after it ends')
+        }
+    })
 </script>

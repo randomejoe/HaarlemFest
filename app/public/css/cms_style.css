@@ -180,6 +180,9 @@ input[readonly] {
 .checkbox-input {
     width: 65%;
 }
+.description-container {
+    justify-content: flex-start;
+}
 
 .category-selector, .category-selector-item-container {
     width: 20em;

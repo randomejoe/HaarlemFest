@@ -27,6 +27,9 @@ class EventService implements CMSService
     }
     public function update(int $id, array $postData): bool
     {
+        $postData['language'] = $postData['language'] ?: NULL;
+        $postData['description'] = $postData['description']?: NULL;
+        
         return $this->repository->updateEvent($id, $postData);
     }
     public function delete(int $id): bool {
@@ -39,7 +42,7 @@ class EventService implements CMSService
     public function getAllInCategory(string $category) {
         return $this->repository->getAllEventsInCategory($category);
     }
-    
+
     public function getCategories() {
         $categories = $this->pageRepository->getEventCategories();
         return array_column($categories, 'category');
@@ -51,6 +54,9 @@ class EventService implements CMSService
         return $this->pageRepository->createPage($title, 1);
     }
     public function createForCategory(string $category, array $postData) {
-        return $this->repository->createSubEvent($postData);
+        $postData['language'] = $postData['language'] ?: NULL;
+        $postData['description'] = $postData['description']?: NULL;
+
+        return $this->repository->createSubEvent($category, $postData);
     }
 }

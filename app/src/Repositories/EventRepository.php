@@ -195,7 +195,49 @@ class EventRepository extends BaseRepository
         return $events;
     }
 
-    public function createSubEvent() {
-        
+    public function createSubEvent(string $category, array $postData) {
+        $this->requireAdmin();
+
+        $stmt = $this->pdo->prepare('INSERT INTO events (name, location, start_time, end_time, ticket_price, ticket_amount, description, language, category) 
+        VALUES (:name, :location, :start_time, :end_time, :price, :amount, :description, :language, :category)');
+
+        $stmt->execute(['name' => $postData['item_name'], 
+        'location' => $postData['location'], 
+        'start_time' => $postData['start_time'], 
+        'end_time' => $postData['end_time'], 
+        'price' => $postData['ticket_price'], 
+        'amount' => $postData['ticket_amount'], 
+        'description' => $postData['description'], 
+        'language' => $postData['language'],
+        'category' => $category]);
+        return true;
+    }
+
+    public function getEventForEdit(int $id) {
+        $stmt = $this->pdo->prepare(
+            'SELECT name AS item_name, event_id AS item_id, location, ticket_amount, ticket_price, category, start_time, end_time, description, language
+            FROM events
+            WHERE event_id = :id'
+            );
+        $stmt->execute(['id' => $id]);
+        $event = $stmt->fetch();
+        return $event;
+    }
+
+    public function updateEvent(int $id, array $postData) {
+        $this->requireAdmin();
+
+        $stmt = $this->pdo->prepare('UPDATE events SET name = :name, location = :location, start_time = :start_time, end_time = :end_time, ticket_price = :price, ticket_amount = :amount, description = :description, language = :language, category = :category');
+
+        $stmt->execute(['name' => $postData['name'], 
+        'location' => $postData['location'], 
+        'start_time' => $postData['start_time'], 
+        'end_time' => $postData['end_time'], 
+        'price' => $postData['ticket_price'], 
+        'amount' => $postData['ticket_amount'], 
+        'description' => $postData['description'], 
+        'language' => $postData['language'],
+        'category' => $postData['category']]);
+        return true;
     }
 }

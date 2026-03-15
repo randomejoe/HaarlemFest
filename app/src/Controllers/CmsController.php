@@ -67,7 +67,7 @@ class CmsController
         if ($success) {
             $_SESSION['create_success'] = true;
             $_SESSION['create_title'] = $_POST['item_name'];
-            header('Location: /cms/' . $type->value);
+            header('Location: /cms/' . $type->value . 's');
         }
         else {
             $this->showCmsItems($type->value);
@@ -83,10 +83,10 @@ class CmsController
         if ($success) {
             $_SESSION['create_success'] = true;
             $_SESSION['create_title'] = $_POST['item_name'];
-            header('Location: /cms/' . $type->value . '/' . $category);
+            header('Location: /cms/' . $type->value . 's/' . $category);
         }
         else {
-            $this->showCmsItemsInCategory();
+            $this->showCmsItemsInCategory($type->value, $category);
         }
     }
 
@@ -97,7 +97,11 @@ class CmsController
         $item = $service->getForEdit($item_id);
         $editable = $service->isNameEditable();
 
-        echo View::render('/../Views/cms/edit', ['type'=>$type, 'item'=>$item, 'editable'=>$editable]);
+        if ($type == CmsType::Event) {
+            $categories = $service->getCategories();
+        }
+
+        echo View::render('/../Views/cms/edit', ['type'=>$type, 'item'=>$item, 'editable'=>$editable, 'categories'=>$categories ?? null]);
     }
     public function editItem(string $type, int $item_id)
     {
