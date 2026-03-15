@@ -15,7 +15,7 @@ class PageRepository extends BaseRepository
 
     public function getAllPages() 
     {
-        $stmt = $this->pdo->prepare('SELECT title as item_name, page_id AS item_id FROM pages');
+        $stmt = $this->pdo->prepare('SELECT title as item_name, page_id AS item_id, is_main_event FROM pages');
         $stmt->execute();
         $pages = $stmt->fetchAll();
         return $pages;
@@ -27,24 +27,24 @@ class PageRepository extends BaseRepository
         return $pageId;
     }
     public function getPageById(int $id) {
-        $stmt = $this->pdo->prepare('SELECT * FROM pages JOIN page_content pc ON pc.page_id = pages.page_id WHERE pages.page_id = :id');
+        $stmt = $this->pdo->prepare('SELECT title, page_id, is_main_event FROM pages JOIN page_content pc ON pc.page_id = pages.page_id WHERE pages.page_id = :id');
         $stmt->execute(['id' => $id]);
         $pageContent = $stmt->fetch();
         return $pageContent;
     }
     public function getPageByName(string $name) {
-        $stmt = $this->pdo->prepare('SELECT * FROM pages JOIN page_content pc ON pc.page_id = pages.page_id WHERE LOWER(title) = LOWER(:title)');
+        $stmt = $this->pdo->prepare('SELECT title, page_id, is_main_event FROM pages JOIN page_content pc ON pc.page_id = pages.page_id WHERE LOWER(title) = LOWER(:title)');
         $stmt->execute(['title' => $name]);
         $pageContent = $stmt->fetchAll();
         return $pageContent;
     }
 
-    public function createPage(string $title): bool 
+    public function createPage(string $title, int $isMainEvent): bool 
     {
         $this->requireAdmin();
-        
-        $stmt = $this->pdo->prepare('INSERT INTO pages (title) VALUES (:title)');
-        $stmt->execute(['title' => $title]);
+        $stmt = $this->pdo->prepare('INSERT INTO pages (title, is_main_event) VALUES (:title, :mainEvent)');
+        $stmt->execute(['title' => $title,
+        'mainEvent' => $isMainEvent]);
         return true;
     }
 
@@ -139,5 +139,13 @@ class PageRepository extends BaseRepository
             'content_id' => $contentId
         ]);
         return true;
+    }
+
+    public function getEventCategories()
+    {
+        $stmt = $this->pdo->prepare('SELECT title as category FROM pages WHERE is_main_event = True');
+        $stmt->execute();
+        $categories = $stmt->fetchAll();
+        return $categories;
     }
 }

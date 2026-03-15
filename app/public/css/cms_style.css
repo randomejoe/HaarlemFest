@@ -138,6 +138,7 @@ a {
 .add-item-form {
     margin-top: 10px;
     gap: 12px;
+    display: flex;
 }
 
 input[readonly] {
@@ -174,6 +175,27 @@ input[readonly] {
 
 .form-submit-button-success:hover {
     background-color: #0f8f0f;
+}
+
+.category-selector, .category-selector-item-container {
+    width: 20em;
+    text-align: left;
+}
+.category-selector {
+    padding: 16px;
+}
+.category-selector.open {
+    border-radius: 8px 8px 0px 0px;
+}
+.category-selector-item {
+    background-color: white;
+    border-radius: 0px;
+    border-top: 0px;
+}
+.category-selector-item-last {
+    background-color: white;
+    border-radius: 0px 0px 8px 8px;
+    border-top: 0px;
 }
 
 .component-list {
@@ -217,8 +239,15 @@ input[readonly] {
     width: 100%;
 }
 
+.half-width {
+    width: 50%;
+}
+
 .no-margin {
     margin: 0px;
+}
+.fit-content {
+    width: fit-content;
 }
 
 .modal {

@@ -171,23 +171,31 @@ class EventRepository extends BaseRepository
     }
     public function getAllEvents() 
     {
-        $stmt = $this->pdo->prepare('SELECT name as item_name, event_id AS item_id FROM events');
+        $stmt = $this->pdo->prepare(
+            'SELECT e.name as item_name, e.event_id AS item_id, 
+            e.location, e.ticket_amount, e.ticket_price, e.category, COUNT(t.ticket_id) AS sold_tickets 
+            FROM events e
+            LEFT JOIN tickets t ON t.event_id = e.event_id
+            GROUP BY e.event_id'
+            );
         $stmt->execute();
         $events = $stmt->fetchAll();
         return $events;
     }
     public function getAllEventsInCategory(string $category) 
     {
-        $stmt = $this->pdo->prepare('SELECT name as item_name, event_id AS item_id FROM events WHERE category = :category');
+        $stmt = $this->pdo->prepare('SELECT e.name as item_name, e.event_id AS item_id, 
+            e.location, e.ticket_amount, e.ticket_price, e.category, COUNT(t.ticket_id) AS sold_tickets 
+            FROM events e
+            LEFT JOIN tickets t ON t.event_id = e.event_id
+            WHERE e.category = :category
+            GROUP BY e.event_id');
         $stmt->execute(['category'=> $category]);
         $events = $stmt->fetchAll();
         return $events;
     }
-    public function getAllEventCategories()
-    {
-        $stmt = $this->pdo->prepare('SELECT DISTINCT category FROM events');
-        $stmt->execute();
-        $events = $stmt->fetchAll();
-        return $events;
+
+    public function createSubEvent() {
+        
     }
 }

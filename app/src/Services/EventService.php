@@ -3,14 +3,17 @@
 namespace App\Services;
 
 use App\Repositories\EventRepository;
+use App\Repositories\PageRepository;
 
 class EventService implements CMSService
 {
     private EventRepository $repository;
+    private PageRepository $pageRepository;
 
-    public function __construct(EventRepository $repository)
+    public function __construct(EventRepository $repository, PageRepository $pageRepository)
     {
         $this->repository = $repository;
+        $this->pageRepository = $pageRepository;
     }
     public function getForEdit(int $id)
     {
@@ -35,5 +38,19 @@ class EventService implements CMSService
     }
     public function getAllInCategory(string $category) {
         return $this->repository->getAllEventsInCategory($category);
+    }
+    
+    public function getCategories() {
+        $categories = $this->pageRepository->getEventCategories();
+        return array_column($categories, 'category');
+    }
+
+    public function create(array $postData) {
+        // Main events need their own page and therefore are handled as pages with an extra tag
+        $title = trim((string) ($postData['item_name'] ?? ''));
+        return $this->pageRepository->createPage($title, 1);
+    }
+    public function createForCategory(string $category, array $postData) {
+        return $this->repository->createSubEvent($postData);
     }
 }

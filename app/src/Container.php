@@ -128,7 +128,8 @@ class Container
             $c->get(PageRepository::class)
         ));
         $this->singleton(EventService::class, fn (self $c): EventService => new EventService(
-            $c->get(EventRepository::class)
+            $c->get(EventRepository::class),
+            $c->get(PageRepository::class)
         ));
         $this->singleton(ContentService::class, fn (self $c): ContentService => new ContentService(
             $c->get(PageRepository::class)
