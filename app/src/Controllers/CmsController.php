@@ -49,6 +49,7 @@ class CmsController
     {
         $type = CmsType::convertToType($type);
         $service = $this->resolveService($type);
+        $category = urldecode($category);
         $items = $service->getAllInCategory($category);
         if ($type == CmsType::Event) {
             $categories = $service->getCategories();
@@ -77,6 +78,7 @@ class CmsController
     {
         $type = CmsType::convertToType($type);
         $service = $this->resolveService($type);
+        $category = urldecode($category);
 
         $success = $service->createForCategory($category, $_POST);
         

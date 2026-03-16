@@ -1,6 +1,6 @@
 <div>
     <button class="button form-input category-selector" id="open-selector-btn">
-        <?php echo $currentCategory ?? 'None' ?>
+        <?php echo urldecode($currentCategory ?? 'None') ?>
     </button>
     <div class="column category-selector-item-container" style="position: fixed; display: none" id="categories">
         <a href='/cms/events' class="form-input category-selector-item">None</a>

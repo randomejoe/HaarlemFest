@@ -227,7 +227,7 @@ class EventRepository extends BaseRepository
     public function updateEvent(int $id, array $postData) {
         $this->requireAdmin();
 
-        $stmt = $this->pdo->prepare('UPDATE events SET name = :name, location = :location, start_time = :start_time, end_time = :end_time, ticket_price = :price, ticket_amount = :amount, description = :description, language = :language, category = :category');
+        $stmt = $this->pdo->prepare('UPDATE events SET name = :name, location = :location, start_time = :start_time, end_time = :end_time, ticket_price = :price, ticket_amount = :amount, description = :description, language = :language, category = :category WHERE event_id = :id');
 
         $stmt->execute(['name' => $postData['name'], 
         'location' => $postData['location'], 
@@ -237,7 +237,8 @@ class EventRepository extends BaseRepository
         'amount' => $postData['ticket_amount'], 
         'description' => $postData['description'], 
         'language' => $postData['language'],
-        'category' => $postData['category']]);
+        'category' => $postData['category'],
+        'id' => $id]);
         return true;
     }
 
