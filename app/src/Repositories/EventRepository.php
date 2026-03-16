@@ -240,4 +240,14 @@ class EventRepository extends BaseRepository
         'category' => $postData['category']]);
         return true;
     }
+
+    public function deleteEvent(int $id) {
+        $this->requireAdmin();
+
+        $stmt = $this->pdo->prepare("DELETE FROM events WHERE event_id = :event_id");
+        $stmt->execute([
+            'event_id' => $id
+        ]);
+        return true;
+    }
 }
