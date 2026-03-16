@@ -1263,3 +1263,7 @@ h2 {
         align-items: flex-start;
     }
 }
+
+.dynamic-page-content-container {
+    padding: 2em;
+}

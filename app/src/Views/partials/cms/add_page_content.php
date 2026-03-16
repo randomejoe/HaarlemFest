@@ -12,7 +12,7 @@
                         <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars((string) ($csrf_token ?? ''), ENT_QUOTES, 'UTF-8'); ?>">
                         <button name="newContent" value="<?php echo $key ?>" class="component-item button max-width"
                                 data-component="<?= $key ?>">
-                            <?= htmlspecialchars($key) ?>
+                            <?= htmlspecialchars(str_replace('_', ' ', $key)) ?>
                         </button>
                     </form>
                 <?php endforeach; ?>
