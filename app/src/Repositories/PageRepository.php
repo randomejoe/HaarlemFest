@@ -4,6 +4,7 @@ namespace App\Repositories;
 
 use PDO;
 use App\Models\Page;
+use App\Models\PageContent;
 
 class PageRepository extends BaseRepository
 {
@@ -78,7 +79,7 @@ class PageRepository extends BaseRepository
 
         $page = ['page_id' => $id, 'title' => $pageContent[0]['title'], 'content' => []];
         foreach ($pageContent as $contentItem) {
-            $page['content'][] = ['name' => $contentItem['component_name'], 'id' => $contentItem['content_id'], 'data' => $contentItem['data']];
+            $page['content'][] = PageContent::fromArray($contentItem);
         }
 
         $returnPage = Page::fromArray($page);
@@ -90,13 +91,13 @@ class PageRepository extends BaseRepository
         $this->requireAdmin();
 
         $stmt = $this->pdo->prepare(
-            "SELECT content_id, page_id, component_name as item_name, data
+            "SELECT content_id, page_id, component_name, data
             FROM page_content pc
             WHERE pc.content_id = :content_id"
             );
         $stmt->execute(['content_id' => $id]);
         $component = $stmt->fetch();
-        return $component;
+        return PageContent::fromArray($component);
     }
 
     public function updatePage(int $id, array $data): bool

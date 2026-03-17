@@ -23,16 +23,16 @@ class Page extends CmsItem
         );
     }
 
-    public function getId() {
+    public function getId(): int {
         return $this->id;
     }
-    public function getName() {
+    public function getName(): string {
         return $this->title;
     }
-    public function getIsMainEvent() {
+    public function getIsMainEvent(): bool {
         return $this->isMainEvent;
     }
-    public function getContent() {
+    public function getContent(): array {
         return $this->content;
     }
 }

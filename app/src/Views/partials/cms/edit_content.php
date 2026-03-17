@@ -4,12 +4,9 @@
     <div class="row between">
         <?php
             require __DIR__ . '/component_registry.php';
-            $fields = $components[$item['item_name']]['fields'];
+            $fields = $components[$item->getName()]['fields'];
 
-            if (isset($item['data'])) 
-            {
-                $data = json_decode($item['data'], true);
-            }
+            $data = $item->getData();
             foreach ($fields as $i => $field) 
             {
                 ?>

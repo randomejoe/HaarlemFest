@@ -10,6 +10,6 @@ abstract class CmsItem
 
     abstract static function fromArray(array $data): self;
 
-    abstract public function getId();
-    abstract public function getName();
+    abstract public function getId(): int;
+    abstract public function getName(): string;
 }
