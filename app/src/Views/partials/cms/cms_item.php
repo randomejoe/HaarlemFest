@@ -1,6 +1,6 @@
 <div class='cms-item'>
     <div class='cms-item-content vertical-center'>
-        <p><?php echo $itemName; ?></p><?php
+        <p><?php echo str_replace('_', ' ', $itemName); ?></p><?php
         if (isset($extraFields)) {
             require __DIR__ . '/' . $extraFields;
         }

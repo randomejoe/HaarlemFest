@@ -1,6 +1,7 @@
 <!DOCTYPE html>
+<script src="/js/tinymce/tinymce.min.js"></script>
 <div class="cms-item-container vertical-center row">
-    <div class="row between vertical-center">
+    <div class="row between">
         <?php
             require __DIR__ . '/component_registry.php';
             $fields = $components[$item['item_name']]['fields'];
@@ -9,7 +10,7 @@
             {
                 $data = json_decode($item['data'], true);
             }
-            foreach ($fields as $field) 
+            foreach ($fields as $i => $field) 
             {
                 ?>
                 <div>
@@ -17,30 +18,28 @@
                     echo $field['name'];
                     if ($field['type'] == 'text') {
                         ?>
-                        <textarea name="<?php echo $field['name'] ?>" id="textField">
+                        <textarea name="<?php echo $field['name'] ?>" id="textField<?php echo $i; ?>">
                             <?php if (isset($data)) {
-                                echo '<' . $field['element'] . '>' . $data[$field['name']] . '</' . $field['element'] . '>';
-                            } else {
-                                echo '<' . $field['element'] . '></' . $field['element'] . '>';
+                                echo $data[$field['name']];
                             } ?>
                         </textarea>
                         <?php    
                     }
                     ?>
                 </div>
+                <script>
+                    tinymce.init({
+                    selector: '#textField<?php echo $i; ?>',
+                    plugins: 'lists link image code',
+                    toolbar: 'undo redo | bold italic | bullist numlist | link image | code',
+                    menubar: false,
+                    license_key: 'gpl',
+                    height: 150,
+                    forced_root_block: "<?php echo $field['element']; ?>"
+                    });
+                </script> 
                 <?php
             }
         ?>
-        <script src="/js/tinymce/tinymce.min.js"></script>
-        <script>
-            tinymce.init({
-            selector: '#textField',
-            plugins: 'lists link image code',
-            toolbar: 'undo redo | bold italic | bullist numlist | link image | code',
-            menubar: false,
-            license_key: 'gpl',
-            height: 150,
-            });
-        </script> 
     </div>
 </div>

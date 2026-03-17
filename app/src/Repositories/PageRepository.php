@@ -34,13 +34,21 @@ class PageRepository extends BaseRepository
         return $pageId;
     }
     public function getPageById(int $id) {
-        $stmt = $this->pdo->prepare('SELECT title, page_id, is_main_event FROM pages JOIN page_content pc ON pc.page_id = pages.page_id WHERE pages.page_id = :id');
+        $stmt = $this->pdo->prepare(
+            'SELECT title, pages.page_id, is_main_event, pc.component_name, pc.data 
+            FROM pages 
+            JOIN page_content pc ON pc.page_id = pages.page_id 
+            WHERE pages.page_id = :id');
         $stmt->execute(['id' => $id]);
-        $pageContent = $stmt->fetch();
+        $pageContent = $stmt->fetchAll();
         return $pageContent;
     }
     public function getPageByName(string $name) {
-        $stmt = $this->pdo->prepare('SELECT title, page_id, is_main_event FROM pages JOIN page_content pc ON pc.page_id = pages.page_id WHERE LOWER(title) = LOWER(:title)');
+        $stmt = $this->pdo->prepare(
+        'SELECT title, pages.page_id, is_main_event, pc.component_name, pc.data 
+        FROM pages 
+        JOIN page_content pc ON pc.page_id = pages.page_id 
+        WHERE LOWER(title) = LOWER(:title)');
         $stmt->execute(['title' => $name]);
         $pageContent = $stmt->fetchAll();
         return $pageContent;
@@ -116,16 +124,21 @@ class PageRepository extends BaseRepository
     public function updateContentItem(int $id, array $data): bool
     {
         $this->requireAdmin();
-
+        
         try {
             $this->pdo->beginTransaction();
             unset($data['name']);
+            unset($data['csrf_token']);
+
+            foreach ($data as $key => $dataItem) {
+                $data[$key] = preg_replace('/^<[^>]+>|<\/[^>]+>$/', '', $dataItem);
+            }
 
             // Update content data
             $stmt = $this->pdo->prepare("UPDATE page_content SET data = :data WHERE content_id = :id");
             $stmt->execute([
                 'id' => $id,
-                'data' => strip_tags(json_encode($data)),
+                'data' => json_encode($data),
             ]);
 
             $this->pdo->commit();
