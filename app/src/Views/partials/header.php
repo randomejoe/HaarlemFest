@@ -35,9 +35,9 @@ if ($displayName === '') {
                     <ul class="navbar-nav ms-lg-auto mb-2 mb-lg-0 fw-semibold">
                         <li class="nav-item"><a class="nav-link<?php echo $currentPath === '/' ? ' active' : ''; ?>" href="/">Home</a></li>
                         <li class="nav-item"><a class="nav-link<?php echo $currentPath === '/jazz' ? ' active' : ''; ?>" href="/jazz">Jazz</a></li>
-                        <li class="nav-item"><a class="nav-link" href="#events">Yummy</a></li>
-                        <li class="nav-item"><a class="nav-link" href="#events">Dance</a></li>
-                        <li class="nav-item"><a class="nav-link" href="#events">History</a></li>
+                        <li class="nav-item"><a class="nav-link" href="/Yummy">Yummy</a></li>
+                        <li class="nav-item"><a class="nav-link" href="/Dance">Dance</a></li>
+                        <li class="nav-item"><a class="nav-link" href="/A_stroll_through_history">History</a></li>
                     </ul>
                     <ul class="navbar-nav navbar-tools flex-row align-items-center gap-2 mt-2 mt-lg-0 ms-lg-3">
                         <li class="nav-item">

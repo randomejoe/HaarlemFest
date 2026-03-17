@@ -11,6 +11,9 @@
     --radius-md: 16px;
     --radius-sm: 12px;
     --shadow: 0 18px 40px rgba(20, 18, 15, 0.12);
+    --history-negative: #FFFADDBF;
+    --history-primary: #8ECDDD;
+    --history-secondary: #22668D;
 }
 
 *,
@@ -1265,5 +1268,92 @@ h2 {
 }
 
 .dynamic-page-content-container {
-    padding: 2em;
+    padding: 1em;
+}
+
+.history-schedule-container, .history-schedule-card-container {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+}
+.history-schedule-container {
+    justify-content: space-between;
+    background-color: var(--history-primary);
+    border: solid var(--history-secondary) 5px;
+    padding: 0.5em;
+}
+.history-schedule-card-container {
+    justify-content: space-evenly;
+}
+.history-schedule-container h3 {
+    color: var(--history-negative);
+}
+.history-schedule-container > .history-schedule-day, .history-schedule-card {
+    min-width: 50%;
+    max-width: 100%;
+    flex:auto;
+}
+.history-schedule-card {
+    display: flex;
+    flex-direction: column;
+    background-color: var(--history-negative);
+    border-radius: var(--radius-lg);
+    min-height: 10em;
+}
+.tour-language-image {
+    width: 1.5em;
+    height: 1em;
+}
+.history-schedule-card-row {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 5px;
+}
+.history-schedule-card-time {
+    background-color: var(--history-secondary);
+    width: 100%;
+    border-radius: var(--radius-lg) var(--radius-lg) 0px 0px;
+    display: flex;
+    justify-content: center;
+    padding: 0.5em;
+}
+.history-schedule-card-time > p {
+    color: var(--history-negative);
+    text-align: center;
+}
+.history-schedule-card-rows {
+    padding: 0.5em 1em;
+}
+.history-schedule-card-content {
+    display: flex;
+    flex-grow: inherit;
+    flex-direction: column;
+    justify-content: space-between;
+    padding-bottom: 0.5em;
+}
+.history-add-ticket-button {
+    width: 80%;
+    background-color: var(--history-secondary);
+    border-width: 0px;
+    color: var(--history-negative);
+}
+
+.horizontal-center {
+    display: flex;
+    justify-content: center;
+}
+.vertical-center {
+    display: flex;
+    align-items: center;
+}
+.row {
+    display: flex;
+    flex-direction: row;
+}
+.no-margin {
+    margin: 0px;
+}
+.fit-content {
+    width: fit-content;
 }

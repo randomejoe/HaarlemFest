@@ -185,7 +185,7 @@ class EventRepository extends BaseRepository
     public function getAllEventsInCategory(string $category) 
     {
         $stmt = $this->pdo->prepare('SELECT e.name as item_name, e.event_id AS item_id, 
-            e.location, e.ticket_amount, e.ticket_price, e.category, COUNT(t.ticket_id) AS sold_tickets 
+            e.location, e.ticket_amount, e.ticket_price, e.category, COUNT(t.ticket_id) AS sold_tickets, e.language, e.description, e.start_time, e.end_time 
             FROM events e
             LEFT JOIN tickets t ON t.event_id = e.event_id
             WHERE e.category = :category
