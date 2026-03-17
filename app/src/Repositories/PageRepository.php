@@ -3,6 +3,7 @@
 namespace App\Repositories;
 
 use PDO;
+use App\Models\Page;
 
 class PageRepository extends BaseRepository
 {
@@ -13,12 +14,18 @@ class PageRepository extends BaseRepository
         $this->pdo = $pdo;
     }
 
-    public function getAllPages() 
+    public function getAllPages(): array 
     {
-        $stmt = $this->pdo->prepare('SELECT title as item_name, page_id AS item_id, is_main_event FROM pages');
+        $stmt = $this->pdo->prepare('SELECT title, page_id, is_main_event FROM pages');
         $stmt->execute();
         $pages = $stmt->fetchAll();
-        return $pages;
+
+        $returnPages = [];
+        foreach ($pages as $page) {
+            $returnPages[] = Page::fromArray($page);
+        }
+        
+        return $returnPages;
     }
     public function getContentPageId(int $id) {
         $stmt = $this->pdo->prepare('SELECT page_id FROM page_content WHERE content_id = :content_id');
@@ -53,14 +60,22 @@ class PageRepository extends BaseRepository
         $this->requireAdmin();
 
         $stmt = $this->pdo->prepare(
-            "SELECT p.title as item_name, pc.content_id, pc.component_name, pc.data
+            "SELECT p.title, pc.content_id, pc.component_name, pc.data
             FROM pages p
             LEFT JOIN page_content pc ON p.page_id = pc.page_id
             WHERE p.page_id = :page_id"
             );
         $stmt->execute(['page_id' => $id]);
-        $page = $stmt->fetchAll();
-        return $page;
+        $pageContent = $stmt->fetchAll();
+
+        $page = ['page_id' => $id, 'title' => $pageContent[0]['title'], 'content' => []];
+        foreach ($pageContent as $contentItem) {
+            $page['content'][] = ['name' => $contentItem['component_name'], 'id' => $contentItem['content_id'], 'data' => $contentItem['data']];
+        }
+
+        $returnPage = Page::fromArray($page);
+
+        return $returnPage;
     }
     public function getContentForEdit(int $id)
     {

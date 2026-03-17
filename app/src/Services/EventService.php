@@ -22,9 +22,6 @@ class EventService implements CMSService
     public function isNameEditable(): bool {
         return true;
     }
-    public function getPageId(int $id) {
-        return $this->repository->getContentPageId($id)['page_id'];
-    }
     public function update(int $id, array $postData): bool
     {
         $postData['language'] = $postData['language'] ?: NULL;

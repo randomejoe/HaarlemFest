@@ -3,11 +3,11 @@
     <?php 
     $remove = true;
     $itemType = "content";
-    foreach ($item as $contentItem)
+    foreach ($item->getContent() as $contentItem)
     {
-        if (isset($contentItem['component_name'])) {
-            $itemName = $contentItem['component_name'];
-        $itemId = $contentItem['content_id'];
+        if (isset($contentItem['name'])) {
+            $itemName = $contentItem['name'];
+        $itemId = $contentItem['id'];
         require __DIR__ . '/cms_item.php';
         }        
     }
