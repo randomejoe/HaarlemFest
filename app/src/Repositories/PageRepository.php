@@ -4,7 +4,7 @@ namespace App\Repositories;
 
 use PDO;
 
-class PageRepository extends RepositoryBase
+class PageRepository extends BaseRepository
 {
     private PDO $pdo;
 
@@ -15,7 +15,7 @@ class PageRepository extends RepositoryBase
 
     public function getAllPages() 
     {
-        $stmt = $this->pdo->prepare('SELECT title, page_id AS id FROM pages');
+        $stmt = $this->pdo->prepare('SELECT title as item_name, page_id AS item_id, is_main_event FROM pages');
         $stmt->execute();
         $pages = $stmt->fetchAll();
         return $pages;
@@ -47,12 +47,12 @@ class PageRepository extends RepositoryBase
         return $pageContent;
     }
 
-    public function createPage(string $title): bool 
+    public function createPage(string $title, int $isMainEvent): bool 
     {
         $this->requireAdmin();
-        
-        $stmt = $this->pdo->prepare('INSERT INTO pages (title) VALUES (:title)');
-        $stmt->execute(['title' => $title]);
+        $stmt = $this->pdo->prepare('INSERT INTO pages (title, is_main_event) VALUES (:title, :mainEvent)');
+        $stmt->execute(['title' => $title,
+        'mainEvent' => $isMainEvent]);
         return true;
     }
 
@@ -104,6 +104,7 @@ class PageRepository extends RepositoryBase
             'page_id' => $pageId,
             'component_name' => $componentName,
         ]);
+        return true;
     }
     public function updateContentItem(int $id, array $data): bool
     {
@@ -151,5 +152,13 @@ class PageRepository extends RepositoryBase
             'content_id' => $contentId
         ]);
         return true;
+    }
+
+    public function getEventCategories()
+    {
+        $stmt = $this->pdo->prepare('SELECT title as category FROM pages WHERE is_main_event = True');
+        $stmt->execute();
+        $categories = $stmt->fetchAll();
+        return $categories;
     }
 }
