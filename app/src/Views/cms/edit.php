@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+<?php use App\Models\CmsType; ?>
 <div>
     <?php include __DIR__ . '/../partials/cms/cms_nav.php';
     ?>
@@ -6,6 +7,7 @@
         <div class='cms-container'>
             <div class='cms-item-container column'>
                 <form method="POST">
+                    <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars((string) ($csrf_token ?? ''), ENT_QUOTES, 'UTF-8'); ?>">
                     <div class="row">
                         <input type="text" id="name" name="name" class="form-input" value="<?php 
                         if (isset($item[0])) {
@@ -18,12 +20,12 @@
                         <button type="submit" class="form-submit-button button">Save</button>
                     </div>
                     <?php 
-                        if ($type == 'contents') {
-                            require(__DIR__ . '/../partials/cms/edit_' . $type . '.php');
+                        if ($type != CmsType::Page ) {
+                            require(__DIR__ . '/../partials/cms/edit_' . $type->value . '.php');
                         }
                         ?></form><?php
-                        if ($type != 'contents') {
-                            require(__DIR__ . '/../partials/cms/edit_' . $type . '.php');
+                        if ($type == CmsType::Page) {
+                            require(__DIR__ . '/../partials/cms/edit_' . $type->value . '.php');
                         }
                     ?>
             </div>

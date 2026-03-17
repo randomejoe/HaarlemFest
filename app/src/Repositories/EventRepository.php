@@ -6,7 +6,7 @@ use App\Models\Event;
 use PDO;
 use RuntimeException;
 
-class EventRepository
+class EventRepository extends BaseRepository
 {
     private PDO $pdo;
 
@@ -195,5 +195,87 @@ class EventRepository
             isset($row['category']) && $row['category'] !== null ? (string) $row['category'] : null,
             (string) ($row['venue_location'] ?? 'Venue to be announced'),
         );
+    }
+    public function getAllEvents() 
+    {
+        $stmt = $this->pdo->prepare(
+            'SELECT e.name as item_name, e.event_id AS item_id, 
+            e.location, e.ticket_amount, e.ticket_price, e.category, COUNT(t.ticket_id) AS sold_tickets 
+            FROM events e
+            LEFT JOIN tickets t ON t.event_id = e.event_id
+            GROUP BY e.event_id'
+            );
+        $stmt->execute();
+        $events = $stmt->fetchAll();
+        return $events;
+    }
+    public function getAllEventsInCategory(string $category) 
+    {
+        $stmt = $this->pdo->prepare('SELECT e.name as item_name, e.event_id AS item_id, 
+            e.location, e.ticket_amount, e.ticket_price, e.category, COUNT(t.ticket_id) AS sold_tickets 
+            FROM events e
+            LEFT JOIN tickets t ON t.event_id = e.event_id
+            WHERE e.category = :category
+            GROUP BY e.event_id');
+        $stmt->execute(['category'=> $category]);
+        $events = $stmt->fetchAll();
+        return $events;
+    }
+
+    public function createSubEvent(string $category, array $postData) {
+        $this->requireAdmin();
+
+        $stmt = $this->pdo->prepare('INSERT INTO events (name, location, start_time, end_time, ticket_price, ticket_amount, description, language, category) 
+        VALUES (:name, :location, :start_time, :end_time, :price, :amount, :description, :language, :category)');
+
+        $stmt->execute(['name' => $postData['item_name'], 
+        'location' => $postData['location'], 
+        'start_time' => $postData['start_time'], 
+        'end_time' => $postData['end_time'], 
+        'price' => $postData['ticket_price'], 
+        'amount' => $postData['ticket_amount'], 
+        'description' => $postData['description'], 
+        'language' => $postData['language'],
+        'category' => $category]);
+        return true;
+    }
+
+    public function getEventForEdit(int $id) {
+        $stmt = $this->pdo->prepare(
+            'SELECT name AS item_name, event_id AS item_id, location, ticket_amount, ticket_price, category, start_time, end_time, description, language
+            FROM events
+            WHERE event_id = :id'
+            );
+        $stmt->execute(['id' => $id]);
+        $event = $stmt->fetch();
+        return $event;
+    }
+
+    public function updateEvent(int $id, array $postData) {
+        $this->requireAdmin();
+
+        $stmt = $this->pdo->prepare('UPDATE events SET name = :name, location = :location, start_time = :start_time, end_time = :end_time, ticket_price = :price, ticket_amount = :amount, description = :description, language = :language, category = :category WHERE event_id = :id');
+
+        $stmt->execute(['name' => $postData['name'], 
+        'location' => $postData['location'], 
+        'start_time' => $postData['start_time'], 
+        'end_time' => $postData['end_time'], 
+        'price' => $postData['ticket_price'], 
+        'amount' => $postData['ticket_amount'], 
+        'description' => $postData['description'], 
+        'language' => $postData['language'],
+        'category' => $postData['category'],
+        'id' => $id]);
+        return true;
+    }
+
+    public function deleteEvent(int $id) {
+        $this->requireAdmin();
+
+        $stmt = $this->pdo->prepare("DELETE FROM events WHERE event_id = :event_id");
+        $stmt->execute([
+            'event_id' => $id
+        ]);
+        return true;
     }
 }
