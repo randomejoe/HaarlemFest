@@ -79,7 +79,9 @@ class PageRepository extends BaseRepository
 
         $page = ['page_id' => $id, 'title' => $pageContent[0]['title'], 'content' => []];
         foreach ($pageContent as $contentItem) {
-            $page['content'][] = PageContent::fromArray($contentItem);
+            if (isset($contentItem['component_name'])) {
+                $page['content'][] = PageContent::fromArray($contentItem);
+            }
         }
 
         $returnPage = Page::fromArray($page);

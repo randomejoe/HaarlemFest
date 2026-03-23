@@ -6,7 +6,7 @@
     <div class='horizontal-center vertical-center'>
         <div class='cms-container'>
             <div class='cms-item-container column'>
-                <form method="POST">
+                <form method="POST" enctype="multipart/form-data">
                     <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars((string) ($csrf_token ?? ''), ENT_QUOTES, 'UTF-8'); ?>">
                     <div class="row">
                         <input type="text" id="name" name="name" class="form-input" value="<?php 

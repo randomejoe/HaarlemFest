@@ -1,4 +1,4 @@
-<div class="cms-item-container vertical-center row">
+<div class="cms-item-container vertical-center row fit-content">
     <div>
         <div class="vertical-center form-input-container">
             <label for="start_time">Start time:</label>
@@ -30,7 +30,7 @@
         </div>
     </div>
 </div>
-<div class="vertical-center form-input-container description-container">
+<div class="vertical-center form-input-container description-container fit-content">
     <label for="description">Description:</label>
     <input type="text" id="description" name="description" class="form-input half-width" value="<?php echo $item->getDescription();?>"> 
 </div>

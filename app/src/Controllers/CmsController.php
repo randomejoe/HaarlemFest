@@ -5,6 +5,7 @@ namespace App\Controllers;
 use App\Services\ContentService;
 use App\Services\PageService;
 use App\Services\EventService;
+use App\Services\LocationService;
 use App\View;
 use App\Models\UserRole;
 use App\Models\CmsType;
@@ -14,12 +15,14 @@ class CmsController
     private PageService $pageService;
     private ContentService $contentService;
     private EventService $eventService;
+    private LocationService $locationService;
 
-    public function __construct(PageService $pageService, ContentService $contentService, EventService $eventService)
+    public function __construct(PageService $pageService, ContentService $contentService, EventService $eventService, LocationService $locationService)
     {
         $this->pageService = $pageService;
         $this->contentService = $contentService;
         $this->eventService = $eventService;
+        $this->locationService = $locationService;
         if (!isset($_SESSION['role'])) {
             header('Location: /');  
         }
@@ -109,8 +112,13 @@ class CmsController
     {
         $type = CmsType::convertToType($type);
         $service = $this->resolveService($type);
-        $success = $service->update($item_id, $_POST);
-
+        if (count($_FILES) > 0) {
+            $success = $service->updateWithImage($item_id, $_POST, $_FILES);
+        }
+        else {
+           $success = $service->update($item_id, $_POST); 
+        }
+        
         if ($success) {
             if ($type == CmsType::Content || isset($_POST['newContent'])) {
                 if ($type == CmsType::Content) {
@@ -139,12 +147,13 @@ class CmsController
         header('Location: ' . $_POST['return_url']);
     }
 
-    private function resolveService(CmsType $type): PageService|ContentService|EventService
+    private function resolveService(CmsType $type): PageService|ContentService|EventService|LocationService
     {
         return match ($type) {
             CmsType::Page => $this->pageService,
             CmsType::Content => $this->contentService,
             CmsType::Event=>$this->eventService,
+            CmsType::Location=>$this->locationService,
             default => throw new \InvalidArgumentException('Unknown CMS type.'),
         };
     }

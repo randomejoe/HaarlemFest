@@ -20,6 +20,7 @@ use App\Repositories\OrderRepository;
 use App\Repositories\PageRepository;
 use App\Repositories\TicketHoldRepository;
 use App\Repositories\UserRepository;
+use App\Repositories\LocationRepository;
 use App\Services\AuthService;
 use App\Services\CaptchaService;
 use App\Services\CheckoutService;
@@ -34,6 +35,7 @@ use App\Services\PaymentGatewayStubService;
 use App\Services\PlannerService;
 use App\Services\TicketDeliveryService;
 use App\Services\TicketPdfService;
+use App\Services\LocationService;
 use PDO;
 use RuntimeException;
 
@@ -93,6 +95,7 @@ class Container
         $this->singleton(OrderRepository::class, fn (self $c): OrderRepository => new OrderRepository($c->pdo()));
         $this->singleton(TicketHoldRepository::class, fn (self $c): TicketHoldRepository => new TicketHoldRepository($c->pdo()));
         $this->singleton(PageRepository::class, fn (self $c): PageRepository => new PageRepository($c->pdo()));
+        $this->singleton(LocationRepository::class, fn (self $c): LocationRepository => new LocationRepository($c->pdo()));
 
         $this->singleton(AuthService::class, static fn (self $c): AuthService => new AuthService());
         $this->singleton(CaptchaService::class, static fn (self $c): CaptchaService => new CaptchaService());
@@ -134,6 +137,9 @@ class Container
         $this->singleton(ContentService::class, fn (self $c): ContentService => new ContentService(
             $c->get(PageRepository::class)
         ));
+        $this->singleton(LocationService::class, fn (self $c): LocationService => new LocationService(
+            $c->get(LocationRepository::class)
+        ));
 
         $this->transient(HomeController::class, static fn (self $c): HomeController => new HomeController());
         $this->transient(HelloController::class, static fn (self $c): HelloController => new HelloController());
@@ -171,7 +177,8 @@ class Container
         $this->transient(CmsController::class, fn (self $c): CmsController => new CmsController(
             $c->get(PageService::class),
             $c->get(ContentService::class),
-            $c->get(EventService::class)
+            $c->get(EventService::class),
+            $c->get(LocationService::class),
         ));
         $this->transient(JazzController::class, fn (self $c): JazzController => new JazzController(
             $c->get(EventRepository::class),

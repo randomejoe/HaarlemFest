@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Repositories\LocationRepository;
 use App\Models\Location;
+use App\Services\ImageUploader;
 
 class LocationService implements CMSService
 {
@@ -20,9 +21,24 @@ class LocationService implements CMSService
     public function isNameEditable(): bool {
         return true;
     }
+    public function updateWithImage(int $id, array $postData, array $fileData): bool
+    {
+        $data = $postData;
+        $data['location_id'] = $id;
+        $image = $_FILES['image'];
+
+        $data['image'] = ImageUploader::handleImageUpload($image);
+
+        $location = Location::fromArray($data);
+        return $this->repository->updateLocation($location);
+    }
+
     public function update(int $id, array $postData): bool
     {
-        return $this->repository->updateLocation($id, $postData);
+        $postData['location_id'] = $id;
+
+        $location = Location::fromArray($postData);
+        return $this->repository->updateLocation($location);
     }
     public function delete(int $id): bool {
         return $this->repository->deleteLocation($id);
@@ -34,7 +50,7 @@ class LocationService implements CMSService
     }
 
     public function create(array $postData) {
-        return $this->pageRepository->createLocation($title, 1);
+        return $this->repository->createLocation($postData);
     }
 
     private function dataToLocationModel(array $data): Location {

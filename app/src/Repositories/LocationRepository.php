@@ -17,40 +17,46 @@ class LocationRepository extends BaseRepository
     public function updateLocation(Location $location) {
         $this->requireAdmin();
 
-        $stmt = $this->pdo->prepare("UPDATE locations SET name = :name WHERE location_id = :id");
+        $stmt = $this->pdo->prepare("UPDATE locations SET name = :name, description = :description, image = :image WHERE location_id = :id");
         $stmt->execute([
-            'id' => $location->id,
-            'name' => $location->name,
+            'id' => $location->getId(),
+            'name' => $location->getName(),
+            'description' => $location->getDescription(),
+            'image' => $location->getImage(),
         ]);
         return true;
     }
     public function getAllLocations(): array 
     {
-        $stmt = $this->pdo->prepare('SELECT name as item_name, location_id AS item_id, description, image  FROM locations');
+        $stmt = $this->pdo->prepare('SELECT name, location_id, description, image FROM locations');
         $stmt->execute();
         $locations = $stmt->fetchAll();
-        return $locations;
+        $returnLocations = [];
+        foreach ($locations as $location) {
+            $returnLocations[] = Location::fromArray($location);
+        }
+        return $returnLocations;
     }
-    public function createPage(string $title, int $isMainEvent): bool 
+    public function createLocation(array $postData): bool 
     {
         $this->requireAdmin();
-        $stmt = $this->pdo->prepare('INSERT INTO pages (title, is_main_event) VALUES (:title, :mainEvent)');
-        $stmt->execute(['title' => $title,
-        'mainEvent' => $isMainEvent]);
+
+        $stmt = $this->pdo->prepare('INSERT INTO locations (name) VALUES (:name)');
+        $stmt->execute(['name' => $postData['item_name']]);
         return true;
     }
-    public function getPageForEdit(int $id)
+    public function getLocationForEdit(int $id)
     {
         $this->requireAdmin();
 
         $stmt = $this->pdo->prepare(
-            "SELECT p.title as item_name, pc.content_id, pc.component_name, pc.data
-            FROM pages p
-            LEFT JOIN page_content pc ON p.page_id = pc.page_id
-            WHERE p.page_id = :page_id"
+            "SELECT name, location_id, description, image
+            FROM locations
+            WHERE location_id = :id"
             );
-        $stmt->execute(['page_id' => $id]);
-        $page = $stmt->fetchAll();
-        return $page;
+        $stmt->execute(['id' => $id]);
+        $location = $stmt->fetch();
+
+        return Location::fromArray($location);
     }
 }

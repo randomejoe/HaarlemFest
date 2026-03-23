@@ -9,6 +9,7 @@ enum CmsType: string
     case Page = 'page';
     case Content = 'content';
     case Event = 'event';
+    case Location = 'location';
     case None = 'none';
 
     public static function convertToType(string $type) {

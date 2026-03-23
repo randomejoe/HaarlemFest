@@ -17,7 +17,7 @@ class PageContent extends CmsItem
         return new self(
             id: (int) ($data['content_id'] ?? 0),
             name: (string) ($data['component_name'] ?? ''),
-            data: (array) (json_decode($data['data'], true) ?? ''),
+            data: (array) (isset($data['data']) ? json_decode($data['data'], true) : []),
         );
     }
 
