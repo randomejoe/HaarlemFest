@@ -42,7 +42,7 @@ class PlannerItem
             quantity:      $quantity,
             isValid:       true,
             invalidReason: null,
-            name:          $event->name(),
+            name:          $event->getName(),
             venue:         $event->venue(),
             time:          $event->formattedPlannerTime(),
             startTime:     $event->startTime(),

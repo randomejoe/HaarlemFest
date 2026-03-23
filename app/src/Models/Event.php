@@ -38,7 +38,7 @@ class Event extends CmsItem
             language: isset($data['language']) ? HistoryTourLanguage::convertToLanguage($data['language']) : null,
             description: isset($data['description']) ? $data['description'] : null,
             category: isset($data['category']) ? $data['category'] : null,
-            location: isset($data['venue']) ? $data['venue'] : null,
+            venue: isset($data['venue']) ? $data['venue'] : null,
         );
     }
 

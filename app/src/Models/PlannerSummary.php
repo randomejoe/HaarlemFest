@@ -67,7 +67,7 @@ class PlannerSummary
 
             $conflictItems[] = [
                 'event_id'   => $eventId,
-                'name'       => $event->name(),
+                'name'       => $event->getName(),
                 'start_time' => $event->startTime(),
                 'end_time'   => $event->endTime(),
             ];

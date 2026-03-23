@@ -140,7 +140,7 @@ final class TicketDeliveryOrchestrator
             'ticket_id' => (int) ($ticket['ticket_id'] ?? 0),
             'event_id' => $eventId,
             'verification_code' => (string) ($ticket['verification_code'] ?? ''),
-            'event_name' => $event->name(),
+            'event_name' => $event->getName(),
             'event_date' => $event->startsAt()->format('D j M Y'),
             'event_time' => $event->formattedTimeRange(),
             'venue' => $event->venue(),

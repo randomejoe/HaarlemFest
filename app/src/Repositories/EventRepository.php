@@ -5,7 +5,6 @@ namespace App\Repositories;
 use App\Models\Event;
 use PDO;
 use RuntimeException;
-use App\Models\Event;
 
 class EventRepository extends BaseRepository
 {
@@ -106,7 +105,7 @@ class EventRepository extends BaseRepository
 
         foreach ($rows as $row) {
             $event = $this->hydrateEvent($row);
-            $byId[$event->id()] = $event;
+            $byId[$event->getId()] = $event;
         }
 
         return $byId;

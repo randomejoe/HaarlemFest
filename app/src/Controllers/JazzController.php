@@ -83,8 +83,8 @@ class JazzController
     private function mapEventForView(Event $event, ?string $availabilityLabel, ?string $status, string $statusClass): array
     {
         return [
-            'event_id' => $event->id(),
-            'name' => $event->name(),
+            'event_id' => $event->getId(),
+            'name' => $event->getName(),
             'time' => $event->formattedTimeRange(),
             'venue' => $event->venue(),
             'description' => $event->description(),

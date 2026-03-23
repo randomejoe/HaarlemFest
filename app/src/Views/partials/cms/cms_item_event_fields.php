@@ -1,6 +1,6 @@
 <div class="row half-width between">
-    <p><?php echo $item->getLocation(); ?></p>
-    <p><?php echo '€' . $item->getTicketPrice(); ?></p>
-    <p><?php echo ($item->getTicketAmount()-$item->getSoldTickets()) . '/' . $item->getTicketAmount(); ?></p>
-    <p><?php echo urldecode($item->getCategory()); ?></p>
+    <p><?php echo $item->location(); ?></p>
+    <p><?php echo '€' . $item->ticketPrice(); ?></p>
+    <p><?php echo ($item->ticketAmount()-$item->getSoldTickets()) . '/' . $item->ticketAmount(); ?></p>
+    <p><?php echo urldecode($item->category()); ?></p>
 </div>
