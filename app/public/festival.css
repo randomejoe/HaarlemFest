@@ -1354,6 +1354,7 @@ h2 {
     padding: 5px 1em;
     border-radius: var(--radius-sm);
     color: var(--history-negative);
+    min-width: fit-content;
 }
 
 .horizontal-center {
