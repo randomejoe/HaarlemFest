@@ -4,7 +4,7 @@ $locations = $locationService->getAll();
 print_r($locations);
 
 foreach ($locations as $index => $location) {
-    require __DIR__ . '/component_partials/history_locations_card_' . ($index % 2 == 0 ? 'left' : 'right') . '.php';
+    require __DIR__ . '/component_partials/history_locations_card.php';
 }
 ?>
  </div>
