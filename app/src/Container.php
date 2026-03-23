@@ -23,16 +23,22 @@ use App\Repositories\UserRepository;
 use App\Services\AuthService;
 use App\Services\CaptchaService;
 use App\Services\CheckoutService;
+use App\Services\CheckoutHoldManager;
+use App\Services\CheckoutValidationService;
 use App\Services\ContentService;
 use App\Services\CsrfService;
+use App\Services\DateTimeFormatter;
 use App\Services\InvoicePdfService;
 use App\Services\Mailer;
 use App\Services\PageService;
 use App\Services\PasswordResetService;
 use App\Services\PaymentGatewayStubService;
+use App\Services\StockReservationService;
 use App\Services\PlannerService;
+use App\Services\TicketDeliveryOrchestrator;
 use App\Services\TicketDeliveryService;
 use App\Services\TicketPdfService;
+use App\Services\PaymentHandoffService;
 use PDO;
 use RuntimeException;
 
@@ -100,23 +106,54 @@ class Container
         $this->singleton(TicketPdfService::class, static fn (self $c): TicketPdfService => new TicketPdfService());
         $this->singleton(InvoicePdfService::class, static fn (self $c): InvoicePdfService => new InvoicePdfService());
         $this->singleton(PaymentGatewayStubService::class, static fn (self $c): PaymentGatewayStubService => new PaymentGatewayStubService());
+        $this->singleton(DateTimeFormatter::class, static fn (self $c): DateTimeFormatter => new DateTimeFormatter());
 
         $this->singleton(PlannerService::class, fn (self $c): PlannerService => new PlannerService(
             $c->get(EventRepository::class)
+        ));
+        $this->singleton(CheckoutValidationService::class, fn (self $c): CheckoutValidationService => new CheckoutValidationService(
+            $c->get(PlannerService::class)
+        ));
+        $this->singleton(StockReservationService::class, fn (self $c): StockReservationService => new StockReservationService(
+            $c->get(EventRepository::class),
+            $c->get(TicketHoldRepository::class),
+            $c->get(DateTimeFormatter::class),
+            $c->pdo()
+        ));
+        $this->singleton(CheckoutHoldManager::class, fn (self $c): CheckoutHoldManager => new CheckoutHoldManager(
+            $c->get(TicketHoldRepository::class),
+            $c->get(CheckoutRepository::class),
+            $c->get(EventRepository::class),
+            $c->get(DateTimeFormatter::class),
+            $c->pdo()
+        ));
+        $this->singleton(PaymentHandoffService::class, fn (self $c): PaymentHandoffService => new PaymentHandoffService(
+            $c->get(PaymentGatewayStubService::class),
+            $c->get(CheckoutRepository::class),
+            $c->get(StockReservationService::class),
+            $c->get(PlannerService::class),
+            $c->pdo()
         ));
         $this->singleton(TicketDeliveryService::class, fn (self $c): TicketDeliveryService => new TicketDeliveryService(
             $c->get(Mailer::class),
             $c->get(TicketPdfService::class),
             $c->get(InvoicePdfService::class)
         ));
+        $this->singleton(TicketDeliveryOrchestrator::class, fn (self $c): TicketDeliveryOrchestrator => new TicketDeliveryOrchestrator(
+            $c->get(TicketDeliveryService::class),
+            $c->get(EventRepository::class),
+            $c->get(DateTimeFormatter::class)
+        ));
         $this->singleton(CheckoutService::class, fn (self $c): CheckoutService => new CheckoutService(
             $c->pdo(),
             $c->get(PlannerService::class),
-            $c->get(EventRepository::class),
             $c->get(CheckoutRepository::class),
-            $c->get(TicketHoldRepository::class),
-            $c->get(PaymentGatewayStubService::class),
-            $c->get(TicketDeliveryService::class)
+            $c->get(CheckoutHoldManager::class),
+            $c->get(DateTimeFormatter::class),
+            $c->get(CheckoutValidationService::class),
+            $c->get(StockReservationService::class),
+            $c->get(PaymentHandoffService::class),
+            $c->get(TicketDeliveryOrchestrator::class)
         ));
         $this->singleton(PasswordResetService::class, fn (self $c): PasswordResetService => new PasswordResetService(
             $c->get(UserRepository::class),

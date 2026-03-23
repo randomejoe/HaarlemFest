@@ -31,17 +31,17 @@ class EventRepository
                 e.ticket_amount,
                 e.description,
                 e.category,
-                COALESCE(NULLIF(e.location, \"\"), v.location) AS venue_location
+                COALESCE(NULLIF(e.location, \'\'), v.location) AS venue_location
             FROM events e
             LEFT JOIN venues v ON v.venue_id = e.venue_id
-            WHERE LOWER(COALESCE(e.category, \"\")) = LOWER(:category)
+            WHERE LOWER(COALESCE(e.category, \'\')) = LOWER(:category)
             ORDER BY e.start_time ASC, e.name ASC'
         );
 
         $stmt->execute(['category' => $category]);
         $rows = $stmt->fetchAll() ?: [];
 
-        return array_map(fn (array $row): Event => $this->hydrateEvent($row), $rows);
+        return array_map(fn(array $row): Event => $this->hydrateEvent($row), $rows);
     }
 
     public function findById(int $eventId): ?Event
@@ -57,7 +57,7 @@ class EventRepository
                 e.ticket_amount,
                 e.description,
                 e.category,
-                COALESCE(NULLIF(e.location, \"\"), v.location) AS venue_location
+                COALESCE(NULLIF(e.location, \'\'), v.location) AS venue_location
             FROM events e
             LEFT JOIN venues v ON v.venue_id = e.venue_id
             WHERE e.event_id = :event_id
@@ -75,7 +75,7 @@ class EventRepository
     public function findByIds(array $eventIds): array
     {
         $ids = array_values(array_unique(array_map('intval', $eventIds)));
-        $ids = array_values(array_filter($ids, static fn (int $id): bool => $id > 0));
+        $ids = array_values(array_filter($ids, static fn(int $id): bool => $id > 0));
 
         if ($ids === []) {
             return [];
@@ -92,7 +92,7 @@ class EventRepository
                 e.ticket_amount,
                 e.description,
                 e.category,
-                COALESCE(NULLIF(e.location, \"\"), v.location) AS venue_location
+                COALESCE(NULLIF(e.location, \'\'), v.location) AS venue_location
             FROM events e
             LEFT JOIN venues v ON v.venue_id = e.venue_id
             WHERE e.event_id IN (' . $placeholders . ')';
@@ -114,7 +114,7 @@ class EventRepository
     public function findStockByIds(array $eventIds): array
     {
         $ids = array_values(array_unique(array_map('intval', $eventIds)));
-        $ids = array_values(array_filter($ids, static fn (int $id): bool => $id > 0));
+        $ids = array_values(array_filter($ids, static fn(int $id): bool => $id > 0));
 
         if ($ids === []) {
             return [];
