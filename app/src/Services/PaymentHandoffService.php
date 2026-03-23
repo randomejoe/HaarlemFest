@@ -24,8 +24,7 @@ final class PaymentHandoffService
         string $plannerToken,
         float $amount,
         string $currency,
-        string $holdExpiresAt,
-        bool $simulateFailure = false
+        string $holdExpiresAt
     ): CheckoutResult {
         $handoff = $this->paymentGateway->createTransaction([
             'checkout_attempt_id' => $attemptId,
@@ -33,7 +32,7 @@ final class PaymentHandoffService
             'planner_token' => $plannerToken,
             'amount' => $amount,
             'currency' => $currency,
-        ], $simulateFailure);
+        ]);
 
         if (!(bool) ($handoff['success'] ?? false)) {
             return $this->handleFailedHandoff($attemptId, $handoff);

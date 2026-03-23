@@ -18,13 +18,13 @@ class CheckoutService
         private PlannerService $planner,
         private CheckoutRepository $checkoutAttempts,
         private CheckoutHoldManager $holdManager,
+        private HoldExpiryEvaluator $expiryEvaluator,
         private DateTimeFormatter $dateTimeFormatter,
         private CheckoutValidationService $validation,
         private StockReservationService $stockReservation,
         private PaymentHandoffService $handoffService,
         private TicketDeliveryOrchestrator $deliveryOrchestrator
-    ) {
-    }
+    ) {}
 
     public function releaseExpiredHolds(): HoldExpiryResult
     {
@@ -33,25 +33,10 @@ class CheckoutService
 
     public function releaseExpiredHoldsIfNeeded(bool $force = false): HoldExpiryResult
     {
-        $result = $this->holdManager->releaseExpiredHoldsIfNeeded($this->planner, $force);
-
-        if ($result->wasExecuted()) {
-            $this->logExpiryCleanup('executed', [
-                'force' => $force,
-                'released_count' => $result->getReleasedCount(),
-                'expired_attempt_count' => count($result->getExpiredAttemptIds()),
-            ]);
-        } else {
-            $this->logExpiryCleanup('skipped', [
-                'force' => $force,
-                'skip_reason' => $result->getSkipReason(),
-            ]);
-        }
-
-        return $result;
+        return $this->holdManager->releaseExpiredHoldsIfNeeded($this->planner, $force);
     }
 
-    public function confirmCheckout(User $user, string $postedIdempotencyKey, bool $simulateFailure = false): CheckoutResult
+    public function confirmCheckout(User $user, string $postedIdempotencyKey): CheckoutResult
     {
         if ($this->planner->isLocked()) {
             return new CheckoutResult(
@@ -85,7 +70,7 @@ class CheckoutService
 
         $checkoutItems = $this->toCheckoutItems($items);
 
-        $result = $this->transaction(function () use ($user, $planner, $items, $checkoutItems, $postedIdempotencyKey, $simulateFailure): CheckoutResult {
+        $result = $this->transaction(function () use ($user, $planner, $items, $checkoutItems, $postedIdempotencyKey): CheckoutResult {
             $pending = $this->createPendingCheckoutAttemptInTransaction(
                 $user,
                 $planner,
@@ -111,8 +96,7 @@ class CheckoutService
                 $this->planner->getPlannerToken(),
                 (float) $planner['total_price_value'],
                 'EUR',
-                $holdExpiresAt,
-                $simulateFailure
+                $holdExpiresAt
             );
 
             if ($result->isSuccess()) {
@@ -165,7 +149,7 @@ class CheckoutService
             $attempt = (array) $attempt;
 
             $holdExpiresAt = (string) ($attempt['hold_expires_at'] ?? '');
-            if ($this->holdManager->isHoldPastGracePeriod($holdExpiresAt)) {
+            if ($this->expiryEvaluator->isPastGracePeriod($holdExpiresAt)) {
                 $this->stockReservation->releaseAndRestoreStock($checkoutAttemptId, 'expired');
                 $this->checkoutAttempts->markExpiredByIds([$checkoutAttemptId]);
 
@@ -360,19 +344,5 @@ class CheckoutService
             'already_processing',
             'Checkout is already being processed. Please wait.'
         );
-    }
-
-    private function logExpiryCleanup(string $event, array $context): void
-    {
-        $parts = [];
-        foreach ($context as $key => $value) {
-            if (is_bool($value)) {
-                $value = $value ? 'true' : 'false';
-            }
-
-            $parts[] = $key . '=' . $value;
-        }
-
-        error_log('expiry_cleanup ' . $event . ' ' . implode(' ', $parts));
     }
 }

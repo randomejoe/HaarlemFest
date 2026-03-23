@@ -73,8 +73,7 @@ class CheckoutController
 
         $result = $this->checkout->confirmCheckout(
             $user,
-            trim($_POST['idempotency_key'] ?? ''),
-            !empty($_POST['simulate_handoff_failure'])
+            trim($_POST['idempotency_key'] ?? '')
         )->toArray();
 
         match ($result['status'] ?? 'unknown') {

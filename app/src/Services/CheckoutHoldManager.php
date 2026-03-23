@@ -13,7 +13,6 @@ use PDO;
 final class CheckoutHoldManager
 {
     private const EXPIRY_CLEANUP_COOLDOWN_SECONDS = 60;
-    private const EXPIRY_GRACE_PERIOD_SECONDS = 30;
     private const HOLD_DURATION_SECONDS = 600;
 
     public function __construct(
@@ -21,9 +20,10 @@ final class CheckoutHoldManager
         private CheckoutRepository $checkoutAttempts,
         private EventRepository $events,
         private DateTimeFormatter $dateTimeFormatter,
+        private HoldExpiryEvaluator $expiryEvaluator,
+        private ExpiryCleanupLogger $logger,
         private PDO $pdo,
-    ) {
-    }
+    ) {}
 
     public function createHoldsForAttempt(
         int $attemptId,
@@ -94,38 +94,25 @@ final class CheckoutHoldManager
     public function releaseExpiredHoldsIfNeeded(PlannerService $planner, bool $force = false): HoldExpiryResult
     {
         if (!$force && !$planner->shouldRunExpiryCleanup(self::EXPIRY_CLEANUP_COOLDOWN_SECONDS)) {
-            $this->logExpiryCleanup('skipped', [
-                'force' => false,
-                'cooldown_seconds' => self::EXPIRY_CLEANUP_COOLDOWN_SECONDS,
-            ]);
-
+            $this->logger->logSkipped($force, 'cooldown', self::EXPIRY_CLEANUP_COOLDOWN_SECONDS);
             return new HoldExpiryResult(0, [], false, 'cooldown');
         }
 
         $result = $this->releaseExpiredHolds();
         $planner->markExpiryCleanupRun();
 
-        $this->logExpiryCleanup('executed', [
-            'force' => $force,
-            'released_count' => $result->getReleasedCount(),
-            'expired_attempt_count' => count($result->getExpiredAttemptIds()),
-        ]);
+        $this->logger->logExecuted(
+            $result->getReleasedCount(),
+            count($result->getExpiredAttemptIds()),
+            $force
+        );
 
         return $result;
     }
 
     public function isHoldPastGracePeriod(string $holdExpiresAt): bool
     {
-        if ($holdExpiresAt === '') {
-            return false;
-        }
-
-        $expiryTimestamp = strtotime($holdExpiresAt);
-        if ($expiryTimestamp === false) {
-            return false;
-        }
-
-        return ($expiryTimestamp + self::EXPIRY_GRACE_PERIOD_SECONDS) <= $this->dateTimeFormatter->currentTimestamp();
+        return $this->expiryEvaluator->isPastGracePeriod($holdExpiresAt);
     }
 
     public function markHoldsAsTransferred(int $attemptId): void
@@ -140,19 +127,4 @@ final class CheckoutHoldManager
             $paidAt ?? $this->dateTimeFormatter->currentDateTime()
         );
     }
-
-    private function logExpiryCleanup(string $event, array $context): void
-    {
-        $parts = [];
-        foreach ($context as $key => $value) {
-            if (is_bool($value)) {
-                $value = $value ? 'true' : 'false';
-            }
-
-            $parts[] = $key . '=' . $value;
-        }
-
-        error_log('expiry_cleanup ' . $event . ' ' . implode(' ', $parts));
-    }
 }
-

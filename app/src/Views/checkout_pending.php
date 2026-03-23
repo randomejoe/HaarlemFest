@@ -76,8 +76,7 @@ $ticketCount = array_sum(array_map(
                                                 type="text"
                                                 name="card_number"
                                                 inputmode="numeric"
-                                                autocomplete="cc-number"
-                                            >
+                                                autocomplete="cc-number">
                                         </div>
 
                                         <div class="col-6">
@@ -88,8 +87,7 @@ $ticketCount = array_sum(array_map(
                                                 type="text"
                                                 name="exp_month"
                                                 inputmode="numeric"
-                                                autocomplete="cc-exp-month"
-                                            >
+                                                autocomplete="cc-exp-month">
                                         </div>
 
                                         <div class="col-6">
@@ -100,8 +98,7 @@ $ticketCount = array_sum(array_map(
                                                 type="text"
                                                 name="exp_year"
                                                 inputmode="numeric"
-                                                autocomplete="cc-exp-year"
-                                            >
+                                                autocomplete="cc-exp-year">
                                         </div>
 
                                         <div class="col-12 col-md-6">
@@ -112,8 +109,7 @@ $ticketCount = array_sum(array_map(
                                                 type="text"
                                                 name="cvc"
                                                 inputmode="numeric"
-                                                autocomplete="cc-csc"
-                                            >
+                                                autocomplete="cc-csc">
                                         </div>
 
                                         <div class="col-12 col-md-6">
@@ -123,8 +119,7 @@ $ticketCount = array_sum(array_map(
                                                 class="form-control"
                                                 type="text"
                                                 name="cardholder_name"
-                                                autocomplete="cc-name"
-                                            >
+                                                autocomplete="cc-name">
                                         </div>
                                     </div>
 
