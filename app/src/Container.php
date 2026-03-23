@@ -145,7 +145,8 @@ class Container
         $this->transient(HelloController::class, static fn (self $c): HelloController => new HelloController());
         $this->transient(PageController::class, fn (self $c): PageController => new PageController(
             $c->get(PageService::class),
-            $c->get(EventService::class)
+            $c->get(EventService::class),
+            $c->get(LocationService::class),
         ));
         $this->transient(CheckoutController::class, fn (self $c): CheckoutController => new CheckoutController(
             $c->get(PlannerService::class),

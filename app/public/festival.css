@@ -1338,6 +1338,23 @@ h2 {
     border-width: 0px;
     color: var(--history-negative);
 }
+.history-location-card {
+    background-color: var(--history-negative);
+    width: 100%;
+    padding: 1em;
+}
+.history-location-card img {
+    height: auto;
+    padding-right: 1em;
+}
+.history-location-card a {
+    height: fit-content;
+    margin-top:auto;
+    background-color: var(--history-secondary);
+    padding: 5px 1em;
+    border-radius: var(--radius-sm);
+    color: var(--history-negative);
+}
 
 .horizontal-center {
     display: flex;

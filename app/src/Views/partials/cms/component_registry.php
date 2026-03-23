@@ -29,6 +29,11 @@ element is only for text elements currently and refers to the element used to wr
         'fields' => [
             ['name'=>'header_text', 'type' => 'text', 'element' => 'h2'],
         ]
+    ],
+    'history_locations' => [
+        'fields' => [
+            ['name' => 'header_text', 'type' => 'text', 'element' => 'h2'],
+        ]
     ]
 ]
 ?>
