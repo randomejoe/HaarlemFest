@@ -12,34 +12,32 @@ use RuntimeException;
 
 class PlannerService
 {
-    private const SESSION_KEY = 'planner';
-    private const TOKEN_KEY = 'planner_token';
-    private const FLASH_KEY = 'planner_flash';
-    private const EXPIRY_CLEANUP_KEY = 'planner_expiry_cleanup';
+    private const LOCK_HOLD_DURATION_SECONDS = 600;
+    private const LOCK_EXPIRY_GRACE_SECONDS = 30;
 
     private EventRepository $events;
+    private SessionManager $session;
 
-    public function __construct(EventRepository $events)
+    public function __construct(EventRepository $events, SessionManager $session)
     {
         $this->events = $events;
-        $this->ensureInitialized();
+        $this->session = $session;
     }
 
     public function getPlannerToken(): string
     {
-        $this->ensureInitialized();
-        return (string) $_SESSION[self::TOKEN_KEY];
+        return $this->session->getPlannerToken();
     }
 
     public function getItems(): array
     {
-        $planner = $this->getPlanner();
+        $planner = $this->session->getPlannerState();
         $items = (array) ($planner['items'] ?? []);
         $filteredItems = $this->filterOutFreeItems($items);
 
         if ($filteredItems !== $items) {
             $planner['items'] = $filteredItems;
-            $this->touchAndPersistPlanner($planner);
+            $this->session->setPlannerState($planner);
         }
 
         return $filteredItems;
@@ -52,30 +50,58 @@ class PlannerService
 
     public function getLockedCheckoutAttemptId(): ?int
     {
-        $planner = $this->getPlanner();
+        $planner = $this->session->getPlannerState();
         $attemptId = $planner['locked_checkout_attempt_id'];
 
         if ($attemptId === null) {
             return null;
         }
 
-        return (int) $attemptId > 0 ? (int) $attemptId : null;
+        $attemptIdInt = (int) $attemptId;
+        if ($attemptIdInt <= 0) {
+            return null;
+        }
+
+        $expiresAtUnix = $this->getLockedCheckoutExpiresAtUnix($planner);
+        if ($expiresAtUnix !== null && $expiresAtUnix <= time()) {
+            $this->unlock();
+            return null;
+        }
+
+        return $attemptIdInt;
     }
 
-    public function lock(int $checkoutAttemptId): void
+    public function lock(int $checkoutAttemptId, ?string $holdExpiresAt = null): void
     {
         $this->assertCheckoutAttemptId($checkoutAttemptId);
 
-        $planner = $this->getPlanner();
+        $planner = $this->session->getPlannerState();
         $planner['locked_checkout_attempt_id'] = $checkoutAttemptId;
+        $planner['locked_checkout_expires_at'] = $this->computeLockExpiresAtUnix($holdExpiresAt);
         $this->touchAndPersistPlanner($planner);
     }
 
     public function unlock(): void
     {
-        $planner = $this->getPlanner();
+        $planner = $this->session->getPlannerState();
         $planner['locked_checkout_attempt_id'] = null;
+        $planner['locked_checkout_expires_at'] = null;
         $this->touchAndPersistPlanner($planner);
+    }
+
+    public function unlockIfAttemptId(int $checkoutAttemptId): bool
+    {
+        $lockedAttemptId = $this->getLockedCheckoutAttemptId();
+        if ($lockedAttemptId === null) {
+            return false;
+        }
+
+        if ($lockedAttemptId !== $checkoutAttemptId) {
+            return false;
+        }
+
+        $this->unlock();
+        return true;
     }
 
     public function unlockIfExpired(array $expiredAttemptIds): bool
@@ -102,7 +128,7 @@ class PlannerService
 
         $this->assertEventCanBePlanned($eventId);
 
-        $planner = $this->getPlanner();
+        $planner = $this->session->getPlannerState();
         $current = (int) ($planner['items'][$eventId] ?? 0);
         $planner['items'][$eventId] = $current + $quantity;
         $this->touchAndPersistPlanner($planner);
@@ -114,7 +140,7 @@ class PlannerService
         $this->assertQuantity($quantity);
         $this->assertUnlocked();
 
-        $planner = $this->getPlanner();
+        $planner = $this->session->getPlannerState();
 
         if (!isset($planner['items'][$eventId])) {
             throw new RuntimeException('This event is not in your planner.');
@@ -131,7 +157,7 @@ class PlannerService
         $this->assertEventId($eventId);
         $this->assertUnlocked();
 
-        $planner = $this->getPlanner();
+        $planner = $this->session->getPlannerState();
         unset($planner['items'][$eventId]);
         $this->touchAndPersistPlanner($planner);
     }
@@ -140,72 +166,48 @@ class PlannerService
     {
         $this->assertUnlocked();
 
-        $planner = $this->getPlanner();
+        $planner = $this->session->getPlannerState();
         $planner['items'] = [];
         $this->touchAndPersistPlanner($planner);
     }
 
     public function getIdempotencyKey(): string
     {
-        $planner = $this->getPlanner();
+        $planner = $this->session->getPlannerState();
         return (string) $planner['idempotency_key'];
     }
 
     public function rotateIdempotencyKey(): string
     {
-        $planner = $this->getPlanner();
-        $planner['idempotency_key'] = $this->generateToken();
+        $planner = $this->session->getPlannerState();
+        $planner['idempotency_key'] = $this->session->generateToken();
         $this->touchAndPersistPlanner($planner);
         return $planner['idempotency_key'];
     }
 
     public function shouldRunExpiryCleanup(int $cooldownSeconds): bool
     {
-        if ($cooldownSeconds <= 0) {
-            return true;
-        }
-
-        $lastRunAt = $this->getLastExpiryCleanupRunAt();
-        if ($lastRunAt === null) {
-            return true;
-        }
-
-        return ($lastRunAt + $cooldownSeconds) <= time();
+        return $this->session->shouldRunExpiryCleanup($cooldownSeconds);
     }
 
     public function markExpiryCleanupRun(?int $timestamp = null): void
     {
-        $_SESSION[self::EXPIRY_CLEANUP_KEY] = [
-            'last_run_at' => $timestamp ?? time(),
-        ];
+        $this->session->markExpiryCleanupRun($timestamp);
     }
 
     public function resetExpiryCleanupRun(): void
     {
-        unset($_SESSION[self::EXPIRY_CLEANUP_KEY]);
+        $this->session->resetExpiryCleanupRun();
     }
 
     public function setFlash(string $type, string $message): void
     {
-        $_SESSION[self::FLASH_KEY] = [
-            'type' => $type,
-            'message' => $message,
-        ];
+        $this->session->setFlash($type, $message);
     }
 
     public function consumeFlash(): ?array
     {
-        if (!isset($_SESSION[self::FLASH_KEY]) || !is_array($_SESSION[self::FLASH_KEY])) {
-            return null;
-        }
-
-        $flash = $_SESSION[self::FLASH_KEY];
-        unset($_SESSION[self::FLASH_KEY]);
-
-        return [
-            'type' => (string) ($flash['type'] ?? 'info'),
-            'message' => (string) ($flash['message'] ?? ''),
-        ];
+        return $this->session->consumeFlash();
     }
 
     public function getDetailedPlanner(): array
@@ -240,82 +242,58 @@ class PlannerService
         ];
     }
 
-    private function getPlanner(): array
-    {
-        $this->ensureInitialized();
-
-        /** @var array<string, mixed> $planner */
-        $planner = $_SESSION[self::SESSION_KEY];
-        return $planner;
-    }
-
-    private function persistPlanner(array $planner): void
-    {
-        $_SESSION[self::SESSION_KEY] = [
-            'items' => $this->normalizeItems((array) ($planner['items'] ?? [])),
-            'locked_checkout_attempt_id' => $planner['locked_checkout_attempt_id'] ?? null,
-            'idempotency_key' => (string) ($planner['idempotency_key'] ?? $this->generateToken()),
-            'updated_at' => (int) ($planner['updated_at'] ?? time()),
-        ];
-    }
-
-    private function ensureInitialized(): void
-    {
-        if (!isset($_SESSION[self::TOKEN_KEY]) || !is_string($_SESSION[self::TOKEN_KEY]) || $_SESSION[self::TOKEN_KEY] === '') {
-            $_SESSION[self::TOKEN_KEY] = $this->generateToken();
-        }
-
-        if (!isset($_SESSION[self::SESSION_KEY]) || !is_array($_SESSION[self::SESSION_KEY])) {
-            $_SESSION[self::SESSION_KEY] = $this->defaultPlanner();
-            return;
-        }
-
-        $planner = $_SESSION[self::SESSION_KEY];
-        $planner['items'] = $this->normalizeItems((array) ($planner['items'] ?? []));
-
-        if (!array_key_exists('locked_checkout_attempt_id', $planner)) {
-            $planner['locked_checkout_attempt_id'] = null;
-        }
-
-        if (!isset($planner['idempotency_key']) || !is_string($planner['idempotency_key']) || $planner['idempotency_key'] === '') {
-            $planner['idempotency_key'] = $this->generateToken();
-        }
-
-        $planner['updated_at'] = (int) ($planner['updated_at'] ?? time());
-
-        $_SESSION[self::SESSION_KEY] = $planner;
-    }
-
-    private function defaultPlanner(): array
-    {
-        return [
-            'items' => [],
-            'locked_checkout_attempt_id' => null,
-            'idempotency_key' => $this->generateToken(),
-            'updated_at' => time(),
-        ];
-    }
-
-    private function generateToken(): string
-    {
-        return bin2hex(random_bytes(32));
-    }
-
-    private function getLastExpiryCleanupRunAt(): ?int
-    {
-        $state = $_SESSION[self::EXPIRY_CLEANUP_KEY] ?? null;
-        if (!is_array($state)) {
-            return null;
-        }
-
-        $lastRunAt = (int) ($state['last_run_at'] ?? 0);
-        return $lastRunAt > 0 ? $lastRunAt : null;
-    }
-
     private function touchAndPersistPlanner(array $planner): void
     {
         $planner['updated_at'] = time();
-        $this->persistPlanner($planner);
+        $this->session->setPlannerState($planner);
+    }
+
+    private function computeLockExpiresAtUnix(?string $holdExpiresAt): int
+    {
+        if ($holdExpiresAt !== null) {
+            $holdExpiresAt = trim($holdExpiresAt);
+        }
+
+        if ($holdExpiresAt !== null && $holdExpiresAt !== '') {
+            $expiryTimestamp = strtotime($holdExpiresAt);
+            if ($expiryTimestamp !== false && $expiryTimestamp > 0) {
+                return $expiryTimestamp + self::LOCK_EXPIRY_GRACE_SECONDS;
+            }
+        }
+
+        // Fallback: if we don't have the checkout hold expiry, approximate using
+        // the hold duration used elsewhere in the checkout flow.
+        return time() + (self::LOCK_HOLD_DURATION_SECONDS + self::LOCK_EXPIRY_GRACE_SECONDS);
+    }
+
+    private function getLockedCheckoutExpiresAtUnix(array $planner): ?int
+    {
+        $expiresAt = $planner['locked_checkout_expires_at'] ?? null;
+        if ($expiresAt === null) {
+            return null;
+        }
+
+        if (is_int($expiresAt)) {
+            return $expiresAt > 0 ? $expiresAt : null;
+        }
+
+        if (is_string($expiresAt) && $expiresAt !== '' && ctype_digit($expiresAt)) {
+            $expiresAtInt = (int) $expiresAt;
+            return $expiresAtInt > 0 ? $expiresAtInt : null;
+        }
+
+        // Fallback: if a legacy planner lock doesn't have `locked_checkout_expires_at`,
+        // derive an expiry timestamp based on the last planner touch time.
+        if (!isset($planner['updated_at'])) {
+            return null;
+        }
+
+        $updatedAt = (int) $planner['updated_at'];
+        if ($updatedAt <= 0) {
+            return null;
+        }
+
+        return $updatedAt + (self::LOCK_HOLD_DURATION_SECONDS + self::LOCK_EXPIRY_GRACE_SECONDS);
     }
 
     private function assertCheckoutAttemptId(int $checkoutAttemptId): void

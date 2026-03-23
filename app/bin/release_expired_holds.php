@@ -13,7 +13,8 @@ if (session_status() !== PHP_SESSION_ACTIVE) {
 
 /** @var CheckoutService $checkout */
 $checkout = (new Container())->get(CheckoutService::class);
-$result = $checkout->releaseExpiredHolds();
+$resultObject = $checkout->releaseExpiredHolds();
+$result = $resultObject->toArray();
 
 fwrite(STDOUT, json_encode([
     'released_count' => (int) ($result['released_count'] ?? 0),
