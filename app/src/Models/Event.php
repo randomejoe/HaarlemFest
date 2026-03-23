@@ -1,6 +1,8 @@
 <?php
 
 namespace App\Models;
+
+use DateTimeImmutable;
 use App\Models\CmsItem;
 use App\Models\HistoryTourLanguage;
 
@@ -9,15 +11,16 @@ class Event extends CmsItem
     public function __construct(
         private int $id,
         private string $name,
-        private string $location,
-        private \DateTimeImmutable $start_time,
-        private \DateTimeImmutable $end_time,
-        private int $ticket_price,
-        private int $ticket_amount,
-        private ?int $sold_tickets,
+        private ?string $location,
+        private string $startTime,
+        private string $endTime,
+        private float $ticketPrice,
+        private ?int $ticketAmount,
+        private ?int $soldTickets,
         private ?HistoryTourLanguage $language,
         private ?string $description,
-        private string $category,
+        private ?string $category,
+        private ?string $venue,
     ) {
     }
 
@@ -26,52 +29,67 @@ class Event extends CmsItem
         return new self(
             id: (int) ($data['event_id'] ?? 0),
             name: (string) ($data['name'] ?? ''),
-            location: (string) ($data['location'] ?? ''),
-            start_time: (new \DateTimeImmutable($data['start_time'])),
-            end_time: (new \DateTimeImmutable($data['end_time'])),
-            ticket_price: (int) ($data['ticket_price']),
-            ticket_amount: (int) ($data['ticket_amount']),
-            sold_tickets: isset($data['sold_tickets']) ? $data['sold_tickets'] : null,
+            location: isset($data['location']) ? $data['location'] : null,
+            startTime: (string) ($data['start_time']),
+            endTime: (string) ($data['end_time']),
+            ticketPrice: (int) ($data['ticket_price']),
+            ticketAmount: isset($data['ticket_amount']) ? $data['ticket_amount'] : null,
+            soldTickets: isset($data['sold_tickets']) ? $data['sold_tickets'] : null,
             language: isset($data['language']) ? HistoryTourLanguage::convertToLanguage($data['language']) : null,
             description: isset($data['description']) ? $data['description'] : null,
-            category: (string) ($data['category'] ?? ''),
+            category: isset($data['category']) ? $data['category'] : null,
+            venue: isset($data['venue']) ? $data['venue'] : null,
         );
     }
 
-    public function getId(): int {
+    public function getId(): int
+    {
         return $this->id;
     }
-    public function getName(): string {
+
+    public function getName(): string
+    {
         return $this->name;
     }
-    public function getLocation(): string
+
+    public function location(): ?string
     {
         return $this->location;
     }
 
-    public function getStartTime(): \DateTimeImmutable
+    public function startTime(): string
     {
-        return $this->start_time;
+        return $this->startTime;
     }
 
-    public function getEndTime(): \DateTimeImmutable
+    public function endTime(): string
     {
-        return $this->end_time;
+        return $this->endTime;
     }
 
-    public function getTicketPrice(): int
+    public function startsAt(): DateTimeImmutable
     {
-        return $this->ticket_price;
+        return new DateTimeImmutable($this->startTime);
     }
 
-    public function getTicketAmount(): int
+    public function endsAt(): DateTimeImmutable
     {
-        return $this->ticket_amount;
+        return new DateTimeImmutable($this->endTime);
+    }
+
+    public function ticketPrice(): float
+    {
+        return $this->ticketPrice;
+    }
+
+    public function ticketAmount(): ?int
+    {
+        return $this->ticketAmount;
     }
 
     public function getSoldTickets(): ?int
     {
-        return $this->sold_tickets;
+        return $this->soldTickets;
     }
 
     public function getLanguage(): ?HistoryTourLanguage
@@ -79,13 +97,57 @@ class Event extends CmsItem
         return $this->language;
     }
 
-    public function getDescription(): ?string
+    public function description(): ?string
     {
         return $this->description;
     }
 
-    public function getCategory(): string
+    public function category(): ?string
     {
         return $this->category;
+    }
+
+    public function venue(): ?string
+    {
+        return $this->venue;
+    }
+
+    public function hasTrackedStock(): bool
+    {
+        return $this->ticketAmount !== null;
+    }
+
+    public function seatCount(): ?int
+    {
+        if ($this->ticketAmount === null) {
+            return null;
+        }
+
+        return max(0, $this->ticketAmount);
+    }
+
+    public function isFree(): bool
+    {
+        return $this->ticketPrice <= 0.0;
+    }
+
+    public function isSoldOut(): bool
+    {
+        return $this->hasTrackedStock() && $this->seatCount() <= 0;
+    }
+
+    public function canBePlanned(): bool
+    {
+        return !$this->isFree() && (!$this->hasTrackedStock() || !$this->isSoldOut());
+    }
+
+    public function formattedTimeRange(string $format = 'H:i'): string
+    {
+        return $this->startsAt()->format($format) . ' - ' . $this->endsAt()->format($format);
+    }
+
+    public function formattedPlannerTime(): string
+    {
+        return $this->startsAt()->format('D j M H:i') . ' - ' . $this->endsAt()->format('H:i');
     }
 }

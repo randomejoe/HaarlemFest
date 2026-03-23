@@ -2,6 +2,8 @@
 
 namespace App\Repositories;
 
+use App\Models\OrderSummary;
+use App\Models\PurchasedTicket;
 use DateTimeImmutable;
 use PDO;
 
@@ -106,9 +108,11 @@ class OrderRepository
 
         $result = [];
         foreach ($orders as $order) {
-            $order['items'] = array_values($order['items_map']);
-            unset($order['items_map']);
-            $result[] = $order;
+            $purchasedTickets = array_map(
+                static fn(array $item): PurchasedTicket => PurchasedTicket::fromAggregated($item),
+                array_values($order['items_map'])
+            );
+            $result[] = OrderSummary::fromOrderData($order, $purchasedTickets)->toArray();
         }
 
         return $result;

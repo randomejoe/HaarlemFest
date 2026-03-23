@@ -2,10 +2,10 @@
 
 namespace App\Controllers;
 
+use App\Models\Event;
 use App\Repositories\EventRepository;
 use App\Services\PlannerService;
 use App\View;
-use DateTimeImmutable;
 
 class JazzController
 {
@@ -20,23 +20,18 @@ class JazzController
 
     public function showProgram(): void
     {
-        $rows = $this->events->findByCategory('jazz');
+        $events = $this->events->findByCategory('jazz');
         $programByDay = [];
 
-        foreach ($rows as $row) {
-            $startsAt = new DateTimeImmutable((string) $row['start_time']);
-            $endsAt = new DateTimeImmutable((string) $row['end_time']);
-            $dayKey = $startsAt->format('Y-m-d');
-            $hasTrackedStock = $row['ticket_amount'] !== null;
-            $seatCount = $hasTrackedStock ? max(0, (int) $row['ticket_amount']) : null;
-            $price = isset($row['ticket_price']) ? (float) $row['ticket_price'] : 0.0;
-            $isFree = $price <= 0.0;
+        foreach ($events as $event) {
+            $dayKey = $event->startsAt()->format('Y-m-d');
+            $seatCount = $event->seatCount();
             $availabilityLabel = null;
             $status = null;
             $statusClass = '';
 
-            if ($hasTrackedStock) {
-                if ($seatCount > 0) {
+            if ($event->hasTrackedStock()) {
+                if (($seatCount ?? 0) > 0) {
                     $availabilityLabel = sprintf(
                         '%d %s available',
                         $seatCount,
@@ -52,26 +47,12 @@ class JazzController
                 $programByDay[$dayKey] = [];
             }
 
-            $programByDay[$dayKey][] = [
-                'event_id' => (int) $row['event_id'],
-                'name' => (string) $row['name'],
-                'time' => $startsAt->format('H:i') . ' - ' . $endsAt->format('H:i'),
-                'venue' => (string) ($row['venue_location'] ?? 'Venue to be announced'),
-                'description' => (string) ($row['description'] ?? ''),
-                'availability_label' => $availabilityLabel,
-                'seat_count' => $seatCount,
-                'status' => $status,
-                'status_class' => $statusClass,
-                'is_free' => $isFree,
-                'can_add_to_planner' => !$isFree && (!$hasTrackedStock || $seatCount > 0),
-                'price_value' => $price,
-                'price' => number_format($price, 2),
-            ];
+            $programByDay[$dayKey][] = $this->mapEventForView($event, $availabilityLabel, $status, $statusClass);
         }
 
         $days = [];
         foreach (array_keys($programByDay) as $dayKey) {
-            $day = new DateTimeImmutable($dayKey);
+            $day = new \DateTimeImmutable($dayKey);
             $days[] = [
                 'key' => $dayKey,
                 'label_day' => strtoupper($day->format('D')),
@@ -97,5 +78,24 @@ class JazzController
             'planner_locked' => (bool) $plannerDetails['is_locked'],
             'planner_flash' => $plannerFlash,
         ]);
+    }
+
+    private function mapEventForView(Event $event, ?string $availabilityLabel, ?string $status, string $statusClass): array
+    {
+        return [
+            'event_id' => $event->getId(),
+            'name' => $event->getName(),
+            'time' => $event->formattedTimeRange(),
+            'venue' => $event->venue(),
+            'description' => $event->description(),
+            'availability_label' => $availabilityLabel,
+            'seat_count' => $event->seatCount(),
+            'status' => $status,
+            'status_class' => $statusClass,
+            'is_free' => $event->isFree(),
+            'can_add_to_planner' => $event->canBePlanned(),
+            'price_value' => $event->ticketPrice(),
+            'price' => number_format($event->ticketPrice(), 2),
+        ];
     }
 }

@@ -2,9 +2,9 @@
 
 namespace App\Repositories;
 
+use App\Models\Event;
 use PDO;
 use RuntimeException;
-use App\Models\Event;
 
 class EventRepository extends BaseRepository
 {
@@ -15,6 +15,9 @@ class EventRepository extends BaseRepository
         $this->pdo = $pdo;
     }
 
+    /**
+     * @return Event[]
+     */
     public function findByCategory(string $category): array
     {
         $stmt = $this->pdo->prepare(
@@ -27,6 +30,7 @@ class EventRepository extends BaseRepository
                 e.ticket_price,
                 e.ticket_amount,
                 e.description,
+                e.category,
                 COALESCE(NULLIF(e.location, \'\'), v.location) AS venue_location
             FROM events e
             LEFT JOIN venues v ON v.venue_id = e.venue_id
@@ -35,10 +39,12 @@ class EventRepository extends BaseRepository
         );
 
         $stmt->execute(['category' => $category]);
-        return $stmt->fetchAll() ?: [];
+        $rows = $stmt->fetchAll() ?: [];
+
+        return array_map(fn(array $row): Event => $this->hydrateEvent($row), $rows);
     }
 
-    public function findById(int $eventId): ?array
+    public function findById(int $eventId): ?Event
     {
         $stmt = $this->pdo->prepare(
             'SELECT
@@ -60,13 +66,16 @@ class EventRepository extends BaseRepository
 
         $stmt->execute(['event_id' => $eventId]);
         $row = $stmt->fetch();
-        return $row ?: null;
+        return $row ? $this->hydrateEvent($row) : null;
     }
 
+    /**
+     * @return array<int, Event>
+     */
     public function findByIds(array $eventIds): array
     {
         $ids = array_values(array_unique(array_map('intval', $eventIds)));
-        $ids = array_values(array_filter($ids, static fn (int $id): bool => $id > 0));
+        $ids = array_values(array_filter($ids, static fn(int $id): bool => $id > 0));
 
         if ($ids === []) {
             return [];
@@ -95,7 +104,8 @@ class EventRepository extends BaseRepository
         $byId = [];
 
         foreach ($rows as $row) {
-            $byId[(int) $row['event_id']] = $row;
+            $event = $this->hydrateEvent($row);
+            $byId[$event->getId()] = $event;
         }
 
         return $byId;
@@ -104,7 +114,7 @@ class EventRepository extends BaseRepository
     public function findStockByIds(array $eventIds): array
     {
         $ids = array_values(array_unique(array_map('intval', $eventIds)));
-        $ids = array_values(array_filter($ids, static fn (int $id): bool => $id > 0));
+        $ids = array_values(array_filter($ids, static fn(int $id): bool => $id > 0));
 
         if ($ids === []) {
             return [];
@@ -169,6 +179,22 @@ class EventRepository extends BaseRepository
             'event_id' => $eventId,
             'quantity' => $quantity,
         ]);
+    }
+
+    private function hydrateEvent(array $row): Event
+    {
+        return new Event(
+            (int) ($row['event_id'] ?? 0),
+            (string) ($row['name'] ?? ''),
+            isset($row['location']) ? (string) $row['location'] : null,
+            (string) ($row['start_time'] ?? ''),
+            (string) ($row['end_time'] ?? ''),
+            isset($row['ticket_price']) ? (float) $row['ticket_price'] : 0.0,
+            isset($row['ticket_amount']) ? ($row['ticket_amount'] !== null ? (int) $row['ticket_amount'] : null) : null,
+            (string) ($row['description'] ?? ''),
+            isset($row['category']) && $row['category'] !== null ? (string) $row['category'] : null,
+            (string) ($row['venue_location'] ?? 'Venue to be announced'),
+        );
     }
     public function getAllEvents(): array 
     {

@@ -3,7 +3,7 @@
 /**
  * This is the central route handler of the application.
  * It uses FastRoute to map URLs to controller methods.
- * 
+ *
  * See the documentation for FastRoute for more information: https://github.com/nikic/FastRoute
  */
 
@@ -40,7 +40,6 @@ $dispatcher = simpleDispatcher(function (RouteCollector $r) {
     $r->addRoute('POST', '/checkout/confirm', ['App\Controllers\CheckoutController', 'confirm']);
     $r->addRoute('GET', '/checkout/pending/{checkoutId}', ['App\Controllers\CheckoutController', 'pending']);
     $r->addRoute('POST', '/checkout/pending/{checkoutId}/confirm', ['App\Controllers\CheckoutController', 'confirmPendingPayment']);
-    $r->addRoute('GET', '/hello/{name}', ['App\Controllers\HelloController', 'greet']);
     $r->addRoute('GET', '/register', ['App\Controllers\AuthController', 'showRegister']);
     $r->addRoute('POST', '/register', ['App\Controllers\AuthController', 'register']);
     $r->addRoute('GET', '/login', ['App\Controllers\AuthController', 'showLogin']);
@@ -92,12 +91,10 @@ switch ($routeInfo[0]) {
     case FastRoute\Dispatcher::FOUND:
         /**
          * $routeInfo contains the data about the matched route.
-         * 
+         *
          * $routeInfo[1] is the whatever we define as the third argument the `$r->addRoute` method.
-         *  For instance for: `$r->addRoute('GET', '/hello/{name}', ['App\Controllers\HelloController', 'greet']);`
-         *  $routeInfo[1] will be `['App\Controllers\HelloController', 'greet']`
-         * 
-         * Hint: we can use class strings like `App\Controllers\HelloController` to create new instances of that class.
+         *
+         * Hint: we can use class strings to create new instances of that class.
          * Hint: in PHP we can use a string to call a class method dynamically, like this: `$instance->$methodName($args);`
          */
 
@@ -119,4 +116,3 @@ switch ($routeInfo[0]) {
 
         break;
 }
-?>
