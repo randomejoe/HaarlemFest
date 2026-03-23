@@ -59,4 +59,13 @@ class LocationRepository extends BaseRepository
 
         return Location::fromArray($location);
     }
+    public function deleteLocation(int $locationId) {
+        $this->requireAdmin();
+
+        $stmt = $this->pdo->prepare("DELETE FROM locations WHERE location_id = :location_id");
+        $stmt->execute([
+            'location_id' => $locationId
+        ]);
+        return true;
+    }
 }
