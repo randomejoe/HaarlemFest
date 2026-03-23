@@ -1,1 +1,1 @@
-<h2 class="wysiwyg"><?php echo $data['title_text'] ?? '' ?></h2>
+<h1 class="wysiwyg"><?php echo $data['text'] ?? '' ?></h1>

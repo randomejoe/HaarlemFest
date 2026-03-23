@@ -9,6 +9,9 @@
     <a href="/cms/events" class='navItem'>
         <p>Events</p>
     </a>
+    <a href="/cms/locations" class='navItem'>
+        <p>Locations</p>
+    </a>
     <a href="/cms/tickets" class='navItem'>
         <p>Tickets</p>
     </a>

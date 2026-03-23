@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Repositories\PageRepository;
+use App\Services\ImageUploader;
 
 class ContentService implements CMSService
 {
@@ -23,6 +24,17 @@ class ContentService implements CMSService
         return $this->repository->getContentPageId($id)['page_id'];
     }
 
+    public function updateWithImage(int $id, array $postData, array $fileData): bool
+    {
+        $data = $postData;
+        $data['id'] = $id;
+        foreach ($fileData as $field => $file) {
+            $filename = ImageUploader::handleImageUpload($file);
+            $data[$field] = $filename;
+        }
+
+        return $this->repository->updateContentItem($id, $data);
+    }
     public function update(int $id, array $postData): bool
     {
         return $this->repository->updateContentItem($id, $postData);

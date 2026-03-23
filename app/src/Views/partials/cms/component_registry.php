@@ -16,7 +16,18 @@ element is only for text elements currently and refers to the element used to wr
     ],
     'title' => [
         'fields' => [
-            ['name'=>'title_text', 'type' => 'text', 'element' => 'h2']
+            ['name'=>'text', 'type' => 'text', 'element' => 'h1']
+        ]
+    ],
+    'paragraph' => [
+        'fields' => [
+            ['name'=>'header_text', 'type' => 'text', 'element' => 'h2'],
+            ['name'=>'paragraph_text', 'type' => 'text', 'element' => 'p']
+        ]
+    ],
+    'history_schedule' => [
+        'fields' => [
+            ['name'=>'header_text', 'type' => 'text', 'element' => 'h2'],
         ]
     ]
 ]

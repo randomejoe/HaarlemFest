@@ -3,8 +3,10 @@
 namespace App\Models;
 
 use DateTimeImmutable;
+use App\Models\CmsItem;
+use App\Models\HistoryTourLanguage;
 
-class Event
+class Event extends CmsItem
 {
     public function __construct(
         private int $id,
@@ -14,18 +16,38 @@ class Event
         private string $endTime,
         private float $ticketPrice,
         private ?int $ticketAmount,
-        private string $description,
+        private ?int $soldTickets,
+        private ?HistoryTourLanguage $language,
+        private ?string $description,
         private ?string $category,
-        private string $venue,
+        private ?string $venue,
     ) {
     }
 
-    public function id(): int
+    public static function fromArray(array $data): self
+    {
+        return new self(
+            id: (int) ($data['event_id'] ?? 0),
+            name: (string) ($data['name'] ?? ''),
+            location: isset($data['location']) ? $data['location'] : null,
+            startTime: (string) ($data['start_time']),
+            endTime: (string) ($data['end_time']),
+            ticketPrice: (int) ($data['ticket_price']),
+            ticketAmount: isset($data['ticket_amount']) ? $data['ticket_amount'] : null,
+            soldTickets: isset($data['sold_tickets']) ? $data['sold_tickets'] : null,
+            language: isset($data['language']) ? HistoryTourLanguage::convertToLanguage($data['language']) : null,
+            description: isset($data['description']) ? $data['description'] : null,
+            category: isset($data['category']) ? $data['category'] : null,
+            location: isset($data['venue']) ? $data['venue'] : null,
+        );
+    }
+
+    public function getId(): int
     {
         return $this->id;
     }
 
-    public function name(): string
+    public function getName(): string
     {
         return $this->name;
     }
@@ -65,7 +87,17 @@ class Event
         return $this->ticketAmount;
     }
 
-    public function description(): string
+    public function getSoldTickets(): ?int
+    {
+        return $this->soldTickets;
+    }
+
+    public function getLanguage(): ?HistoryTourLanguage
+    {
+        return $this->language;
+    }
+
+    public function description(): ?string
     {
         return $this->description;
     }
@@ -75,7 +107,7 @@ class Event
         return $this->category;
     }
 
-    public function venue(): string
+    public function venue(): ?string
     {
         return $this->venue;
     }

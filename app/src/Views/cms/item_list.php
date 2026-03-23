@@ -98,8 +98,6 @@
             <?php 
             $itemType = $type->value;
             foreach ($items as $item) {
-                $itemName = $item['item_name'];
-                $itemId = $item['item_id'];
                 if ($type == CmsType::Event) {
                     $extraFields = 'cms_item_event_fields.php';
                 }

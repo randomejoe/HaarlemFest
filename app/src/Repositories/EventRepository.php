@@ -5,6 +5,7 @@ namespace App\Repositories;
 use App\Models\Event;
 use PDO;
 use RuntimeException;
+use App\Models\Event;
 
 class EventRepository extends BaseRepository
 {
@@ -196,30 +197,39 @@ class EventRepository extends BaseRepository
             (string) ($row['venue_location'] ?? 'Venue to be announced'),
         );
     }
-    public function getAllEvents() 
+    public function getAllEvents(): array 
     {
         $stmt = $this->pdo->prepare(
-            'SELECT e.name as item_name, e.event_id AS item_id, 
-            e.location, e.ticket_amount, e.ticket_price, e.category, COUNT(t.ticket_id) AS sold_tickets 
+            'SELECT e.name, e.event_id, 
+            e.location, e.ticket_amount, e.ticket_price, e.category, COUNT(t.ticket_id) AS sold_tickets , start_time, end_time
             FROM events e
             LEFT JOIN tickets t ON t.event_id = e.event_id
             GROUP BY e.event_id'
             );
         $stmt->execute();
         $events = $stmt->fetchAll();
-        return $events;
+        $returnEvents = [];
+        foreach ($events as $event) {
+            $returnEvents[] = Event::fromArray($event);
+        }
+        return $returnEvents;
     }
-    public function getAllEventsInCategory(string $category) 
+    public function getAllEventsInCategory(string $category): array 
     {
         $stmt = $this->pdo->prepare('SELECT e.name as item_name, e.event_id AS item_id, 
-            e.location, e.ticket_amount, e.ticket_price, e.category, COUNT(t.ticket_id) AS sold_tickets 
+            e.location, e.ticket_amount, e.ticket_price, e.category, COUNT(t.ticket_id) AS sold_tickets, e.language, e.description, e.start_time, e.end_time 
             FROM events e
             LEFT JOIN tickets t ON t.event_id = e.event_id
             WHERE e.category = :category
             GROUP BY e.event_id');
         $stmt->execute(['category'=> $category]);
         $events = $stmt->fetchAll();
-        return $events;
+
+        $returnEvents = [];
+        foreach ($events as $event) {
+            $returnEvents[] = Event::fromArray($event);
+        }
+        return $returnEvents;
     }
 
     public function createSubEvent(string $category, array $postData) {
@@ -240,15 +250,16 @@ class EventRepository extends BaseRepository
         return true;
     }
 
-    public function getEventForEdit(int $id) {
+    public function getEventForEdit(int $id): Event {
         $stmt = $this->pdo->prepare(
-            'SELECT name AS item_name, event_id AS item_id, location, ticket_amount, ticket_price, category, start_time, end_time, description, language
+            'SELECT name, event_id, location, ticket_amount, ticket_price, category, start_time, end_time, description, language
             FROM events
             WHERE event_id = :id'
             );
         $stmt->execute(['id' => $id]);
         $event = $stmt->fetch();
-        return $event;
+
+        return Event::fromArray($event);
     }
 
     public function updateEvent(int $id, array $postData) {
