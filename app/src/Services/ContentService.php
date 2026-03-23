@@ -4,7 +4,7 @@ namespace App\Services;
 
 use App\Repositories\PageRepository;
 
-class ContentService
+class ContentService implements CMSService
 {
     private PageRepository $repository;
 
@@ -16,7 +16,7 @@ class ContentService
     {
         return $this->repository->getContentForEdit($id);
     }
-    public function isNameEditable() {
+    public function isNameEditable(): bool {
         return false;
     }
     public function getPageId(int $id) {
@@ -27,7 +27,7 @@ class ContentService
     {
         return $this->repository->updateContentItem($id, $postData);
     }
-    public function delete(int $id) {
+    public function delete(int $id): bool {
         return $this->repository->deleteContentItem($id);
     }
 }

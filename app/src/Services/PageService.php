@@ -4,7 +4,7 @@ namespace App\Services;
 
 use App\Repositories\PageRepository;
 
-class PageService
+class PageService implements CMSService
 {
     private PageRepository $repository;
 
@@ -26,11 +26,13 @@ class PageService
         }
     }
 
-    public function create(string $title): bool 
+    public function create(array $postData): bool 
     {
-        return $this->repository->createPage($title);
+        $title = trim((string) ($postData['item_name'] ?? ''));
+        $isMainEvent = ($postData['is_main_event'] ?? "off") == "on" ? 1 : 0;
+        return $this->repository->createPage($title, $isMainEvent);
     }
-    public function isNameEditable() {
+    public function isNameEditable(): bool {
         return true;
     }
 
@@ -39,7 +41,7 @@ class PageService
        return $this->repository->getPageForEdit($id);
     }
 
-    public function update(int $id, array $postData) {
+    public function update(int $id, array $postData): bool {
         if (isset($postData['newContent'])) {
             return $this->repository->addContentItemToPage($id, $postData['newContent']);
         }
@@ -47,7 +49,7 @@ class PageService
             return $this->repository->updatePage($id, $postData);
         }
     }
-    public function delete(int $id) {
+    public function delete(int $id): bool {
         return $this->repository->deletePage($id);
     }
 }

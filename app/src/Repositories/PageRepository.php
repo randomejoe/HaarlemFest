@@ -4,7 +4,7 @@ namespace App\Repositories;
 
 use PDO;
 
-class PageRepository
+class PageRepository extends BaseRepository
 {
     private PDO $pdo;
 
@@ -15,7 +15,7 @@ class PageRepository
 
     public function getAllPages() 
     {
-        $stmt = $this->pdo->prepare('SELECT title, page_id AS id FROM pages');
+        $stmt = $this->pdo->prepare('SELECT title as item_name, page_id AS item_id, is_main_event FROM pages');
         $stmt->execute();
         $pages = $stmt->fetchAll();
         return $pages;
@@ -27,27 +27,31 @@ class PageRepository
         return $pageId;
     }
     public function getPageById(int $id) {
-        $stmt = $this->pdo->prepare('SELECT * FROM pages JOIN page_content pc ON pc.page_id = pages.page_id WHERE pages.page_id = :id');
+        $stmt = $this->pdo->prepare('SELECT title, page_id, is_main_event FROM pages JOIN page_content pc ON pc.page_id = pages.page_id WHERE pages.page_id = :id');
         $stmt->execute(['id' => $id]);
         $pageContent = $stmt->fetch();
         return $pageContent;
     }
     public function getPageByName(string $name) {
-        $stmt = $this->pdo->prepare('SELECT * FROM pages JOIN page_content pc ON pc.page_id = pages.page_id WHERE LOWER(title) = LOWER(:title)');
+        $stmt = $this->pdo->prepare('SELECT title, page_id, is_main_event FROM pages JOIN page_content pc ON pc.page_id = pages.page_id WHERE LOWER(title) = LOWER(:title)');
         $stmt->execute(['title' => $name]);
         $pageContent = $stmt->fetchAll();
         return $pageContent;
     }
 
-    public function createPage(string $title): bool 
+    public function createPage(string $title, int $isMainEvent): bool 
     {
-        $stmt = $this->pdo->prepare('INSERT INTO pages (title) VALUES (:title)');
-        $stmt->execute(['title' => $title]);
+        $this->requireAdmin();
+        $stmt = $this->pdo->prepare('INSERT INTO pages (title, is_main_event) VALUES (:title, :mainEvent)');
+        $stmt->execute(['title' => $title,
+        'mainEvent' => $isMainEvent]);
         return true;
     }
 
     public function getPageForEdit(int $id)
     {
+        $this->requireAdmin();
+
         $stmt = $this->pdo->prepare(
             "SELECT p.title as item_name, pc.content_id, pc.component_name, pc.data
             FROM pages p
@@ -60,6 +64,8 @@ class PageRepository
     }
     public function getContentForEdit(int $id)
     {
+        $this->requireAdmin();
+
         $stmt = $this->pdo->prepare(
             "SELECT content_id, page_id, component_name as item_name, data
             FROM page_content pc
@@ -72,23 +78,30 @@ class PageRepository
 
     public function updatePage(int $id, array $data): bool
     {
-            // Update page name
-            $stmt = $this->pdo->prepare("UPDATE pages SET title = :title WHERE page_id = :id");
-            $stmt->execute([
-                'id' => $id,
-                'title' => $data['name'],
-            ]);
-            return true;
+        $this->requireAdmin();
+
+        // Update page name
+        $stmt = $this->pdo->prepare("UPDATE pages SET title = :title WHERE page_id = :id");
+        $stmt->execute([
+            'id' => $id,
+            'title' => $data['name'],
+        ]);
+        return true;
     }
     public function addContentItemToPage(int $pageId, string $componentName) {
+        $this->requireAdmin();
+
         $stmt = $this->pdo->prepare("INSERT INTO page_content (page_id, component_name) VALUES (:page_id, :component_name)");
         $stmt->execute([
             'page_id' => $pageId,
             'component_name' => $componentName,
         ]);
+        return true;
     }
     public function updateContentItem(int $id, array $data): bool
     {
+        $this->requireAdmin();
+
         try {
             $this->pdo->beginTransaction();
             unset($data['name']);
@@ -110,6 +123,8 @@ class PageRepository
         }
     }
     public function deletePage(int $pageId) {
+        $this->requireAdmin();
+
         $stmt = $this->pdo->prepare("DELETE FROM pages WHERE page_id = :page_id");
         $stmt->execute([
             'page_id' => $pageId
@@ -117,10 +132,20 @@ class PageRepository
         return true;
     }
     public function deleteContentItem(int $contentId) {
+        $this->requireAdmin();
+        
         $stmt = $this->pdo->prepare("DELETE FROM page_content WHERE content_id = :content_id");
         $stmt->execute([
             'content_id' => $contentId
         ]);
         return true;
+    }
+
+    public function getEventCategories()
+    {
+        $stmt = $this->pdo->prepare('SELECT title as category FROM pages WHERE is_main_event = True');
+        $stmt->execute();
+        $categories = $stmt->fetchAll();
+        return $categories;
     }
 }

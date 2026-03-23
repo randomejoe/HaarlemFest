@@ -9,6 +9,7 @@
             <div class="component-list">
                 <?php foreach ($components as $key => $component): ?>
                     <form method="POST">
+                        <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars((string) ($csrf_token ?? ''), ENT_QUOTES, 'UTF-8'); ?>">
                         <button name="newContent" value="<?php echo $key ?>" class="component-item button max-width"
                                 data-component="<?= $key ?>">
                             <?= htmlspecialchars($key) ?>
