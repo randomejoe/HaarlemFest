@@ -194,6 +194,8 @@ class EventRepository extends BaseRepository
             (string) ($row['description'] ?? ''),
             isset($row['category']) && $row['category'] !== null ? (string) $row['category'] : null,
             (string) ($row['venue_location'] ?? 'Venue to be announced'),
+            null,
+            null,
         );
     }
     public function getAllEvents(): array 

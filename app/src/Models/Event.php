@@ -16,11 +16,11 @@ class Event extends CmsItem
         private string $endTime,
         private float $ticketPrice,
         private ?int $ticketAmount,
-        private ?int $soldTickets,
-        private ?HistoryTourLanguage $language,
         private ?string $description,
         private ?string $category,
         private ?string $venue,
+        private ?int $soldTickets,
+        private ?HistoryTourLanguage $language,
     ) {
     }
 
@@ -34,7 +34,7 @@ class Event extends CmsItem
             endTime: (string) ($data['end_time']),
             ticketPrice: (int) ($data['ticket_price']),
             ticketAmount: isset($data['ticket_amount']) ? $data['ticket_amount'] : null,
-            soldTickets: isset($data['sold_tickets']) ? $data['sold_tickets'] : null,
+            soldTickets: isset($data['sold_tickets']) ? (int) $data['sold_tickets'] : null,
             language: isset($data['language']) ? HistoryTourLanguage::convertToLanguage($data['language']) : null,
             description: isset($data['description']) ? $data['description'] : null,
             category: isset($data['category']) ? $data['category'] : null,
