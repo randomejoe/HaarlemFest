@@ -10,14 +10,14 @@
         </div>
         <div class="vertical-center form-input-container">
             <label for="language">Language:</label>
-            <input type="text" id="language" name="language" class="form-input" value="<?php echo $item->getLanguage()->value;?>"> 
+            <input type="text" id="language" name="language" class="form-input" value="<?php echo $item->getLanguage()->value ?? '';?>"> 
         </div>
     </div>
     <div>
         <!-- TODO: change to selector for location -->
         <div class="vertical-center form-input-container">
             <label for="location">Location:</label>
-            <input type="text" id="location" name="location" class="form-input" required value="<?php echo $item->gocation();?>"> 
+            <input type="text" id="location" name="location" class="form-input" required value="<?php echo $item->location();?>"> 
         </div>
         <!-- TODO: change to use selected location ticket count -->
         <div class="vertical-center form-input-container">
