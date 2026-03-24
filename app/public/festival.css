@@ -1269,6 +1269,9 @@ h2 {
 
 .dynamic-page-content-container {
     padding: 1em;
+    gap: 2em;
+    display: flex;
+    flex-direction: column;
 }
 
 .history-schedule-container, .history-schedule-card-container {

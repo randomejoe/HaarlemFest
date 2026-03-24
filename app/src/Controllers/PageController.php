@@ -40,7 +40,8 @@ class PageController
                 else {
                     $data = null;
                 }
-                require __DIR__ . '/../Views/partials/page_components/' . $pageContentItem['component_name'] . '.php';
+            
+                ?><div><?php require __DIR__ . '/../Views/partials/page_components/' . $pageContentItem['component_name'] . '.php';?></div><?php
             }
             else {
                 foreach ($page as $pageContentItem) {
@@ -50,7 +51,7 @@ class PageController
                 else {
                     $data = null;
                 }
-                require __DIR__ . '/../Views/partials/page_components/' . $pageContentItem['component_name'] . '.php';
+                ?><div><?php require __DIR__ . '/../Views/partials/page_components/' . $pageContentItem['component_name'] . '.php';?></div><?php
             }
             }?></div><?php
         }
