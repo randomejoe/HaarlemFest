@@ -16,7 +16,7 @@
                     if ($field['type'] == 'text') {
                         ?>
                         <textarea name="<?php echo $field['name'] ?>" id="textField<?php echo $i; ?>">
-                            <?php if (isset($data)) {
+                            <?php if (isset($data[$field['name']])) {
                                 echo $data[$field['name']];
                             } ?>
                         </textarea>

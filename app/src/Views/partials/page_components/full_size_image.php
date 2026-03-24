@@ -1,0 +1,1 @@
+<img class="full-size-image" src="<?php echo '/images/' . $data['image_source']; ?>">

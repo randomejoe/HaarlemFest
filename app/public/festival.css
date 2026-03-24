@@ -55,10 +55,6 @@ h4 {
     line-height: 1.05;
 }
 
-h2 {
-    font-size: clamp(2rem, 4vw, 3.5rem);
-}
-
 .section-intro {
     color: var(--muted);
     margin: 1rem 0 2rem;
@@ -1358,6 +1354,11 @@ h2 {
     border-radius: var(--radius-sm);
     color: var(--history-negative);
     min-width: fit-content;
+}
+
+.full-size-image {
+    width: 100%;
+    height: auto;
 }
 
 .horizontal-center {
