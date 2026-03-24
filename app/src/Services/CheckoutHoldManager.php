@@ -48,7 +48,7 @@ final class CheckoutHoldManager
         try {
             $releaseCutoff = $this->dateTimeFormatter->addSeconds(
                 $this->dateTimeFormatter->currentTimestamp(),
-                -self::EXPIRY_GRACE_PERIOD_SECONDS
+                -$this->expiryEvaluator->getGracePeriodSeconds()
             );
             $releasedAt = $this->dateTimeFormatter->currentDateTime();
             $releasedCount = 0;
