@@ -8,7 +8,6 @@
                     <h1 class="mb-2">Checkout</h1>
                     <p class="text-muted mb-0">Confirm your tickets and continue to payment.</p>
                 </div>
-                <a href="/planner" class="btn btn-outline-secondary">Edit tickets</a>
             </div>
 
             <?php echo \App\View::render('components/flash_alert', ['flash' => $flash]); ?>
@@ -130,8 +129,8 @@
                                         <input type="hidden" name="idempotency_key" value="<?php echo htmlspecialchars((string) $idempotency_key, ENT_QUOTES, 'UTF-8'); ?>">
 
                                         <div class="d-flex flex-wrap gap-2">
-                                            <a href="/planner" class="btn btn-outline-secondary">Edit tickets</a>
-                                            <button type="submit" class="btn cta-btn">Proceed to payment</button>
+                                            <a href="/planner" class="btn btn-outline-secondary">Back to Planner</a>
+                                            <button type="submit" class="btn cta-btn">Pay</button>
                                         </div>
                                     </form>
                                 <?php endif; ?>

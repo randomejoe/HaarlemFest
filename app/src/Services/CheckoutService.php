@@ -149,7 +149,7 @@ class CheckoutService
             $attempt = (array) $attempt;
 
             $holdExpiresAt = (string) ($attempt['hold_expires_at'] ?? '');
-            if ($this->expiryEvaluator->isPastGracePeriod($holdExpiresAt)) {
+            if ($this->expiryEvaluator->isExpired($holdExpiresAt)) {
                 $this->stockReservation->releaseAndRestoreStock($checkoutAttemptId, 'expired');
                 $this->checkoutAttempts->markExpiredByIds([$checkoutAttemptId]);
 

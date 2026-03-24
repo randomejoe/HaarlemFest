@@ -13,7 +13,6 @@ use RuntimeException;
 class PlannerService
 {
     private const LOCK_HOLD_DURATION_SECONDS = 600;
-    private const LOCK_EXPIRY_GRACE_SECONDS = 30;
 
     private EventRepository $events;
     private SessionManager $session;
@@ -126,10 +125,13 @@ class PlannerService
         $this->assertQuantity($quantity);
         $this->assertUnlocked();
 
-        $this->assertEventCanBePlanned($eventId);
+        $event = $this->assertEventCanBePlanned($eventId);
 
         $planner = $this->session->getPlannerState();
         $current = (int) ($planner['items'][$eventId] ?? 0);
+        $requestedQuantity = $current + $quantity;
+        $this->assertQuantityWithinAvailability($event, $requestedQuantity);
+
         $planner['items'][$eventId] = $current + $quantity;
         $this->touchAndPersistPlanner($planner);
     }
@@ -146,7 +148,8 @@ class PlannerService
             throw new RuntimeException('This event is not in your planner.');
         }
 
-        $this->assertEventCanBePlanned($eventId);
+        $event = $this->assertEventCanBePlanned($eventId);
+        $this->assertQuantityWithinAvailability($event, $quantity);
 
         $planner['items'][$eventId] = $quantity;
         $this->touchAndPersistPlanner($planner);
@@ -257,13 +260,13 @@ class PlannerService
         if ($holdExpiresAt !== null && $holdExpiresAt !== '') {
             $expiryTimestamp = strtotime($holdExpiresAt);
             if ($expiryTimestamp !== false && $expiryTimestamp > 0) {
-                return $expiryTimestamp + self::LOCK_EXPIRY_GRACE_SECONDS;
+                return $expiryTimestamp;
             }
         }
 
         // Fallback: if we don't have the checkout hold expiry, approximate using
         // the hold duration used elsewhere in the checkout flow.
-        return time() + (self::LOCK_HOLD_DURATION_SECONDS + self::LOCK_EXPIRY_GRACE_SECONDS);
+        return time() + self::LOCK_HOLD_DURATION_SECONDS;
     }
 
     private function getLockedCheckoutExpiresAtUnix(array $planner): ?int
@@ -293,7 +296,7 @@ class PlannerService
             return null;
         }
 
-        return $updatedAt + (self::LOCK_HOLD_DURATION_SECONDS + self::LOCK_EXPIRY_GRACE_SECONDS);
+        return $updatedAt + self::LOCK_HOLD_DURATION_SECONDS;
     }
 
     private function assertCheckoutAttemptId(int $checkoutAttemptId): void
@@ -366,7 +369,7 @@ class PlannerService
         return $filtered;
     }
 
-    private function assertEventCanBePlanned(int $eventId): void
+    private function assertEventCanBePlanned(int $eventId): Event
     {
         $event = $this->events->findById($eventId);
         if ($event === null) {
@@ -380,6 +383,26 @@ class PlannerService
         if ($event->isSoldOut()) {
             throw new RuntimeException('This event is sold out.');
         }
+
+        return $event;
+    }
+
+    private function assertQuantityWithinAvailability(Event $event, int $requestedQuantity): void
+    {
+        if (!$event->hasTrackedStock()) {
+            return;
+        }
+
+        $availableSeats = $event->seatCount() ?? 0;
+        if ($requestedQuantity <= $availableSeats) {
+            return;
+        }
+
+        throw new RuntimeException(sprintf(
+            'Only %d %s available for this event.',
+            $availableSeats,
+            $availableSeats === 1 ? 'seat is' : 'seats are'
+        ));
     }
 
     private function detectTimeConflicts(array $items): array

@@ -28,8 +28,7 @@ class CheckoutResult
         private ?string $redirectUrl = null,
         private ?string $providerReference = null,
         private array $conflicts = [],
-    ) {
-    }
+    ) {}
 
     public function getStatus(): string
     {
@@ -102,10 +101,12 @@ class CheckoutResult
         }
 
         if ($this->conflicts !== []) {
-            $data['conflicts'] = $this->conflicts;
+            $data['conflicts'] = array_map(
+                fn(StockReservationFailure $c): array => $c->toArray(),
+                $this->conflicts
+            );
         }
 
         return $data;
     }
 }
-

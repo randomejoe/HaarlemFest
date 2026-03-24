@@ -24,13 +24,19 @@ Run migration(s): `docker compose run --rm php vendor/bin/phinx migrate`
 
 ## Expired Hold Cleanup
 
-Expired ticket holds are now cleaned up on checkout-critical requests only:
+Expired ticket holds are released as soon as `expires_at` is reached (no grace period).
+
+Cleanup now runs from two paths:
 
 - `GET /checkout` runs at most once per session minute
 - checkout confirmation and pending-payment routes force a fresh cleanup
-- planner and jazz browsing no longer run expiry cleanup on every request
+- `expiry-cleanup-cron` service in Docker Compose runs `php app/bin/release_expired_holds.php` every minute
 
-For near-real-time stock recovery outside user traffic, schedule the shared CLI task:
+Start it with the rest of the stack:
+
+`docker compose up -d --build`
+
+If you are not using Docker Compose cron service, schedule the shared CLI task on your host:
 
 `php app/bin/release_expired_holds.php`
 

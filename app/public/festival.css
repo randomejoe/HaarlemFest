@@ -228,6 +228,18 @@ h4 {
     color: #fff;
 }
 
+.btn.btn-outline-secondary,
+.btn.cta-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 44px;
+    padding: 0.65rem 1.15rem;
+    border-radius: 12px;
+    font-weight: 700;
+    line-height: 1.2;
+}
+
 .event-card {
     position: relative;
     border-radius: var(--radius-lg);
@@ -924,6 +936,7 @@ h4 {
     display: inline-flex;
     align-items: center;
     justify-content: center;
+    flex: 1 1 220px;
     min-height: 42px;
     border-radius: 9px;
     border: 1px solid #d4a017;

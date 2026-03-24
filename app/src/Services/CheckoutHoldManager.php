@@ -46,10 +46,7 @@ final class CheckoutHoldManager
         $this->pdo->beginTransaction();
 
         try {
-            $releaseCutoff = $this->dateTimeFormatter->addSeconds(
-                $this->dateTimeFormatter->currentTimestamp(),
-                -$this->expiryEvaluator->getGracePeriodSeconds()
-            );
+            $releaseCutoff = $this->dateTimeFormatter->currentDateTime();
             $releasedAt = $this->dateTimeFormatter->currentDateTime();
             $releasedCount = 0;
             $expiredAttemptIds = [];
@@ -112,7 +109,7 @@ final class CheckoutHoldManager
 
     public function isHoldPastGracePeriod(string $holdExpiresAt): bool
     {
-        return $this->expiryEvaluator->isPastGracePeriod($holdExpiresAt);
+        return $this->expiryEvaluator->isExpired($holdExpiresAt);
     }
 
     public function markHoldsAsTransferred(int $attemptId): void

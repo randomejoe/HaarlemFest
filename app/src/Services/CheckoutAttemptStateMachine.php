@@ -20,7 +20,7 @@ namespace App\Services;
  * State transitions:
  * initiated → handoff_created → paid
  *          ↘ handoff_failed (payment provider error)
- *          ↘ expired (grace period elapsed)
+ *          ↘ expired (hold expiry reached)
  */
 final class CheckoutAttemptStateMachine
 {
@@ -29,7 +29,7 @@ final class CheckoutAttemptStateMachine
 	public const STATE_HANDOFF_CREATED = 'handoff_created'; // Payment provider URL delivered
 	public const STATE_PAID = 'paid';                   // Payment confirmed, invoice created, tickets delivered
 	public const STATE_HANDOFF_FAILED = 'handoff_failed';   // Payment provider handoff failed
-	public const STATE_EXPIRED = 'expired';               // Hold grace period elapsed
+	public const STATE_EXPIRED = 'expired';               // Hold expiry reached
 
 	public const VALID_STATES = [
 		self::STATE_INITIATED,

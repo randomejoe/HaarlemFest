@@ -242,10 +242,10 @@ class PlannerServiceLockTtlTest extends TestCase
         $this->planner = new PlannerService($events);
     }
 
-    public function test_lock_auto_unlocks_after_hold_expires_at_plus_grace(): void
+    public function test_lock_auto_unlocks_after_hold_expires_at(): void
     {
         $attemptId = 123;
-        $holdExpiresAt = date('Y-m-d H:i:s', time() - 60); // <= now - 30s grace => must expire
+        $holdExpiresAt = date('Y-m-d H:i:s', time() - 1); // already expired => must unlock
 
         $this->planner->lock($attemptId, $holdExpiresAt);
 
@@ -270,4 +270,3 @@ class PlannerServiceLockTtlTest extends TestCase
         $this->assertNull($this->planner->getLockedCheckoutAttemptId());
     }
 }
-
