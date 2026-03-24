@@ -191,8 +191,6 @@ class EventRepository extends BaseRepository
             (string) ($row['end_time'] ?? ''),
             isset($row['ticket_price']) ? (float) $row['ticket_price'] : 0.0,
             isset($row['ticket_amount']) ? ($row['ticket_amount'] !== null ? (int) $row['ticket_amount'] : null) : null,
-            null,
-            null,
             (string) ($row['description'] ?? ''),
             isset($row['category']) && $row['category'] !== null ? (string) $row['category'] : null,
             (string) ($row['venue_location'] ?? 'Venue to be announced'),
