@@ -1360,6 +1360,11 @@ h2 {
     min-width: fit-content;
 }
 
+.full-size-image {
+    width: 100%;
+    height: auto;
+}
+
 .horizontal-center {
     display: flex;
     justify-content: center;
