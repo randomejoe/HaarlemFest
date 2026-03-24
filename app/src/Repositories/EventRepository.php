@@ -213,11 +213,12 @@ class EventRepository extends BaseRepository
         foreach ($events as $event) {
             $returnEvents[] = Event::fromArray($event);
         }
+        print_r($returnEvents);
         return $returnEvents;
     }
     public function getAllEventsInCategory(string $category): array
     {
-        $stmt = $this->pdo->prepare('SELECT e.name as item_name, e.event_id AS item_id,
+        $stmt = $this->pdo->prepare('SELECT e.name, e.event_id,
             e.location, e.ticket_amount, e.ticket_price, e.category, COUNT(t.ticket_id) AS sold_tickets, e.language, e.description, e.start_time, e.end_time
             FROM events e
             LEFT JOIN tickets t ON t.event_id = e.event_id
@@ -239,12 +240,13 @@ class EventRepository extends BaseRepository
         $stmt = $this->pdo->prepare('INSERT INTO events (name, location, start_time, end_time, ticket_price, ticket_amount, description, language, category)
         VALUES (:name, :location, :start_time, :end_time, :price, :amount, :description, :language, :category)');
 
+        $ticketAmount = $postData['ticket_price'] > 0 ? $postData['ticket_amount'] : null;
         $stmt->execute(['name' => $postData['item_name'],
         'location' => $postData['location'],
         'start_time' => $postData['start_time'],
         'end_time' => $postData['end_time'],
         'price' => $postData['ticket_price'],
-        'amount' => $postData['ticket_amount'],
+        'amount' => $ticketAmount,
         'description' => $postData['description'],
         'language' => $postData['language'],
         'category' => $category]);
