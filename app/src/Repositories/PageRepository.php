@@ -15,7 +15,7 @@ class PageRepository extends BaseRepository
         $this->pdo = $pdo;
     }
 
-    public function getAllPages(): array 
+    public function getAllPages(): array
     {
         $stmt = $this->pdo->prepare('SELECT title, page_id, is_main_event FROM pages');
         $stmt->execute();
@@ -25,42 +25,49 @@ class PageRepository extends BaseRepository
         foreach ($pages as $page) {
             $returnPages[] = Page::fromArray($page);
         }
-        
+
         return $returnPages;
     }
-    public function getContentPageId(int $id) {
+    public function getContentPageId(int $id)
+    {
         $stmt = $this->pdo->prepare('SELECT page_id FROM page_content WHERE content_id = :content_id');
         $stmt->execute(['content_id' => $id]);
         $pageId = $stmt->fetch();
         return $pageId;
     }
-    public function getPageById(int $id) {
+    public function getPageById(int $id)
+    {
         $stmt = $this->pdo->prepare(
-            'SELECT title, pages.page_id, is_main_event, pc.component_name, pc.data 
-            FROM pages 
-            JOIN page_content pc ON pc.page_id = pages.page_id 
-            WHERE pages.page_id = :id');
+            'SELECT title, pages.page_id, is_main_event, pc.component_name, pc.data
+            FROM pages
+            JOIN page_content pc ON pc.page_id = pages.page_id
+            WHERE pages.page_id = :id'
+        );
         $stmt->execute(['id' => $id]);
         $pageContent = $stmt->fetchAll();
         return $pageContent;
     }
-    public function getPageByName(string $name) {
+    public function getPageByName(string $name)
+    {
         $stmt = $this->pdo->prepare(
-        'SELECT title, pages.page_id, is_main_event, pc.component_name, pc.data 
-        FROM pages 
-        JOIN page_content pc ON pc.page_id = pages.page_id 
-        WHERE LOWER(title) = LOWER(:title)');
+            'SELECT title, pages.page_id, is_main_event, pc.component_name, pc.data
+        FROM pages
+        JOIN page_content pc ON pc.page_id = pages.page_id
+        WHERE LOWER(title) = LOWER(:title)'
+        );
         $stmt->execute(['title' => $name]);
         $pageContent = $stmt->fetchAll();
         return $pageContent;
     }
 
-    public function createPage(string $title, int $isMainEvent): bool 
+    public function createPage(string $title, int $isMainEvent): bool
     {
         $this->requireAdmin();
         $stmt = $this->pdo->prepare('INSERT INTO pages (title, is_main_event) VALUES (:title, :mainEvent)');
-        $stmt->execute(['title' => $title,
-        'mainEvent' => $isMainEvent]);
+        $stmt->execute([
+            'title' => $title,
+            'mainEvent' => $isMainEvent
+        ]);
         return true;
     }
 
@@ -73,7 +80,7 @@ class PageRepository extends BaseRepository
             FROM pages p
             LEFT JOIN page_content pc ON p.page_id = pc.page_id
             WHERE p.page_id = :page_id"
-            );
+        );
         $stmt->execute(['page_id' => $id]);
         $pageContent = $stmt->fetchAll();
 
@@ -96,7 +103,7 @@ class PageRepository extends BaseRepository
             "SELECT content_id, page_id, component_name, data
             FROM page_content pc
             WHERE pc.content_id = :content_id"
-            );
+        );
         $stmt->execute(['content_id' => $id]);
         $component = $stmt->fetch();
         return PageContent::fromArray($component);
@@ -114,7 +121,8 @@ class PageRepository extends BaseRepository
         ]);
         return true;
     }
-    public function addContentItemToPage(int $pageId, string $componentName) {
+    public function addContentItemToPage(int $pageId, string $componentName)
+    {
         $this->requireAdmin();
 
         $stmt = $this->pdo->prepare("INSERT INTO page_content (page_id, component_name) VALUES (:page_id, :component_name)");
@@ -127,7 +135,7 @@ class PageRepository extends BaseRepository
     public function updateContentItem(int $id, array $data): bool
     {
         $this->requireAdmin();
-        
+
         try {
             $this->pdo->beginTransaction();
             unset($data['name']);
@@ -146,14 +154,14 @@ class PageRepository extends BaseRepository
 
             $this->pdo->commit();
             return true;
-        }
-        catch (Exception $e) {
+        } catch (\Exception $e) {
             echo $e;
             $this->pdo->rollback();
             return false;
         }
     }
-    public function deletePage(int $pageId) {
+    public function deletePage(int $pageId)
+    {
         $this->requireAdmin();
 
         $stmt = $this->pdo->prepare("DELETE FROM pages WHERE page_id = :page_id");
@@ -162,9 +170,10 @@ class PageRepository extends BaseRepository
         ]);
         return true;
     }
-    public function deleteContentItem(int $contentId) {
+    public function deleteContentItem(int $contentId)
+    {
         $this->requireAdmin();
-        
+
         $stmt = $this->pdo->prepare("DELETE FROM page_content WHERE content_id = :content_id");
         $stmt->execute([
             'content_id' => $contentId

@@ -5,6 +5,7 @@ $currentPath = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?: '/';
 if ($displayName === '') {
     $displayName = trim((string) ($_SESSION['email'] ?? ''));
 }
+require_once __DIR__ . '/../helpers.php';
 ?>
 <!doctype html>
 <html lang="en">
@@ -18,6 +19,11 @@ if ($displayName === '') {
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@400;500;600;700;800&family=Manrope:wght@400;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/festival.css">
+    <?php
+    // Render all component assets that are used on this page
+    $pageComponentsForAssets = $pageComponents ?? [];
+    echo hf_render_component_assets($pageComponentsForAssets);
+    ?>
 </head>
 
 <body>

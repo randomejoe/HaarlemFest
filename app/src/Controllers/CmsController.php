@@ -24,11 +24,11 @@ class CmsController
         $this->eventService = $eventService;
         $this->locationService = $locationService;
         if (!isset($_SESSION['role'])) {
-            header('Location: /');  
+            header('Location: /');
         }
         $role = UserRole::from($_SESSION['role']);
         if (!isset($role) || !$role->isAdmin()) {
-            header('Location: /');   
+            header('Location: /');
         }
     }
 
@@ -46,7 +46,7 @@ class CmsController
             $categories = $service->getCategories();
         }
 
-        echo View::render('/../Views/cms/item_list', ['items' => $items, 'type'=>$type, 'categories'=>$categories ?? null]);
+        echo View::render('/../Views/cms/item_list', ['items' => $items, 'type' => $type, 'categories' => $categories ?? null]);
     }
     public function showCmsItemsInCategory(string $type, string $category): void
     {
@@ -58,7 +58,7 @@ class CmsController
             $categories = $service->getCategories();
         }
 
-        echo View::render('/../Views/cms/item_list', ['items' => $items, 'type'=>$type,'categories'=>$categories, 'currentCategory'=>$category]);
+        echo View::render('/../Views/cms/item_list', ['items' => $items, 'type' => $type, 'categories' => $categories, 'currentCategory' => $category]);
     }
 
     public function createCmsItem(string $type): void
@@ -67,13 +67,12 @@ class CmsController
         $service = $this->resolveService($type);
 
         $success = $service->create($_POST);
-        
+
         if ($success) {
             $_SESSION['create_success'] = true;
             $_SESSION['create_title'] = $_POST['item_name'];
             header('Location: /cms/' . $type->value . 's');
-        }
-        else {
+        } else {
             $this->showCmsItems($type->value);
         }
     }
@@ -84,13 +83,12 @@ class CmsController
         $category = urldecode($category);
 
         $success = $service->createForCategory($category, $_POST);
-        
+
         if ($success) {
             $_SESSION['create_success'] = true;
             $_SESSION['create_title'] = $_POST['item_name'];
             header('Location: /cms/' . $type->value . 's/' . $category);
-        }
-        else {
+        } else {
             $this->showCmsItemsInCategory($type->value, $category);
         }
     }
@@ -106,39 +104,34 @@ class CmsController
             $categories = $service->getCategories();
         }
 
-        echo View::render('/../Views/cms/edit', ['type'=>$type, 'item'=>$item, 'editable'=>$editable, 'categories'=>$categories ?? null]);
+        echo View::render('/../Views/cms/edit', ['type' => $type, 'item' => $item, 'editable' => $editable, 'categories' => $categories ?? null]);
     }
     public function editItem(string $type, int $item_id)
     {
         $type = CmsType::convertToType($type);
         $service = $this->resolveService($type);
-        if (count($_FILES) > 0) {
+        if ($this->hasUploadedFiles($_FILES)) {
             $success = $service->updateWithImage($item_id, $_POST, $_FILES);
+        } else {
+            $success = $service->update($item_id, $_POST);
         }
-        else {
-           $success = $service->update($item_id, $_POST); 
-        }
-        
+
         if ($success) {
             if ($type == CmsType::Content || isset($_POST['newContent'])) {
                 if ($type == CmsType::Content) {
                     $pageId = $service->getPageId($item_id);
-                }
-                else {
+                } else {
                     $pageId = $item_id;
                 }
                 header('Location: /cms/pages/' . $pageId . '/edit');
-            } 
-            else {
+            } else {
                 header('Location: /cms/' . $type->value);
             }
-            
-        }
-        else {
-            $this->showEdit($type, $item_id);
+        } else {
+            $this->showEdit($type->value, $item_id);
         }
     }
-    public function deleteItem(string $type, int $item_id) 
+    public function deleteItem(string $type, int $item_id)
     {
         $type = CmsType::convertToType($type);
         $service = $this->resolveService($type);
@@ -152,9 +145,20 @@ class CmsController
         return match ($type) {
             CmsType::Page => $this->pageService,
             CmsType::Content => $this->contentService,
-            CmsType::Event=>$this->eventService,
-            CmsType::Location=>$this->locationService,
+            CmsType::Event => $this->eventService,
+            CmsType::Location => $this->locationService,
             default => throw new \InvalidArgumentException('Unknown CMS type.'),
         };
+    }
+
+    private function hasUploadedFiles(array $files): bool
+    {
+        foreach ($files as $file) {
+            if (($file['error'] ?? UPLOAD_ERR_NO_FILE) === UPLOAD_ERR_OK) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }
