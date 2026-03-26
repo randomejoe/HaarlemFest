@@ -48,13 +48,13 @@ a {
     background-color: #606060;
 }
 
-.navItem > p {
+.navItem>p {
     width: 180px;
     text-align: center;
     color: white;
 }
 
-/* CMS area components */ 
+/* CMS area components */
 
 .cms-container {
     border: black 3px solid;
@@ -68,15 +68,17 @@ a {
 .button {
     padding: 16px;
     width: fit-content;
-    display:block;
+    display: block;
     border-radius: 10px;
     border: none;
     cursor: pointer;
 }
+
 .button:hover {
     background-color: #e0e0e0;
 }
-.button > p {
+
+.button>p {
     width: fit-content;
     margin: 0px;
 }
@@ -84,10 +86,12 @@ a {
 .add-item-btn {
     background-color: green;
 }
+
 .add-item-btn:hover {
     background-color: rgb(2, 89, 2);
 }
-.add-item-btn > p {
+
+.add-item-btn>p {
     color: white;
 }
 
@@ -96,16 +100,47 @@ a {
     margin-top: 10px;
 }
 
+.cms-content-editor {
+    align-items: stretch;
+    width: 100%;
+}
+
+.cms-content-editor__fields {
+    width: 100%;
+    gap: 16px;
+}
+
+.cms-content-editor__field {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    width: 100%;
+}
+
+.cms-content-editor__field>label {
+    font-weight: 600;
+}
+
+.cms-content-editor__image-field {
+    gap: 12px;
+}
+
+.cms-content-editor .tox-tinymce {
+    min-width: 0;
+}
+
 .cms-item {
     border: solid 2px #666666;
     padding: 20px 10px;
     border-radius: 10px;
 }
+
 .cms-item-content {
     display: flex;
     flex-direction: row;
     justify-content: space-between;
 }
+
 .cms-item-buttons {
     display: flex;
     flex-direction: row;
@@ -115,16 +150,21 @@ a {
 .edit-btn {
     background-color: orange;
 }
+
 .edit-btn:hover {
     background-color: #e68900;
 }
+
 .delete-btn {
     background-color: red;
 }
+
 .delete-btn:hover {
     background-color: #b52f26;
 }
-.edit-btn > p, .delete-btn > p {
+
+.edit-btn>p,
+.delete-btn>p {
     color: white;
 }
 
@@ -134,7 +174,8 @@ a {
     border-radius: 5px;
     border: solid 2px black;
 }
-.notification > p {
+
+.notification>p {
     margin: 5px;
 }
 
@@ -142,6 +183,7 @@ a {
     background-color: #c0e9c085;
     border-color: #93c993;
 }
+
 .failure {
     background-color: #af6868;
     border-color: #af6868;
@@ -168,7 +210,7 @@ input[readonly] {
 
 .form-input:focus {
     border-color: #444;
-    box-shadow: 0 0 5px rgba(0,0,0,0.2);
+    box-shadow: 0 0 5px rgba(0, 0, 0, 0.2);
 }
 
 .form-input-container {
@@ -186,28 +228,35 @@ input[readonly] {
 .form-submit-button:hover {
     background-color: #3b63b5;
 }
+
 .checkbox-input {
     width: 65%;
 }
+
 .description-container {
     justify-content: flex-start;
 }
 
-.category-selector, .category-selector-item-container {
+.category-selector,
+.category-selector-item-container {
     width: 20em;
     text-align: left;
 }
+
 .category-selector {
     padding: 16px;
 }
+
 .category-selector.open {
     border-radius: 8px 8px 0px 0px;
 }
+
 .category-selector-item {
     background-color: white;
     border-radius: 0px;
     border-top: 0px;
 }
+
 .category-selector-item-last {
     background-color: white;
     border-radius: 0px 0px 8px 8px;
@@ -221,6 +270,7 @@ input[readonly] {
     flex-direction: column;
     gap: 8px;
 }
+
 .component-item {
     padding: 10px;
     text-align: left;
@@ -262,9 +312,11 @@ input[readonly] {
 .no-margin {
     margin: 0px;
 }
+
 .fit-content {
     width: fit-content;
 }
+
 .fill-flex {
     flex: auto;
     padding: 0px 2em;

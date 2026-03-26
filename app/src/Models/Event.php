@@ -21,8 +21,8 @@ class Event extends CmsItem
         private ?string $venue,
         private ?int $soldTickets,
         private ?HistoryTourLanguage $language,
-    ) {
-    }
+        private ?string $artistImg = null,
+    ) {}
 
     public static function fromArray(array $data): self
     {
@@ -39,6 +39,7 @@ class Event extends CmsItem
             description: isset($data['description']) ? $data['description'] : null,
             category: isset($data['category']) ? $data['category'] : null,
             venue: isset($data['venue']) ? $data['venue'] : null,
+            artistImg: isset($data['artist_img']) ? $data['artist_img'] : null,
         );
     }
 
@@ -110,6 +111,11 @@ class Event extends CmsItem
     public function venue(): ?string
     {
         return $this->venue;
+    }
+
+    public function artistImg(): ?string
+    {
+        return $this->artistImg;
     }
 
     public function hasTrackedStock(): bool

@@ -3,12 +3,29 @@
 namespace App\Repositories;
 
 use App\Models\Event;
+use App\Models\HistoryTourLanguage;
 use PDO;
 use RuntimeException;
 
 class EventRepository extends BaseRepository
 {
     private PDO $pdo;
+
+    private const BASE_EVENT_SELECT = "SELECT
+                e.event_id,
+                e.name,
+                e.location,
+                e.start_time,
+                e.end_time,
+                e.ticket_price,
+                e.ticket_amount,
+                e.description,
+                e.category,
+                e.language,
+                e.artist_img,
+                COALESCE(NULLIF(v.location, ''), NULLIF(e.location, ''), 'Venue to be announced') AS venue_location
+            FROM events e
+            LEFT JOIN venues v ON v.venue_id = e.venue_id";
 
     public function __construct(PDO $pdo)
     {
@@ -21,19 +38,7 @@ class EventRepository extends BaseRepository
     public function findByCategory(string $category): array
     {
         $stmt = $this->pdo->prepare(
-            'SELECT
-                e.event_id,
-                e.name,
-                e.location,
-                e.start_time,
-                e.end_time,
-                e.ticket_price,
-                e.ticket_amount,
-                e.description,
-                e.category,
-                COALESCE(NULLIF(e.location, \'\'), v.location) AS venue_location
-            FROM events e
-            LEFT JOIN venues v ON v.venue_id = e.venue_id
+            self::BASE_EVENT_SELECT . '
             WHERE LOWER(COALESCE(e.category, \'\')) = LOWER(:category)
             ORDER BY e.start_time ASC, e.name ASC'
         );
@@ -47,19 +52,7 @@ class EventRepository extends BaseRepository
     public function findById(int $eventId): ?Event
     {
         $stmt = $this->pdo->prepare(
-            'SELECT
-                e.event_id,
-                e.name,
-                e.location,
-                e.start_time,
-                e.end_time,
-                e.ticket_price,
-                e.ticket_amount,
-                e.description,
-                e.category,
-                COALESCE(NULLIF(e.location, \'\'), v.location) AS venue_location
-            FROM events e
-            LEFT JOIN venues v ON v.venue_id = e.venue_id
+            self::BASE_EVENT_SELECT . '
             WHERE e.event_id = :event_id
             LIMIT 1'
         );
@@ -82,19 +75,7 @@ class EventRepository extends BaseRepository
         }
 
         $placeholders = implode(',', array_fill(0, count($ids), '?'));
-        $sql = 'SELECT
-                e.event_id,
-                e.name,
-                e.location,
-                e.start_time,
-                e.end_time,
-                e.ticket_price,
-                e.ticket_amount,
-                e.description,
-                e.category,
-                COALESCE(NULLIF(e.location, \'\'), v.location) AS venue_location
-            FROM events e
-            LEFT JOIN venues v ON v.venue_id = e.venue_id
+        $sql = self::BASE_EVENT_SELECT . '
             WHERE e.event_id IN (' . $placeholders . ')';
 
         $stmt = $this->pdo->prepare($sql);
@@ -194,96 +175,109 @@ class EventRepository extends BaseRepository
             (string) ($row['description'] ?? ''),
             isset($row['category']) && $row['category'] !== null ? (string) $row['category'] : null,
             (string) ($row['venue_location'] ?? 'Venue to be announced'),
-            null,
-            null,
+            isset($row['sold_tickets']) ? (int) $row['sold_tickets'] : null,
+            isset($row['language']) && $row['language'] !== null ? HistoryTourLanguage::convertToLanguage((string) $row['language']) : null,
+            isset($row['artist_img']) && $row['artist_img'] !== null ? (string) $row['artist_img'] : null,
         );
     }
+
     public function getAllEvents(): array
     {
         $stmt = $this->pdo->prepare(
             'SELECT e.name, e.event_id,
-            e.location, e.ticket_amount, e.ticket_price, e.category, COUNT(t.ticket_id) AS sold_tickets , start_time, end_time
+            e.location, e.ticket_amount, e.ticket_price, e.category, e.language, e.description, e.artist_img, COUNT(t.ticket_id) AS sold_tickets, e.start_time, e.end_time
             FROM events e
             LEFT JOIN tickets t ON t.event_id = e.event_id
             GROUP BY e.event_id'
-            );
+        );
         $stmt->execute();
         $events = $stmt->fetchAll();
         $returnEvents = [];
         foreach ($events as $event) {
-            $returnEvents[] = Event::fromArray($event);
+            $returnEvents[] = $this->hydrateEvent($event);
         }
-        print_r($returnEvents);
         return $returnEvents;
     }
+
     public function getAllEventsInCategory(string $category): array
     {
-        $stmt = $this->pdo->prepare('SELECT e.name, e.event_id,
-            e.location, e.ticket_amount, e.ticket_price, e.category, COUNT(t.ticket_id) AS sold_tickets, e.language, e.description, e.start_time, e.end_time
+        $stmt = $this->pdo->prepare("SELECT e.name, e.event_id,
+            e.location, e.ticket_amount, e.ticket_price, e.category, COUNT(t.ticket_id) AS sold_tickets, e.language, e.description, e.artist_img, e.start_time, e.end_time,
+            COALESCE(NULLIF(v.location, ''), NULLIF(e.location, ''), 'Venue to be announced') AS venue_location
             FROM events e
+            LEFT JOIN venues v ON v.venue_id = e.venue_id
             LEFT JOIN tickets t ON t.event_id = e.event_id
             WHERE e.category = :category
-            GROUP BY e.event_id');
-        $stmt->execute(['category'=> $category]);
+            GROUP BY e.event_id");
+        $stmt->execute(['category' => $category]);
         $events = $stmt->fetchAll();
 
         $returnEvents = [];
         foreach ($events as $event) {
-            $returnEvents[] = Event::fromArray($event);
+            $returnEvents[] = $this->hydrateEvent($event);
         }
         return $returnEvents;
     }
 
-    public function createSubEvent(string $category, array $postData) {
+    public function createSubEvent(string $category, array $postData)
+    {
         $this->requireAdmin();
 
         $stmt = $this->pdo->prepare('INSERT INTO events (name, location, start_time, end_time, ticket_price, ticket_amount, description, language, category)
         VALUES (:name, :location, :start_time, :end_time, :price, :amount, :description, :language, :category)');
 
         $ticketAmount = $postData['ticket_price'] > 0 ? $postData['ticket_amount'] : null;
-        $stmt->execute(['name' => $postData['item_name'],
-        'location' => $postData['location'],
-        'start_time' => $postData['start_time'],
-        'end_time' => $postData['end_time'],
-        'price' => $postData['ticket_price'],
-        'amount' => $ticketAmount,
-        'description' => $postData['description'],
-        'language' => $postData['language'],
-        'category' => $category]);
+        $stmt->execute([
+            'name' => $postData['item_name'],
+            'location' => $postData['location'],
+            'start_time' => $postData['start_time'],
+            'end_time' => $postData['end_time'],
+            'price' => $postData['ticket_price'],
+            'amount' => $ticketAmount,
+            'description' => $postData['description'],
+            'language' => $postData['language'],
+            'category' => $category
+        ]);
         return true;
     }
 
-    public function getEventForEdit(int $id): Event {
+    public function getEventForEdit(int $id): Event
+    {
         $stmt = $this->pdo->prepare(
-            'SELECT name, event_id, location, ticket_amount, ticket_price, category, start_time, end_time, description, language
+            'SELECT name, event_id, location, ticket_amount, ticket_price, category, start_time, end_time, description, language, artist_img
             FROM events
             WHERE event_id = :id'
-            );
+        );
         $stmt->execute(['id' => $id]);
         $event = $stmt->fetch();
 
         return Event::fromArray($event);
     }
 
-    public function updateEvent(int $id, array $postData) {
+    public function updateEvent(int $id, array $postData)
+    {
         $this->requireAdmin();
 
-        $stmt = $this->pdo->prepare('UPDATE events SET name = :name, location = :location, start_time = :start_time, end_time = :end_time, ticket_price = :price, ticket_amount = :amount, description = :description, language = :language, category = :category WHERE event_id = :id');
+        $stmt = $this->pdo->prepare('UPDATE events SET name = :name, location = :location, start_time = :start_time, end_time = :end_time, ticket_price = :price, ticket_amount = :amount, description = :description, language = :language, category = :category, artist_img = :artist_img WHERE event_id = :id');
 
-        $stmt->execute(['name' => $postData['name'],
-        'location' => $postData['location'],
-        'start_time' => $postData['start_time'],
-        'end_time' => $postData['end_time'],
-        'price' => $postData['ticket_price'],
-        'amount' => $postData['ticket_amount'],
-        'description' => $postData['description'],
-        'language' => $postData['language'],
-        'category' => $postData['category'],
-        'id' => $id]);
+        $stmt->execute([
+            'name' => $postData['name'],
+            'location' => $postData['location'],
+            'start_time' => $postData['start_time'],
+            'end_time' => $postData['end_time'],
+            'price' => $postData['ticket_price'],
+            'amount' => $postData['ticket_amount'],
+            'description' => $postData['description'],
+            'language' => $postData['language'],
+            'category' => $postData['category'],
+            'artist_img' => $postData['artist_img'] ?? null,
+            'id' => $id
+        ]);
         return true;
     }
 
-    public function deleteEvent(int $id) {
+    public function deleteEvent(int $id)
+    {
         $this->requireAdmin();
 
         $stmt = $this->pdo->prepare("DELETE FROM events WHERE event_id = :event_id");
