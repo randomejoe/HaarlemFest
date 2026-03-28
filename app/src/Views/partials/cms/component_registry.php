@@ -61,7 +61,117 @@ element is only for text elements currently and refers to the element used to wr
             ['name' => 'image_alignment', 'type' => 'text', 'element' => 'p'],
         ]
     ],
+    'artist_hero' => [
+        'fields' => [
+            ['name' => 'artist_name', 'type' => 'text', 'element' => 'h1'],
+            ['name' => 'artist_summary', 'type' => 'text', 'element' => 'p'],
+            ['name' => 'artist_location', 'type' => 'text', 'element' => 'p'],
+            ['name' => 'artist_genres', 'type' => 'text', 'element' => 'p'],
+            ['name' => 'featured_event_id', 'type' => 'text', 'element' => 'p'],
+            ['name' => 'featured_event_note', 'type' => 'text', 'element' => 'p'],
+            ['name' => 'tickets_cta_label', 'type' => 'text', 'element' => 'p'],
+            ['name' => 'tickets_cta_url', 'type' => 'text', 'element' => 'p'],
+            ['name' => 'artist_image', 'type' => 'image'],
+            ['name' => 'artist_image_alt', 'type' => 'text', 'element' => 'p'],
+        ]
+    ],
+    'artist_story' => [
+        'fields' => [
+            ['name' => 'section_id', 'type' => 'text', 'element' => 'p'],
+            ['name' => 'story_title', 'type' => 'text', 'element' => 'h2'],
+            ['name' => 'paragraph_1', 'type' => 'text', 'element' => 'p'],
+            ['name' => 'paragraph_2', 'type' => 'text', 'element' => 'p'],
+            ['name' => 'paragraph_3', 'type' => 'text', 'element' => 'p'],
+            ['name' => 'quote_text', 'type' => 'text', 'element' => 'p'],
+            ['name' => 'quote_author', 'type' => 'text', 'element' => 'p'],
+            ['name' => 'highlights_title', 'type' => 'text', 'element' => 'h3'],
+            ['name' => 'highlight_1_title', 'type' => 'text', 'element' => 'h4'],
+            ['name' => 'highlight_1_text', 'type' => 'text', 'element' => 'p'],
+            ['name' => 'highlight_2_title', 'type' => 'text', 'element' => 'h4'],
+            ['name' => 'highlight_2_text', 'type' => 'text', 'element' => 'p'],
+            ['name' => 'highlight_3_title', 'type' => 'text', 'element' => 'h4'],
+            ['name' => 'highlight_3_text', 'type' => 'text', 'element' => 'p'],
+            ['name' => 'highlight_4_title', 'type' => 'text', 'element' => 'h4'],
+            ['name' => 'highlight_4_text', 'type' => 'text', 'element' => 'p'],
+            ['name' => 'highlight_5_title', 'type' => 'text', 'element' => 'h4'],
+            ['name' => 'highlight_5_text', 'type' => 'text', 'element' => 'p'],
+            ['name' => 'highlight_6_title', 'type' => 'text', 'element' => 'h4'],
+            ['name' => 'highlight_6_text', 'type' => 'text', 'element' => 'p'],
+        ]
+    ],
+    'artist_gallery' => [
+        'fields' => [
+            ['name' => 'section_id', 'type' => 'text', 'element' => 'p'],
+            ['name' => 'card_1_image', 'type' => 'image'],
+            ['name' => 'card_1_image_alt', 'type' => 'text', 'element' => 'p'],
+            ['name' => 'card_1_caption', 'type' => 'text', 'element' => 'p'],
+            ['name' => 'card_2_image', 'type' => 'image'],
+            ['name' => 'card_2_image_alt', 'type' => 'text', 'element' => 'p'],
+            ['name' => 'card_2_caption', 'type' => 'text', 'element' => 'p'],
+        ]
+    ],
+    'artist_schedule' => [
+        'fields' => [
+            ['name' => 'section_id', 'type' => 'text', 'element' => 'p'],
+            ['name' => 'tickets_cta_url', 'type' => 'text', 'element' => 'p'],
+        ]
+    ],
+    'artist_listening' => [
+        'fields' => [
+            ['name' => 'section_id', 'type' => 'text', 'element' => 'p'],
+            ['name' => 'section_title', 'type' => 'text', 'element' => 'h2'],
+            ['name' => 'card_1_image', 'type' => 'image'],
+            ['name' => 'card_1_image_alt', 'type' => 'text', 'element' => 'p'],
+            ['name' => 'card_1_preview', 'type' => 'checkbox'],
+            ['name' => 'card_1_badge', 'type' => 'text', 'element' => 'p'],
+            ['name' => 'card_1_tracks_label', 'type' => 'text', 'element' => 'p'],
+            ['name' => 'card_1_year_label', 'type' => 'text', 'element' => 'p'],
+            ['name' => 'card_1_title', 'type' => 'text', 'element' => 'h3'],
+            ['name' => 'card_1_description', 'type' => 'text', 'element' => 'p'],
+            ['name' => 'card_1_featured', 'type' => 'checkbox'],
+            ['name' => 'card_2_image', 'type' => 'image'],
+            ['name' => 'card_2_image_alt', 'type' => 'text', 'element' => 'p'],
+            ['name' => 'card_2_preview', 'type' => 'checkbox'],
+            ['name' => 'card_2_badge', 'type' => 'text', 'element' => 'p'],
+            ['name' => 'card_2_tracks_label', 'type' => 'text', 'element' => 'p'],
+            ['name' => 'card_2_year_label', 'type' => 'text', 'element' => 'p'],
+            ['name' => 'card_2_title', 'type' => 'text', 'element' => 'h3'],
+            ['name' => 'card_2_description', 'type' => 'text', 'element' => 'p'],
+            ['name' => 'card_2_featured', 'type' => 'checkbox'],
+            ['name' => 'card_3_image', 'type' => 'image'],
+            ['name' => 'card_3_image_alt', 'type' => 'text', 'element' => 'p'],
+            ['name' => 'card_3_preview', 'type' => 'checkbox'],
+            ['name' => 'card_3_badge', 'type' => 'text', 'element' => 'p'],
+            ['name' => 'card_3_tracks_label', 'type' => 'text', 'element' => 'p'],
+            ['name' => 'card_3_year_label', 'type' => 'text', 'element' => 'p'],
+            ['name' => 'card_3_title', 'type' => 'text', 'element' => 'h3'],
+            ['name' => 'card_3_description', 'type' => 'text', 'element' => 'p'],
+            ['name' => 'card_3_featured', 'type' => 'checkbox'],
+            ['name' => 'card_4_image', 'type' => 'image'],
+            ['name' => 'card_4_image_alt', 'type' => 'text', 'element' => 'p'],
+            ['name' => 'card_4_preview', 'type' => 'checkbox'],
+            ['name' => 'card_4_badge', 'type' => 'text', 'element' => 'p'],
+            ['name' => 'card_4_tracks_label', 'type' => 'text', 'element' => 'p'],
+            ['name' => 'card_4_year_label', 'type' => 'text', 'element' => 'p'],
+            ['name' => 'card_4_title', 'type' => 'text', 'element' => 'h3'],
+            ['name' => 'card_4_description', 'type' => 'text', 'element' => 'p'],
+            ['name' => 'card_4_featured', 'type' => 'checkbox'],
+        ]
+    ],
+    'artist_venues' => [
+        'fields' => [
+            ['name' => 'section_id', 'type' => 'text', 'element' => 'p'],
+            ['name' => 'venues_title', 'type' => 'text', 'element' => 'h2'],
+            ['name' => 'venues_subtitle', 'type' => 'text', 'element' => 'p'],
+            ['name' => 'map_title', 'type' => 'text', 'element' => 'h2'],
+            ['name' => 'map_image', 'type' => 'image'],
+            ['name' => 'map_image_alt', 'type' => 'text', 'element' => 'p'],
+        ]
+    ],
     'lineup_section' => [
+        'fields' => []
+    ],
+    'jazz_program' => [
         'fields' => []
     ],
     'tickets_passes' => [

@@ -8,7 +8,6 @@ use App\Controllers\CheckoutController;
 use App\Controllers\CmsController;
 
 use App\Controllers\HomeController;
-use App\Controllers\JazzController;
 use App\Controllers\OrdersController;
 use App\Controllers\PageController;
 use App\Controllers\PasswordController;
@@ -181,14 +180,14 @@ class Container
         $this->singleton(PageService::class, fn(self $c): PageService => new PageService(
             $c->get(PageRepository::class)
         ));
-        $this->singleton(EventService::class, fn (self $c): EventService => new EventService(
+        $this->singleton(EventService::class, fn(self $c): EventService => new EventService(
             $c->get(EventRepository::class),
             $c->get(PageRepository::class)
         ));
-        $this->singleton(ContentService::class, fn (self $c): ContentService => new ContentService(
+        $this->singleton(ContentService::class, fn(self $c): ContentService => new ContentService(
             $c->get(PageRepository::class)
         ));
-        $this->singleton(LocationService::class, fn (self $c): LocationService => new LocationService(
+        $this->singleton(LocationService::class, fn(self $c): LocationService => new LocationService(
             $c->get(LocationRepository::class)
         ));
 
@@ -197,6 +196,7 @@ class Container
             $c->get(PageService::class),
             $c->get(EventService::class),
             $c->get(LocationService::class),
+            $c->get(PlannerService::class),
         ));
         $this->transient(CheckoutController::class, fn(self $c): CheckoutController => new CheckoutController(
             $c->get(PlannerService::class),
@@ -230,10 +230,6 @@ class Container
             $c->get(ContentService::class),
             $c->get(EventService::class),
             $c->get(LocationService::class),
-        ));
-        $this->transient(JazzController::class, fn(self $c): JazzController => new JazzController(
-            $c->get(EventRepository::class),
-            $c->get(PlannerService::class)
         ));
     }
 

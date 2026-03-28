@@ -5,18 +5,21 @@ namespace App\Controllers;
 use App\Services\PageService;
 use App\Services\EventService;
 use App\Services\LocationService;
+use App\Services\PlannerService;
 
 class PageController
 {
     private PageService $pageService;
     private EventService $eventService;
     private LocationService $locationService;
+    private PlannerService $plannerService;
 
-    public function __construct(PageService $pageService, EventService $eventService, LocationService $locationService)
+    public function __construct(PageService $pageService, EventService $eventService, LocationService $locationService, PlannerService $plannerService)
     {
         $this->pageService = $pageService;
         $this->eventService = $eventService;
         $this->locationService = $locationService;
+        $this->plannerService = $plannerService;
     }
 
     public function showPage($page): void
@@ -48,6 +51,7 @@ class PageController
         } else {
             $eventService = $this->eventService;
             $locationService = $this->locationService;
+            $plannerService = $this->plannerService;
 ?><div class='dynamic-page-content-container'><?php
                                                 if (isset($page['page_id'])) {
                                                     $pageContentItem = $page;
@@ -59,20 +63,20 @@ class PageController
 
                                                     if (!empty($pageContentItem['component_name'])) {
                                                 ?><div><?php require __DIR__ . '/../Views/partials/page_components/' . $pageContentItem['component_name'] . '.php'; ?></div><?php
-                                                                                                                                                                                    }
-                                                                                                                                                                                } else {
-                                                                                                                                                                                    foreach ($page as $pageContentItem) {
-                                                                                                                                                                                        if (isset($pageContentItem['data'])) {
-                                                                                                                                                                                            $data = json_decode($pageContentItem['data'], true);
-                                                                                                                                                                                        } else {
-                                                                                                                                                                                            $data = null;
-                                                                                                                                                                                        }
-                                                                                                                                                                                        if (!empty($pageContentItem['component_name'])) {
-                                                                                                                                                                                        ?><div><?php require __DIR__ . '/../Views/partials/page_components/' . $pageContentItem['component_name'] . '.php'; ?></div><?php
+                                                                                                                                                                        }
+                                                                                                                                                                    } else {
+                                                                                                                                                                        foreach ($page as $pageContentItem) {
+                                                                                                                                                                            if (isset($pageContentItem['data'])) {
+                                                                                                                                                                                $data = json_decode($pageContentItem['data'], true);
+                                                                                                                                                                            } else {
+                                                                                                                                                                                $data = null;
+                                                                                                                                                                            }
+                                                                                                                                                                            if (!empty($pageContentItem['component_name'])) {
+                                                                                                                                                                            ?><div><?php require __DIR__ . '/../Views/partials/page_components/' . $pageContentItem['component_name'] . '.php'; ?></div><?php
+                                                                                                                                                                                                                                                                                                                }
+                                                                                                                                                                                                                                                                                                            }
+                                                                                                                                                                                                                                                                                                        } ?></div><?php
                                                                                                                                                                                                                                                                         }
+                                                                                                                                                                                                                                                                        require __DIR__ . '/../Views/partials/footer.php';
                                                                                                                                                                                                                                                                     }
-                                                                                                                                                                                                                                                                } ?></div><?php
-                                                                                                                                                }
-                                                                                                                                                require __DIR__ . '/../Views/partials/footer.php';
-                                                                                                                                            }
-                                                                                                                                        }
+                                                                                                                                                                                                                                                                }

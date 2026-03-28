@@ -33,6 +33,17 @@ if (!function_exists('hf_normalize_section_id')) {
 	}
 }
 
+if (!function_exists('hf_csrf_token')) {
+	function hf_csrf_token(): string
+	{
+		if (!isset($_SESSION['csrf_token']) || !is_string($_SESSION['csrf_token']) || trim($_SESSION['csrf_token']) === '') {
+			$_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+		}
+
+		return (string) $_SESSION['csrf_token'];
+	}
+}
+
 /**
  * Get all defined component assets (fonts, preconnect tags, and stylesheets)
  */
@@ -58,6 +69,34 @@ if (!function_exists('hf_get_component_assets')) {
 			],
 			'split_content_block' => [
 				'stylesheets' => ['/css/primitives.css', '/css/split_content_block.css'],
+				'fonts' => null,
+			],
+			'artist_hero' => [
+				'stylesheets' => ['/css/artist_hero.css'],
+				'fonts' => 'barlow_serif_inter',
+			],
+			'artist_story' => [
+				'stylesheets' => ['/css/artist_story.css'],
+				'fonts' => 'barlow_serif_inter',
+			],
+			'artist_gallery' => [
+				'stylesheets' => ['/css/artist_gallery.css'],
+				'fonts' => 'barlow_serif_inter',
+			],
+			'artist_schedule' => [
+				'stylesheets' => ['/css/artist_schedule.css'],
+				'fonts' => 'barlow_serif_inter',
+			],
+			'artist_listening' => [
+				'stylesheets' => ['/css/artist_listening.css'],
+				'fonts' => 'barlow_serif_inter',
+			],
+			'artist_venues' => [
+				'stylesheets' => ['/css/artist_venues.css'],
+				'fonts' => 'barlow_serif_inter',
+			],
+			'jazz_program' => [
+				'stylesheets' => ['/css/jazz_program.css'],
 				'fonts' => null,
 			],
 		];

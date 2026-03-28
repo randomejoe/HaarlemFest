@@ -29,7 +29,6 @@ View::setCsrfTokenResolver(static function () use ($container): string {
  */
 $dispatcher = simpleDispatcher(function (RouteCollector $r) {
     $r->addRoute('GET', '/', ['App\Controllers\HomeController', 'home']);
-    $r->addRoute('GET', '/jazz', ['App\Controllers\JazzController', 'showProgram']);
     $r->addRoute('GET', '/planner', ['App\Controllers\PlannerController', 'show']);
     $r->addRoute('POST', '/planner/items', ['App\Controllers\PlannerController', 'addItem']);
     $r->addRoute('POST', '/planner/items/{eventId}/quantity', ['App\Controllers\PlannerController', 'updateItemQuantity']);

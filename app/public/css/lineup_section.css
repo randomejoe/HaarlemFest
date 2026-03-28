@@ -12,6 +12,7 @@
     --lineup-radius-lg: 16px;
     --lineup-radius-md: 12px;
     --lineup-radius-sm: 8px;
+    --lineup-schedule-max-width: 620px;
     padding: 30px 0;
     background: var(--lineup-navy);
 }
@@ -89,6 +90,13 @@
     display: grid;
     gap: 1.5rem;
     padding: 0 10px 20px;
+    justify-items: center;
+}
+
+.lineup-component .schedule-panel .section-divider,
+.lineup-component .schedule-panel .legend,
+.lineup-component .schedule-panel .schedule-card {
+    width: min(100%, var(--lineup-schedule-max-width));
 }
 
 .lineup-component .section-divider {
@@ -162,10 +170,10 @@
 .lineup-component .schedule-head,
 .lineup-component .schedule-row {
     display: grid;
-    grid-template-columns: 140px minmax(0, 1fr);
-    gap: 2rem;
+    grid-template-columns: 124px minmax(0, 1fr);
+    gap: 1.5rem;
     align-items: center;
-    padding: 0.95rem 1.5rem;
+    padding: 0.95rem 1.25rem;
 }
 
 .lineup-component .schedule-head {
@@ -328,16 +336,36 @@
 
 @media (max-width: 768px) {
     .lineup-component .lineup-tabs {
-        gap: 12px;
-        justify-content: flex-start;
-        overflow-x: auto;
-        padding-bottom: 10px;
+        display: grid;
+        grid-template-columns: repeat(2, minmax(132px, 1fr));
+        gap: 10px;
+        justify-content: center;
+        width: min(100%, var(--lineup-schedule-max-width));
+        margin-inline: auto;
+        overflow: visible;
+        padding-bottom: 6px;
     }
 
     .lineup-component .date-tab {
-        flex: 0 0 auto;
-        width: 124px;
-        min-height: 78px;
+        width: 100%;
+        min-height: 72px;
+        padding: 0.7rem 0.5rem;
+        border-radius: var(--lineup-radius-md);
+        background: linear-gradient(180deg, rgba(3, 24, 45, 0.94) 0%, rgba(1, 17, 33, 0.92) 100%);
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1), 0 8px 14px rgba(0, 0, 0, 0.26);
+    }
+
+    .lineup-component .date-tab span {
+        font-size: 0.92rem;
+        letter-spacing: 0.1em;
+    }
+
+    .lineup-component .date-tab strong {
+        font-size: 1.95rem;
+    }
+
+    .lineup-component .date-tab.is-active {
+        box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.28), 0 10px 16px rgba(0, 0, 0, 0.22);
     }
 
     .lineup-component .schedule-head,

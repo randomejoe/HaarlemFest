@@ -1,42 +1,32 @@
-<?php require __DIR__ . '/partials/header.php'; ?>
+<?php
+$extraStylesheets = [
+    '/css/planner.css?v=' . rawurlencode((string) @filemtime(__DIR__ . '/../../public/css/planner.css')),
+];
+require __DIR__ . '/partials/header.php';
+?>
 
 <main>
     <section class="section">
-        <div class="container planner-wrap">
-            <div class="d-flex flex-wrap justify-content-between align-items-end gap-3 mb-4">
-                <div>
-                    <h1 class="mb-2">Your Planner</h1>
-                    <p class="text-muted mb-0">Review, adjust, and checkout.</p>
+        <div class="container planner-wrap planner-page">
+            <div class="planner-hero mb-4">
+                <div class="planner-hero-copy">
+                    <h1 class="planner-title">Your Planner</h1>
+                    <p class="planner-intro">Review your tickets, resolve conflicts, and finish checkout.</p>
                 </div>
-                <?php if (!empty($planner['is_locked'])): ?>
-                    <span class="badge rounded-pill text-bg-warning">Payment in progress</span>
-                <?php endif; ?>
+
+                <div class="planner-hero-stats" aria-label="Planner summary">
+                    <div class="planner-stat">
+                        <span class="planner-stat-label">Tickets</span>
+                        <strong data-planner-count><?php echo (int) $planner['total_quantity']; ?></strong>
+                    </div>
+                    <div class="planner-stat">
+                        <span class="planner-stat-label">Total</span>
+                        <strong>&euro;<span data-planner-total><?php echo htmlspecialchars((string) $planner['total_price'], ENT_QUOTES, 'UTF-8'); ?></span></strong>
+                    </div>
+                </div>
             </div>
 
             <?php echo \App\View::render('components/flash_alert', ['flash' => $flash]); ?>
-
-            <?php if (!empty($planner['time_conflicts'])): ?>
-                <div class="alert alert-warning mb-4" role="alert">
-                    <h2 class="h6 mb-2">Schedule conflicts</h2>
-                    <ul class="mb-0 ps-3">
-                        <?php
-                        $conflicts = (array) $planner['time_conflicts'];
-                        $max = 3;
-                        $shown = 0;
-                        foreach ($conflicts as $conflict):
-                            if ($shown >= $max) {
-                                break;
-                            }
-                            $shown++;
-                        ?>
-                            <li><?php echo htmlspecialchars((string) $conflict, ENT_QUOTES, 'UTF-8'); ?></li>
-                        <?php endforeach; ?>
-                        <?php if (count($conflicts) > $max): ?>
-                            <li class="fst-italic"><?php echo htmlspecialchars('And more...', ENT_QUOTES, 'UTF-8'); ?></li>
-                        <?php endif; ?>
-                    </ul>
-                </div>
-            <?php endif; ?>
 
             <?php if (!empty($planner['is_empty'])): ?>
                 <div class="card shadow-sm border-0">
@@ -47,97 +37,199 @@
                     </div>
                 </div>
             <?php else: ?>
-                <div class="card shadow-sm border-0">
-                    <div class="card-body p-0">
-                        <div class="table-responsive">
-                            <table class="table table-hover align-middle mb-0">
-                                <thead class="table-light">
-                                    <tr>
-                                        <th>Event</th>
-                                        <th>When</th>
-                                        <th>Qty</th>
-                                        <th class="text-end">Total</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <?php foreach ($planner['items'] as $item): ?>
-                                        <tr>
-                                            <td>
-                                                <div class="fw-semibold"><?php echo htmlspecialchars((string) $item['name'], ENT_QUOTES, 'UTF-8'); ?></div>
-                                                <?php if (empty($item['is_valid'])): ?>
-                                                    <div class="small text-danger mt-1">Not available</div>
-                                                <?php endif; ?>
-                                            </td>
-                                            <td class="small">
-                                                <?php if (!empty($item['is_valid'])): ?>
-                                                    <?php echo htmlspecialchars((string) $item['time'], ENT_QUOTES, 'UTF-8'); ?>
-                                                <?php else: ?>
-                                                    <?php echo htmlspecialchars('Unavailable', ENT_QUOTES, 'UTF-8'); ?>
-                                                <?php endif; ?>
-                                            </td>
-                                            <td>
-                                                <?php if (!empty($item['is_valid']) && empty($planner['is_locked'])): ?>
-                                                    <div class="d-flex flex-column align-items-start gap-2">
-                                                        <form method="post" action="/planner/items/<?php echo (int) $item['event_id']; ?>/quantity" class="d-flex align-items-center gap-2">
-                                                            <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars((string) ($csrf_token ?? ''), ENT_QUOTES, 'UTF-8'); ?>">
-                                                            <input
-                                                                type="number"
-                                                                min="1"
-                                                                step="1"
-                                                                name="quantity"
-                                                                value="<?php echo (int) $item['quantity']; ?>"
-                                                                class="form-control form-control-sm"
-                                                                style="max-width: 90px;"
-                                                                required
-                                                            >
-                                                            <button type="submit" class="btn btn-sm btn-outline-secondary">Update</button>
-                                                        </form>
+                <?php
+                $groupedPlannerItems = [];
+                $plannerItemsByEventId = [];
+                $eventGroupByEventId = [];
+                $pairedEventByEventId = [];
 
-                                                        <form method="post" action="/planner/items/<?php echo (int) $item['event_id']; ?>/remove" class="m-0">
-                                                            <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars((string) ($csrf_token ?? ''), ENT_QUOTES, 'UTF-8'); ?>">
-                                                            <button type="submit" class="btn btn-sm btn-outline-danger">Remove</button>
-                                                        </form>
-                                                    </div>
-                                                <?php else: ?>
-                                                    <span class="badge text-bg-light border">x<?php echo (int) $item['quantity']; ?></span>
-                                                <?php endif; ?>
-                                            </td>
-                                            <td class="fw-semibold text-end">
-                                                <?php if (!empty($item['is_valid'])): ?>
-                                                    &euro;<?php echo htmlspecialchars((string) $item['line_total'], ENT_QUOTES, 'UTF-8'); ?>
-                                                <?php else: ?>
-                                                    &mdash;
-                                                <?php endif; ?>
-                                            </td>
-                                        </tr>
+                foreach ((array) ($planner['time_conflict_pairs'] ?? []) as $pair) {
+                    $leftEventId = (int) ($pair['left_event_id'] ?? 0);
+                    $rightEventId = (int) ($pair['right_event_id'] ?? 0);
+
+                    if ($leftEventId <= 0 || $rightEventId <= 0) {
+                        continue;
+                    }
+
+                    if (!isset($pairedEventByEventId[$leftEventId])) {
+                        $pairedEventByEventId[$leftEventId] = $rightEventId;
+                    }
+                    if (!isset($pairedEventByEventId[$rightEventId])) {
+                        $pairedEventByEventId[$rightEventId] = $leftEventId;
+                    }
+                }
+
+                foreach ((array) $planner['items'] as $item) {
+                    $eventId = (int) ($item['event_id'] ?? 0);
+                    $plannerItemsByEventId[$eventId] = $item;
+                    $groupKey = 'unavailable';
+                    $groupLabel = 'Unavailable events';
+
+                    if (!empty($item['is_valid']) && !empty($item['start_time'])) {
+                        try {
+                            $itemStart = new \DateTimeImmutable((string) $item['start_time']);
+                            $groupKey = 'day-' . $itemStart->format('Y-m-d');
+                            $groupLabel = $itemStart->format('l j F');
+                        } catch (\Throwable $e) {
+                            $groupKey = 'scheduled';
+                            $groupLabel = 'Scheduled events';
+                        }
+                    }
+
+                    if (!isset($groupedPlannerItems[$groupKey])) {
+                        $groupedPlannerItems[$groupKey] = [
+                            'label' => $groupLabel,
+                            'items' => [],
+                        ];
+                    }
+
+                    $eventGroupByEventId[$eventId] = $groupKey;
+                    $groupedPlannerItems[$groupKey]['items'][] = $item;
+                }
+
+                $csrfToken = (string) ($csrf_token ?? '');
+                $renderPlannerEventCard = static function (array $item, array $planner, string $csrfToken): void {
+                ?>
+                    <article id="planner-item-<?php echo (int) $item['event_id']; ?>" data-planner-event-id="<?php echo (int) $item['event_id']; ?>" class="planner-event-card<?php echo empty($item['is_valid']) ? ' is-invalid' : ''; ?>">
+                        <div class="planner-event-main">
+                            <div class="planner-event-title-wrap">
+                                <h3 class="planner-event-title"><?php echo htmlspecialchars((string) $item['name'], ENT_QUOTES, 'UTF-8'); ?></h3>
+                                <?php if (!empty($item['is_valid']) && !empty($item['venue'])): ?>
+                                    <p class="planner-event-meta mb-0"><?php echo htmlspecialchars((string) $item['venue'], ENT_QUOTES, 'UTF-8'); ?></p>
+                                <?php endif; ?>
+                                <?php if (empty($item['is_valid'])): ?>
+                                    <p class="planner-event-invalid mb-0">This ticket is no longer available.</p>
+                                <?php endif; ?>
+                            </div>
+
+                            <p class="planner-event-time mb-0">
+                                <?php if (!empty($item['is_valid'])): ?>
+                                    <?php echo htmlspecialchars((string) $item['time'], ENT_QUOTES, 'UTF-8'); ?>
+                                <?php else: ?>
+                                    Unavailable
+                                <?php endif; ?>
+                            </p>
+                        </div>
+
+                        <div class="planner-event-side">
+                            <div class="planner-event-pricing">
+                                <strong>
+                                    <?php if (!empty($item['is_valid'])): ?>
+                                        &euro;<span data-planner-line-total><?php echo htmlspecialchars((string) $item['line_total'], ENT_QUOTES, 'UTF-8'); ?></span>
+                                    <?php else: ?>
+                                        &mdash;
+                                    <?php endif; ?>
+                                </strong>
+                            </div>
+
+                            <div class="planner-event-actions">
+                                <?php if (!empty($item['is_valid']) && empty($planner['is_locked'])): ?>
+                                    <form method="post" action="/planner/items/<?php echo (int) $item['event_id']; ?>/quantity" class="planner-qty-form" data-planner-async="quantity" data-planner-event-id="<?php echo (int) $item['event_id']; ?>">
+                                        <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($csrfToken, ENT_QUOTES, 'UTF-8'); ?>">
+                                        <label class="visually-hidden" for="planner-qty-<?php echo (int) $item['event_id']; ?>">Quantity for <?php echo htmlspecialchars((string) $item['name'], ENT_QUOTES, 'UTF-8'); ?></label>
+                                        <input
+                                            id="planner-qty-<?php echo (int) $item['event_id']; ?>"
+                                            type="number"
+                                            min="1"
+                                            step="1"
+                                            name="quantity"
+                                            value="<?php echo (int) $item['quantity']; ?>"
+                                            class="form-control form-control-sm"
+                                            data-planner-qty-input
+                                            data-auto-submit="true"
+                                            required>
+                                    </form>
+
+                                    <form method="post" action="/planner/items/<?php echo (int) $item['event_id']; ?>/remove" class="m-0" data-planner-async="remove" data-planner-event-id="<?php echo (int) $item['event_id']; ?>">
+                                        <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($csrfToken, ENT_QUOTES, 'UTF-8'); ?>">
+                                        <button type="submit" class="btn btn-sm btn-outline-danger">Remove</button>
+                                    </form>
+                                <?php else: ?>
+                                    <span class="badge text-bg-light border px-3 py-2">x<?php echo (int) $item['quantity']; ?></span>
+                                <?php endif; ?>
+                            </div>
+                        </div>
+                    </article>
+                <?php
+                };
+                ?>
+                <div class="planner-layout">
+                    <section class="planner-events" aria-label="Planner tickets">
+                        <?php foreach ($groupedPlannerItems as $group): ?>
+                            <?php $renderedEvents = []; ?>
+                            <section class="planner-day-group" aria-label="<?php echo htmlspecialchars((string) $group['label'], ENT_QUOTES, 'UTF-8'); ?>">
+                                <header class="planner-day-header">
+                                    <h2><?php echo htmlspecialchars((string) $group['label'], ENT_QUOTES, 'UTF-8'); ?></h2>
+                                    <span class="planner-day-count"><?php echo count((array) $group['items']); ?> event<?php echo count((array) $group['items']) === 1 ? '' : 's'; ?></span>
+                                </header>
+
+                                <div class="planner-day-events">
+                                    <?php foreach ((array) $group['items'] as $item): ?>
+                                        <?php
+                                        $eventId = (int) ($item['event_id'] ?? 0);
+                                        if (isset($renderedEvents[$eventId])) {
+                                            continue;
+                                        }
+                                        $pairedEventId = (int) ($pairedEventByEventId[$eventId] ?? 0);
+                                        $isPairInSameGroup = $pairedEventId > 0
+                                            && isset($plannerItemsByEventId[$pairedEventId])
+                                            && (($eventGroupByEventId[$pairedEventId] ?? '') === ($eventGroupByEventId[$eventId] ?? ''))
+                                            && !isset($renderedEvents[$pairedEventId]);
+                                        ?>
+
+                                        <?php if ($isPairInSameGroup): ?>
+                                            <section class="planner-conflict-paired-events" data-conflict-left-event-id="<?php echo $eventId; ?>" data-conflict-right-event-id="<?php echo $pairedEventId; ?>" role="note" aria-label="Conflicting events">
+                                                <h3 class="planner-conflict-paired-title">Conflicting events</h3>
+                                                <?php $renderPlannerEventCard($item, $planner, $csrfToken); ?>
+                                                <?php $renderPlannerEventCard((array) $plannerItemsByEventId[$pairedEventId], $planner, $csrfToken); ?>
+                                            </section>
+                                            <?php
+                                            $renderedEvents[$eventId] = true;
+                                            $renderedEvents[$pairedEventId] = true;
+                                            ?>
+                                        <?php else: ?>
+                                            <?php $renderPlannerEventCard($item, $planner, $csrfToken); ?>
+                                            <?php $renderedEvents[$eventId] = true; ?>
+                                        <?php endif; ?>
                                     <?php endforeach; ?>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
+                                </div>
+                            </section>
+                        <?php endforeach; ?>
+                    </section>
 
-                    <div class="card-footer bg-white d-flex flex-wrap justify-content-between align-items-center gap-3">
-                        <div class="d-flex flex-wrap align-items-center gap-2">
-                            <span class="badge text-bg-light border px-3 py-2"><?php echo (int) $planner['total_quantity']; ?> tickets</span>
-                            <span class="fw-semibold">Total: &euro;<?php echo htmlspecialchars((string) $planner['total_price'], ENT_QUOTES, 'UTF-8'); ?></span>
-                        </div>
+                    <aside class="planner-summary-panel" aria-label="Order summary">
+                        <div class="planner-summary-card">
+                            <h2>Summary</h2>
+                            <dl>
+                                <div>
+                                    <dt>Tickets</dt>
+                                    <dd data-planner-count><?php echo (int) $planner['total_quantity']; ?></dd>
+                                </div>
+                                <div>
+                                    <dt>Total</dt>
+                                    <dd>&euro;<span data-planner-total><?php echo htmlspecialchars((string) $planner['total_price'], ENT_QUOTES, 'UTF-8'); ?></span></dd>
+                                </div>
+                            </dl>
 
-                        <div class="d-flex flex-wrap gap-2">
-                            <?php if (!empty($planner['is_locked'])): ?>
-                                <a href="/checkout/pending/<?php echo (int) $planner['locked_checkout_attempt_id']; ?>" class="btn cta-btn">View payment status</a>
-                            <?php else: ?>
-                                <form method="post" action="/planner/clear" class="m-0">
-                                    <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars((string) ($csrf_token ?? ''), ENT_QUOTES, 'UTF-8'); ?>">
-                                    <button type="submit" class="btn btn-outline-secondary">Clear tickets</button>
-                                </form>
-                                <a href="/checkout" class="btn cta-btn">Proceed to checkout</a>
-                            <?php endif; ?>
+                            <div class="planner-summary-actions">
+                                <?php if (!empty($planner['is_locked'])): ?>
+                                    <a href="/checkout/pending/<?php echo (int) $planner['locked_checkout_attempt_id']; ?>" class="btn cta-btn">View payment status</a>
+                                <?php else: ?>
+                                    <a href="/checkout" class="btn cta-btn">Proceed to checkout</a>
+                                    <form method="post" action="/planner/clear" class="m-0" data-planner-async="clear">
+                                        <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars((string) ($csrf_token ?? ''), ENT_QUOTES, 'UTF-8'); ?>">
+                                        <button type="submit" class="btn btn-outline-secondary w-100">Clear tickets</button>
+                                    </form>
+                                <?php endif; ?>
+                            </div>
                         </div>
-                    </div>
+                    </aside>
                 </div>
             <?php endif; ?>
         </div>
     </section>
 </main>
+
+<script src="/js/planner_page_async.js?v=<?php echo rawurlencode((string) @filemtime(__DIR__ . '/../../public/js/planner_page_async.js')); ?>" defer></script>
 
 <?php require __DIR__ . '/partials/footer.php'; ?>
