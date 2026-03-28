@@ -63,6 +63,50 @@ class EventRepository extends BaseRepository
     }
 
     /**
+     * @return Event[]
+     */
+    public function findByName(string $eventName): array
+    {
+        $stmt = $this->pdo->prepare(
+            self::BASE_EVENT_SELECT . '
+            WHERE LOWER(TRIM(COALESCE(e.name, \'\'))) = LOWER(TRIM(:event_name))
+            ORDER BY e.start_time ASC, e.name ASC'
+        );
+
+        $stmt->execute(['event_name' => $eventName]);
+        $rows = $stmt->fetchAll() ?: [];
+
+        return array_map(fn(array $row): Event => $this->hydrateEvent($row), $rows);
+    }
+
+    /**
+     * @return array<int, array<string, mixed>>
+     */
+    public function findArtistVenuesByEventName(string $eventName): array
+    {
+        $stmt = $this->pdo->prepare(
+            "SELECT
+                e.event_id,
+                e.name,
+                e.location AS event_location,
+                e.start_time,
+                e.end_time,
+                e.venue_id,
+                v.location AS venue_location,
+                v.capacity AS venue_capacity
+            FROM events e
+            LEFT JOIN venues v ON v.venue_id = e.venue_id
+            WHERE LOWER(TRIM(COALESCE(e.name, ''))) = LOWER(TRIM(:event_name))
+            ORDER BY e.start_time ASC, e.event_id ASC"
+        );
+
+        $stmt->execute(['event_name' => $eventName]);
+        $rows = $stmt->fetchAll();
+
+        return is_array($rows) ? $rows : [];
+    }
+
+    /**
      * @return array<int, Event>
      */
     public function findByIds(array $eventIds): array

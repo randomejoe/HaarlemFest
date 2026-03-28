@@ -1,0 +1,204 @@
+.avn-venues {
+	padding: 64px 0;
+	background: #ffffff;
+}
+
+.avn-shell {
+	width: min(calc(100% - 48px), 1596px);
+	margin: 0 auto;
+}
+
+.avn-grid {
+	display: grid;
+	grid-template-columns: minmax(0, 779px) minmax(0, 761px);
+	gap: 56px;
+}
+
+.avn-info h2,
+.avn-map-wrap h2 {
+	margin: 0;
+	color: #d4a017;
+	font: 400 48px/48px "Instrument Serif", serif;
+}
+
+.avn-subtitle {
+	margin: 0 0 21px;
+	color: rgba(0, 0, 0, 0.6);
+	font: 400 16px/24px "Inter", sans-serif;
+}
+
+.avn-venue-card {
+	padding: 25px;
+	border: 1px solid #d4a017;
+	border-radius: 10px;
+}
+
+.avn-venue-card+.avn-venue-card {
+	margin-top: 21px;
+}
+
+.avn-venue-head {
+	display: flex;
+	align-items: flex-start;
+	justify-content: space-between;
+	gap: 16px;
+}
+
+.avn-venue-head h3 {
+	margin: 0;
+	color: #0a1828;
+	font: 600 32px/36px "Barlow", sans-serif;
+}
+
+.avn-venue-head p {
+	margin: 4px 0 0;
+	color: rgba(0, 0, 0, 0.6);
+	font: 400 20px/24px "Inter", sans-serif;
+}
+
+.avn-capacity {
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+	color: #d4a017;
+	font: 400 14px/21px "Inter", sans-serif;
+	white-space: nowrap;
+}
+
+.avn-capacity-dot {
+	width: 16px;
+	height: 16px;
+	color: #d4a017;
+}
+
+.avn-capacity-dot svg {
+	width: 100%;
+	height: 100%;
+	display: block;
+}
+
+.avn-description {
+	margin: 16px 0 0;
+	color: rgba(0, 0, 0, 0.7);
+	font: 400 16px/24px "Inter", sans-serif;
+}
+
+.avn-details {
+	margin-top: 16px;
+	padding-top: 17px;
+	border-top: 1px solid rgba(212, 160, 23, 0.3);
+}
+
+.avn-details p {
+	display: flex;
+	align-items: flex-start;
+	gap: 12px;
+	margin: 0;
+	color: rgba(0, 0, 0, 0.6);
+	font: 400 14px/21px "Inter", sans-serif;
+}
+
+.avn-details p+p {
+	margin-top: 12px;
+}
+
+.avn-detail-icon {
+	width: 16px;
+	height: 16px;
+	flex-shrink: 0;
+	margin-top: 2px;
+	color: #d4a017;
+}
+
+.avn-detail-icon-alt {
+	color: #2d7a3e;
+}
+
+.avn-detail-icon svg {
+	width: 100%;
+	height: 100%;
+	display: block;
+}
+
+.avn-map-wrap h2 {
+	margin-bottom: 20px;
+}
+
+.avn-map-card {
+	aspect-ratio: 761 / 416;
+	overflow: hidden;
+	border: 1px solid #d4a017;
+	border-radius: 10px;
+	background: #0d1830;
+}
+
+.avn-map-image {
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+	object-position: center;
+}
+
+.avn-map-placeholder {
+	display: grid;
+	place-items: center;
+	width: 100%;
+	height: 100%;
+	min-height: 260px;
+	padding: 20px;
+	text-align: center;
+	color: rgba(255, 255, 255, 0.9);
+	font: 600 14px/21px "Barlow", sans-serif;
+	letter-spacing: 0.05em;
+	text-transform: uppercase;
+}
+
+.avn-empty-state {
+	margin-top: 20px;
+	padding: 20px;
+	border: 1px dashed rgba(212, 160, 23, 0.6);
+	border-radius: 10px;
+	color: rgba(0, 0, 0, 0.65);
+	font: 400 16px/24px "Inter", sans-serif;
+}
+
+@media (max-width: 1279px) {
+	.avn-grid {
+		grid-template-columns: 1fr;
+	}
+}
+
+@media (max-width: 767px) {
+	.avn-venues {
+		padding: 44px 0;
+	}
+
+	.avn-shell {
+		width: min(calc(100% - 24px), 1596px);
+	}
+
+	.avn-info h2,
+	.avn-map-wrap h2 {
+		font-size: 36px;
+		line-height: 1;
+	}
+
+	.avn-venue-card {
+		padding: 18px;
+	}
+
+	.avn-venue-head {
+		flex-direction: column;
+		gap: 10px;
+	}
+
+	.avn-venue-head h3 {
+		font-size: 28px;
+		line-height: 32px;
+	}
+
+	.avn-venue-head p {
+		font-size: 18px;
+		line-height: 22px;
+	}
+}

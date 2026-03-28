@@ -136,6 +136,36 @@ class PlannerService
         $this->touchAndPersistPlanner($planner);
     }
 
+    public function addItems(array $eventIds, int $quantity): int
+    {
+        $ids = array_values(array_unique(array_map('intval', $eventIds)));
+        $ids = array_values(array_filter($ids, static fn(int $id): bool => $id > 0));
+
+        if ($ids === []) {
+            throw new InvalidArgumentException('Select at least one valid event before adding it to your planner.');
+        }
+
+        $this->assertQuantity($quantity);
+        $this->assertUnlocked();
+
+        $planner = $this->session->getPlannerState();
+
+        foreach ($ids as $eventId) {
+            $event = $this->assertEventCanBePlanned($eventId);
+            $current = (int) ($planner['items'][$eventId] ?? 0);
+            $requestedQuantity = $current + $quantity;
+            $this->assertQuantityWithinAvailability($event, $requestedQuantity);
+        }
+
+        foreach ($ids as $eventId) {
+            $planner['items'][$eventId] = (int) ($planner['items'][$eventId] ?? 0) + $quantity;
+        }
+
+        $this->touchAndPersistPlanner($planner);
+
+        return count($ids);
+    }
+
     public function updateItemQuantity(int $eventId, int $quantity): void
     {
         $this->assertEventId($eventId);
@@ -219,7 +249,13 @@ class PlannerService
         $eventIds = array_map('intval', array_keys($items));
         $eventsById = $this->events->findByIds($eventIds);
         $summary = PlannerSummary::fromRawItems($items, $eventsById);
+        $plannerState = $this->session->getPlannerState();
         $lockedCheckoutAttemptId = $this->getLockedCheckoutAttemptId();
+        $lockExpiresAtUnix = $this->getLockedCheckoutExpiresAtUnix($plannerState);
+        $lockExpiresInSeconds = null;
+        if ($lockExpiresAtUnix !== null) {
+            $lockExpiresInSeconds = max(0, $lockExpiresAtUnix - time());
+        }
 
         // Convert PlannerItem objects to plain arrays so that views and
         // downstream services (CheckoutService) continue to receive the same
@@ -239,9 +275,12 @@ class PlannerService
             'has_invalid_items' => $summary->hasInvalidItems(),
             'invalid_item_ids' => $summary->invalidItemIds(),
             'locked_checkout_attempt_id' => $lockedCheckoutAttemptId,
+            'locked_checkout_expires_at_unix' => $lockExpiresAtUnix,
+            'lock_expires_in_seconds' => $lockExpiresInSeconds,
             'is_locked' => $lockedCheckoutAttemptId !== null,
             'idempotency_key' => $this->getIdempotencyKey(),
             'time_conflicts' => $this->detectTimeConflicts($summary->conflictItems()),
+            'time_conflict_pairs' => $this->detectTimeConflictPairs($summary->conflictItems()),
         ];
     }
 
@@ -429,5 +468,37 @@ class PlannerService
         }
 
         return $conflicts;
+    }
+
+    private function detectTimeConflictPairs(array $items): array
+    {
+        $pairs = [];
+        $count = count($items);
+
+        for ($i = 0; $i < $count; $i++) {
+            $leftStart = new DateTimeImmutable((string) $items[$i]['start_time']);
+            $leftEnd = new DateTimeImmutable((string) $items[$i]['end_time']);
+
+            for ($j = $i + 1; $j < $count; $j++) {
+                $rightStart = new DateTimeImmutable((string) $items[$j]['start_time']);
+                $rightEnd = new DateTimeImmutable((string) $items[$j]['end_time']);
+
+                if ($leftStart < $rightEnd && $rightStart < $leftEnd) {
+                    $pairs[] = [
+                        'left_event_id' => (int) $items[$i]['event_id'],
+                        'left_name' => (string) $items[$i]['name'],
+                        'right_event_id' => (int) $items[$j]['event_id'],
+                        'right_name' => (string) $items[$j]['name'],
+                        'message' => sprintf(
+                            '%s overlaps with %s.',
+                            (string) $items[$i]['name'],
+                            (string) $items[$j]['name']
+                        ),
+                    ];
+                }
+            }
+        }
+
+        return $pairs;
     }
 }

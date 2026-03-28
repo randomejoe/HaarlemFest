@@ -12,9 +12,12 @@ use App\Services\CheckoutHoldManager;
 use App\Services\CheckoutService;
 use App\Services\CheckoutValidationService;
 use App\Services\DateTimeFormatter;
+use App\Services\ExpiryCleanupLogger;
+use App\Services\HoldExpiryEvaluator;
 use App\Services\PaymentGatewayStubService;
 use App\Services\PaymentHandoffService;
 use App\Services\PlannerService;
+use App\Services\SessionManager;
 use App\Services\StockReservationService;
 use App\Services\TicketDeliveryOrchestrator;
 use App\Services\TicketDeliveryService;
@@ -60,6 +63,8 @@ class CheckoutServiceTest extends TestCase
             $this->checkoutAttempts,
             $this->events,
             $dateTimeFormatter,
+            new HoldExpiryEvaluator($dateTimeFormatter),
+            new ExpiryCleanupLogger(),
             $this->pdo
         );
 
@@ -84,6 +89,7 @@ class CheckoutServiceTest extends TestCase
             $this->planner,
             $this->checkoutAttempts,
             $holdManager,
+            new HoldExpiryEvaluator($dateTimeFormatter),
             $dateTimeFormatter,
             $validation,
             $stockReservation,
@@ -189,7 +195,7 @@ class CheckoutServiceTest extends TestCase
 
         $this->paymentGateway->expects($this->once())
             ->method('createTransaction')
-            ->with($this->isType('array'), false)
+            ->with($this->isType('array'))
             ->willReturn([
                 'success' => true,
                 'redirect_url' => '/checkout/pending/' . $attemptId,
@@ -239,7 +245,8 @@ class PlannerServiceLockTtlTest extends TestCase
         $_SESSION = [];
 
         $events = $this->createMock(EventRepository::class);
-        $this->planner = new PlannerService($events);
+        $session = new SessionManager();
+        $this->planner = new PlannerService($events, $session);
     }
 
     public function test_lock_auto_unlocks_after_hold_expires_at(): void

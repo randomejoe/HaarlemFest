@@ -1277,34 +1277,46 @@ h4 {
 }
 
 .dynamic-page-content-container {
-    padding: 1em;
-    gap: 2em;
+    margin: 0;
+    padding: 0;
+    gap: 0;
     display: flex;
     flex-direction: column;
 }
 
-.history-schedule-container, .history-schedule-card-container {
+.mt-5 {
+    margin-top: 0 !important;
+}
+
+.history-schedule-container,
+.history-schedule-card-container {
     display: flex;
     flex-direction: row;
     flex-wrap: wrap;
 }
+
 .history-schedule-container {
     justify-content: space-between;
     background-color: var(--history-primary);
     border: solid var(--history-secondary) 5px;
     padding: 0.5em;
 }
+
 .history-schedule-card-container {
     justify-content: space-evenly;
 }
+
 .history-schedule-container h3 {
     color: var(--history-negative);
 }
-.history-schedule-container > .history-schedule-day, .history-schedule-card {
+
+.history-schedule-container>.history-schedule-day,
+.history-schedule-card {
     min-width: 50%;
     max-width: 100%;
-    flex:auto;
+    flex: auto;
 }
+
 .history-schedule-card {
     display: flex;
     flex-direction: column;
@@ -1312,16 +1324,19 @@ h4 {
     border-radius: var(--radius-lg);
     min-height: 10em;
 }
+
 .tour-language-image {
     width: 1.5em;
     height: 1em;
 }
+
 .history-schedule-card-row {
     display: flex;
     flex-direction: row;
     align-items: center;
     gap: 5px;
 }
+
 .history-schedule-card-time {
     background-color: var(--history-secondary);
     width: 100%;
@@ -1330,13 +1345,16 @@ h4 {
     justify-content: center;
     padding: 0.5em;
 }
-.history-schedule-card-time > p {
+
+.history-schedule-card-time>p {
     color: var(--history-negative);
     text-align: center;
 }
+
 .history-schedule-card-rows {
     padding: 0.5em 1em;
 }
+
 .history-schedule-card-content {
     display: flex;
     flex-grow: inherit;
@@ -1344,24 +1362,28 @@ h4 {
     justify-content: space-between;
     padding-bottom: 0.5em;
 }
+
 .history-add-ticket-button {
     width: 80%;
     background-color: var(--history-secondary);
     border-width: 0px;
     color: var(--history-negative);
 }
+
 .history-location-card {
     background-color: var(--history-negative);
     width: 100%;
     padding: 1em;
 }
+
 .history-location-card img {
     height: auto;
     padding-right: 1em;
 }
+
 .history-location-card a {
     height: fit-content;
-    margin-top:auto;
+    margin-top: auto;
     background-color: var(--history-secondary);
     padding: 5px 1em;
     border-radius: var(--radius-sm);
@@ -1378,17 +1400,21 @@ h4 {
     display: flex;
     justify-content: center;
 }
+
 .vertical-center {
     display: flex;
     align-items: center;
 }
+
 .row {
     display: flex;
     flex-direction: row;
 }
+
 .no-margin {
     margin: 0px;
 }
+
 .fit-content {
     width: fit-content;
 }

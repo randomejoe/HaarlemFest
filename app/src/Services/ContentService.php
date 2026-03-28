@@ -49,6 +49,18 @@ class ContentService implements CMSService
             $data = $this->normalizeHeroFields($data);
         } elseif ($component->getName() === 'split_content_block') {
             $data = $this->normalizeSplitContentBlockFields($data);
+        } elseif ($component->getName() === 'artist_hero') {
+            $data = $this->normalizeArtistHeroFields($data);
+        } elseif ($component->getName() === 'artist_story') {
+            $data = $this->normalizeArtistStoryFields($data);
+        } elseif ($component->getName() === 'artist_gallery') {
+            $data = $this->normalizeArtistGalleryFields($data);
+        } elseif ($component->getName() === 'artist_schedule') {
+            $data = $this->normalizeArtistScheduleFields($data);
+        } elseif ($component->getName() === 'artist_listening') {
+            $data = $this->normalizeArtistListeningFields($data);
+        } elseif ($component->getName() === 'artist_venues') {
+            $data = $this->normalizeArtistVenuesFields($data);
         } elseif ($component->getName() === 'tickets_passes') {
             $data = $this->normalizeTicketsPassesFields($data);
         } elseif ($component->getName() === 'venues_map') {
@@ -65,6 +77,18 @@ class ContentService implements CMSService
             $data = $this->normalizeHeroFields($data);
         } elseif ($component->getName() === 'split_content_block') {
             $data = $this->normalizeSplitContentBlockFields($data);
+        } elseif ($component->getName() === 'artist_hero') {
+            $data = $this->normalizeArtistHeroFields($data);
+        } elseif ($component->getName() === 'artist_story') {
+            $data = $this->normalizeArtistStoryFields($data);
+        } elseif ($component->getName() === 'artist_gallery') {
+            $data = $this->normalizeArtistGalleryFields($data);
+        } elseif ($component->getName() === 'artist_schedule') {
+            $data = $this->normalizeArtistScheduleFields($data);
+        } elseif ($component->getName() === 'artist_listening') {
+            $data = $this->normalizeArtistListeningFields($data);
+        } elseif ($component->getName() === 'artist_venues') {
+            $data = $this->normalizeArtistVenuesFields($data);
         } elseif ($component->getName() === 'tickets_passes') {
             $data = $this->normalizeTicketsPassesFields($data);
         } elseif ($component->getName() === 'venues_map') {
@@ -144,6 +168,149 @@ class ContentService implements CMSService
         ];
 
         foreach ($splitContentBlockPlainTextFields as $field) {
+            if (!array_key_exists($field, $data)) {
+                continue;
+            }
+
+            $data[$field] = $this->normalizePlainText((string) $data[$field]);
+        }
+
+        return $data;
+    }
+
+    private function normalizeArtistHeroFields(array $data): array
+    {
+        $artistHeroPlainTextFields = [
+            'artist_name',
+            'artist_summary',
+            'artist_location',
+            'artist_genres',
+            'featured_event_id',
+            'featured_event_note',
+            'tickets_cta_label',
+            'tickets_cta_url',
+            'artist_image_alt',
+        ];
+
+        foreach ($artistHeroPlainTextFields as $field) {
+            if (!array_key_exists($field, $data)) {
+                continue;
+            }
+
+            $data[$field] = $this->normalizePlainText((string) $data[$field]);
+        }
+
+        return $data;
+    }
+
+    private function normalizeArtistStoryFields(array $data): array
+    {
+        $artistStoryPlainTextFields = [
+            'section_id',
+            'story_title',
+            'paragraph_1',
+            'paragraph_2',
+            'paragraph_3',
+            'quote_text',
+            'quote_author',
+            'highlights_title',
+        ];
+
+        foreach (range(1, 6) as $index) {
+            $artistStoryPlainTextFields[] = 'highlight_' . $index . '_title';
+            $artistStoryPlainTextFields[] = 'highlight_' . $index . '_text';
+        }
+
+        foreach ($artistStoryPlainTextFields as $field) {
+            if (!array_key_exists($field, $data)) {
+                continue;
+            }
+
+            $data[$field] = $this->normalizePlainText((string) $data[$field]);
+        }
+
+        return $data;
+    }
+
+    private function normalizeArtistGalleryFields(array $data): array
+    {
+        $artistGalleryPlainTextFields = [
+            'section_id',
+            'card_1_image_alt',
+            'card_1_caption',
+            'card_2_image_alt',
+            'card_2_caption',
+        ];
+
+        foreach ($artistGalleryPlainTextFields as $field) {
+            if (!array_key_exists($field, $data)) {
+                continue;
+            }
+
+            $data[$field] = $this->normalizePlainText((string) $data[$field]);
+        }
+
+        return $data;
+    }
+
+    private function normalizeArtistScheduleFields(array $data): array
+    {
+        $artistSchedulePlainTextFields = [
+            'section_id',
+            'tickets_cta_url',
+        ];
+
+        foreach ($artistSchedulePlainTextFields as $field) {
+            if (!array_key_exists($field, $data)) {
+                continue;
+            }
+
+            $data[$field] = $this->normalizePlainText((string) $data[$field]);
+        }
+
+        return $data;
+    }
+
+    private function normalizeArtistListeningFields(array $data): array
+    {
+        $artistListeningPlainTextFields = [
+            'section_id',
+            'section_title',
+        ];
+
+        foreach (range(1, 4) as $index) {
+            $artistListeningPlainTextFields[] = 'card_' . $index . '_image_alt';
+            $artistListeningPlainTextFields[] = 'card_' . $index . '_preview';
+            $artistListeningPlainTextFields[] = 'card_' . $index . '_badge';
+            $artistListeningPlainTextFields[] = 'card_' . $index . '_tracks_label';
+            $artistListeningPlainTextFields[] = 'card_' . $index . '_year_label';
+            $artistListeningPlainTextFields[] = 'card_' . $index . '_title';
+            $artistListeningPlainTextFields[] = 'card_' . $index . '_description';
+            $artistListeningPlainTextFields[] = 'card_' . $index . '_featured';
+        }
+
+        foreach ($artistListeningPlainTextFields as $field) {
+            if (!array_key_exists($field, $data)) {
+                continue;
+            }
+
+            $data[$field] = $this->normalizePlainText((string) $data[$field]);
+        }
+
+        return $data;
+    }
+
+    private function normalizeArtistVenuesFields(array $data): array
+    {
+        $artistVenuesPlainTextFields = [
+            'section_id',
+            'venues_title',
+            'venues_subtitle',
+            'map_title',
+            'map_image_alt',
+        ];
+
+        foreach ($artistVenuesPlainTextFields as $field) {
             if (!array_key_exists($field, $data)) {
                 continue;
             }

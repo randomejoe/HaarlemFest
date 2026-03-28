@@ -5,6 +5,10 @@ hf_register_component('lineup_section');
 
 $category = trim((string) ($pageContentItem['title'] ?? ''));
 $days = [];
+$artistDetailsLinks = [
+    'Ntjam Rosie' => '/Ntjam%20Rosie',
+    'Jonna Frazer' => '/Jonna%20Frazer',
+];
 
 if (isset($eventService) && $category !== '' && method_exists($eventService, 'getLineupDataForCategory')) {
     $days = $eventService->getLineupDataForCategory($category);
@@ -81,6 +85,7 @@ if (isset($eventService) && $category !== '' && method_exists($eventService, 'ge
                                 $artistImage = trim((string) ($event['artist_img'] ?? ''));
                                 $artistImageUrl = hf_image_url($artistImage);
                                 $artistDescription = trim((string) ($event['description'] ?? ''));
+                                $artistDetailsUrl = $artistDetailsLinks[$event['name']] ?? '#lineup-schedule-event-' . (int) $event['id'];
                                 if ($artistDescription === '') {
                                     $artistDescription = 'Line-up details will be announced soon.';
                                 }
@@ -92,7 +97,7 @@ if (isset($eventService) && $category !== '' && method_exists($eventService, 'ge
                                     <div class="artist-card-copy">
                                         <h3><?php echo hf_e($event['name']); ?></h3>
                                         <p><?php echo hf_e($artistDescription); ?></p>
-                                        <a class="artist-link" href="#lineup-schedule-event-<?php echo (int) $event['id']; ?>">
+                                        <a class="artist-link" href="<?php echo hf_e($artistDetailsUrl); ?>">
                                             Details <span aria-hidden="true">&rarr;</span>
                                         </a>
                                     </div>
@@ -106,36 +111,36 @@ if (isset($eventService) && $category !== '' && method_exists($eventService, 'ge
     </div>
 </section>
 <script>
-(() => {
-    const roots = document.querySelectorAll('[data-lineup-root]');
+    (() => {
+        const roots = document.querySelectorAll('[data-lineup-root]');
 
-    roots.forEach((root) => {
-        if (root.dataset.lineupBound === 'true') {
-            return;
-        }
+        roots.forEach((root) => {
+            if (root.dataset.lineupBound === 'true') {
+                return;
+            }
 
-        root.dataset.lineupBound = 'true';
+            root.dataset.lineupBound = 'true';
 
-        const tabs = Array.from(root.querySelectorAll('[data-lineup-tab]'));
-        const panels = Array.from(root.querySelectorAll('[data-lineup-panel]'));
+            const tabs = Array.from(root.querySelectorAll('[data-lineup-tab]'));
+            const panels = Array.from(root.querySelectorAll('[data-lineup-panel]'));
 
-        const activateDay = (dayKey) => {
+            const activateDay = (dayKey) => {
+                tabs.forEach((tab) => {
+                    const isActive = tab.dataset.lineupTab === dayKey;
+                    tab.classList.toggle('is-active', isActive);
+                    tab.setAttribute('aria-selected', isActive ? 'true' : 'false');
+                });
+
+                panels.forEach((panel) => {
+                    const isActive = panel.dataset.lineupPanel === dayKey;
+                    panel.classList.toggle('is-active', isActive);
+                    panel.hidden = !isActive;
+                });
+            };
+
             tabs.forEach((tab) => {
-                const isActive = tab.dataset.lineupTab === dayKey;
-                tab.classList.toggle('is-active', isActive);
-                tab.setAttribute('aria-selected', isActive ? 'true' : 'false');
+                tab.addEventListener('click', () => activateDay(tab.dataset.lineupTab));
             });
-
-            panels.forEach((panel) => {
-                const isActive = panel.dataset.lineupPanel === dayKey;
-                panel.classList.toggle('is-active', isActive);
-                panel.hidden = !isActive;
-            });
-        };
-
-        tabs.forEach((tab) => {
-            tab.addEventListener('click', () => activateDay(tab.dataset.lineupTab));
         });
-    });
-})();
+    })();
 </script>

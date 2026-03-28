@@ -1,4 +1,9 @@
-<?php require __DIR__ . '/partials/header.php'; ?>
+<?php
+$extraStylesheets = [
+    '/css/planner.css?v=' . rawurlencode((string) @filemtime(__DIR__ . '/../../public/css/planner.css')),
+];
+require __DIR__ . '/partials/header.php';
+?>
 
 <main>
     <section class="section">
@@ -38,42 +43,95 @@
                                 <h2 class="h5 mb-0">Your tickets</h2>
                             </div>
                             <div class="card-body">
+                                <?php
+                                $checkoutItemsByEventId = [];
+                                $pairedEventByEventId = [];
+
+                                foreach ((array) ($planner['items'] ?? []) as $plannerItem) {
+                                    $checkoutItemsByEventId[(int) ($plannerItem['event_id'] ?? 0)] = $plannerItem;
+                                }
+
+                                foreach ((array) ($planner['time_conflict_pairs'] ?? []) as $pair) {
+                                    $leftEventId = (int) ($pair['left_event_id'] ?? 0);
+                                    $rightEventId = (int) ($pair['right_event_id'] ?? 0);
+
+                                    if ($leftEventId <= 0 || $rightEventId <= 0) {
+                                        continue;
+                                    }
+
+                                    if (!isset($checkoutItemsByEventId[$leftEventId]) || !isset($checkoutItemsByEventId[$rightEventId])) {
+                                        continue;
+                                    }
+
+                                    if (!isset($pairedEventByEventId[$leftEventId])) {
+                                        $pairedEventByEventId[$leftEventId] = $rightEventId;
+                                    }
+                                    if (!isset($pairedEventByEventId[$rightEventId])) {
+                                        $pairedEventByEventId[$rightEventId] = $leftEventId;
+                                    }
+                                }
+
+                                $renderedCheckoutEvents = [];
+                                ?>
                                 <ul class="list-group list-group-flush mb-3">
-                                    <?php foreach ($planner['items'] as $item): ?>
-                                        <li class="list-group-item px-0 d-flex justify-content-between gap-3">
-                                            <div>
-                                                <div class="fw-semibold"><?php echo htmlspecialchars((string) $item['name'], ENT_QUOTES, 'UTF-8'); ?></div>
-                                                <div class="small text-muted"><?php echo htmlspecialchars((string) $item['time'], ENT_QUOTES, 'UTF-8'); ?></div>
-                                            </div>
-                                            <div class="text-end">
-                                                <div class="small text-muted">x<?php echo (int) $item['quantity']; ?></div>
-                                            </div>
-                                        </li>
+                                    <?php foreach ((array) ($planner['items'] ?? []) as $item): ?>
+                                        <?php
+                                        $eventId = (int) ($item['event_id'] ?? 0);
+                                        if (isset($renderedCheckoutEvents[$eventId])) {
+                                            continue;
+                                        }
+
+                                        $pairedEventId = (int) ($pairedEventByEventId[$eventId] ?? 0);
+                                        $hasPair = $pairedEventId > 0
+                                            && isset($checkoutItemsByEventId[$pairedEventId])
+                                            && !isset($renderedCheckoutEvents[$pairedEventId]);
+                                        ?>
+
+                                        <?php if ($hasPair): ?>
+                                            <?php $pairedItem = (array) $checkoutItemsByEventId[$pairedEventId]; ?>
+                                            <li class="list-group-item px-0">
+                                                <section class="checkout-conflict-paired-events" data-conflict-left-event-id="<?php echo $eventId; ?>" data-conflict-right-event-id="<?php echo $pairedEventId; ?>" role="note" aria-label="Conflicting events">
+                                                    <h3 class="checkout-conflict-paired-title">Conflicting events</h3>
+
+                                                    <div class="checkout-ticket-row">
+                                                        <div>
+                                                            <div class="fw-semibold"><?php echo htmlspecialchars((string) $item['name'], ENT_QUOTES, 'UTF-8'); ?></div>
+                                                            <div class="small text-muted"><?php echo htmlspecialchars((string) $item['time'], ENT_QUOTES, 'UTF-8'); ?></div>
+                                                        </div>
+                                                        <div class="text-end">
+                                                            <div class="small text-muted">x<?php echo (int) $item['quantity']; ?></div>
+                                                        </div>
+                                                    </div>
+
+                                                    <div class="checkout-ticket-row">
+                                                        <div>
+                                                            <div class="fw-semibold"><?php echo htmlspecialchars((string) $pairedItem['name'], ENT_QUOTES, 'UTF-8'); ?></div>
+                                                            <div class="small text-muted"><?php echo htmlspecialchars((string) $pairedItem['time'], ENT_QUOTES, 'UTF-8'); ?></div>
+                                                        </div>
+                                                        <div class="text-end">
+                                                            <div class="small text-muted">x<?php echo (int) $pairedItem['quantity']; ?></div>
+                                                        </div>
+                                                    </div>
+                                                </section>
+                                            </li>
+                                            <?php
+                                            $renderedCheckoutEvents[$eventId] = true;
+                                            $renderedCheckoutEvents[$pairedEventId] = true;
+                                            ?>
+                                        <?php else: ?>
+                                            <li class="list-group-item px-0 d-flex justify-content-between gap-3">
+                                                <div>
+                                                    <div class="fw-semibold"><?php echo htmlspecialchars((string) $item['name'], ENT_QUOTES, 'UTF-8'); ?></div>
+                                                    <div class="small text-muted"><?php echo htmlspecialchars((string) $item['time'], ENT_QUOTES, 'UTF-8'); ?></div>
+                                                </div>
+                                                <div class="text-end">
+                                                    <div class="small text-muted">x<?php echo (int) $item['quantity']; ?></div>
+                                                </div>
+                                            </li>
+                                            <?php $renderedCheckoutEvents[$eventId] = true; ?>
+                                        <?php endif; ?>
                                     <?php endforeach; ?>
                                 </ul>
-
-                                <?php if (!empty($planner['time_conflicts'])): ?>
-                                    <div class="alert alert-warning mb-3" role="alert">
-                                        <h3 class="h6 mb-2">Schedule conflicts</h3>
-                                        <ul class="mb-0 ps-3">
-                                            <?php
-                                            $conflicts = (array) $planner['time_conflicts'];
-                                            $max = 3;
-                                            $shown = 0;
-                                            foreach ($conflicts as $conflict):
-                                                if ($shown >= $max) {
-                                                    break;
-                                                }
-                                                $shown++;
-                                            ?>
-                                                <li><?php echo htmlspecialchars((string) $conflict, ENT_QUOTES, 'UTF-8'); ?></li>
-                                            <?php endforeach; ?>
-                                            <?php if (count($conflicts) > $max): ?>
-                                                <li class="fst-italic"><?php echo htmlspecialchars('And more...', ENT_QUOTES, 'UTF-8'); ?></li>
-                                            <?php endif; ?>
-                                        </ul>
-                                    </div>
-                                <?php endif; ?>
 
                                 <div class="d-flex justify-content-between align-items-center border-top pt-3">
                                     <span class="badge text-bg-light border"><?php echo (int) $planner['total_quantity']; ?> tickets</span>
