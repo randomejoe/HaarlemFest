@@ -78,8 +78,8 @@ class CheckoutController
 
         match ($result['status'] ?? 'unknown') {
             'handoff_created', 'already_pending', 'already_paid' => $this->redirectToPendingAttempt($result['attempt_id'] ?? 0),
-            'out_of_stock' => $this->handleOutOfStock($result),
-            default => $this->handleConfirmError($result)
+            'out_of_stock' => $this->redirectOutOfStock($result),
+            default => $this->redirectConfirmError($result)
         };
     }
 
@@ -164,7 +164,7 @@ class CheckoutController
         return $user;
     }
 
-    private function handleOutOfStock(array $result): void
+    private function redirectOutOfStock(array $result): void
     {
         $conflicts = $result['conflicts'] ?? [];
         if (!$conflicts) {
@@ -182,7 +182,7 @@ class CheckoutController
         $this->redirect(self::CHECKOUT_PATH);
     }
 
-    private function handleConfirmError(array $result): void
+    private function redirectConfirmError(array $result): void
     {
         $type = ($result['status'] ?? '') === 'handoff_failed' ? 'error' : 'info';
         $this->planner->setFlash($type, $result['message'] ?? 'Checkout could not be completed.');

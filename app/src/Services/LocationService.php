@@ -27,7 +27,7 @@ class LocationService implements CMSService
         $data['location_id'] = $id;
         $image = $_FILES['image'];
 
-        $data['image'] = ImageUploader::handleImageUpload($image);
+        $data['image'] = ImageUploader::upload($image);
 
         $location = Location::fromArray($data);
         return $this->repository->updateLocation($location);

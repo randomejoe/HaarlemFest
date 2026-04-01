@@ -39,7 +39,7 @@ class ContentService implements CMSService
                 continue;
             }
 
-            $filename = ImageUploader::handleImageUpload($file);
+            $filename = ImageUploader::upload($file);
             $data[$field] = $filename;
         }
         $data = $this->stripExistingImageKeys($data);

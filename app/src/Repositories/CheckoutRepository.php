@@ -326,7 +326,7 @@ class CheckoutRepository
         $stmt = $this->pdo->prepare($sql);
         $stmt->execute($insertParams);
 
-        return $this->findInsertedTicketsByVerificationCodes($invoiceId, $ticketsToCreate);
+        return $this->findCreatedTickets($invoiceId, $ticketsToCreate);
     }
 
     private function generateVerificationCode(int $checkoutAttemptId, int $eventId): string
@@ -336,7 +336,7 @@ class CheckoutRepository
         );
     }
 
-    private function findInsertedTicketsByVerificationCodes(int $invoiceId, array $ticketsToCreate): array
+    private function findCreatedTickets(int $invoiceId, array $ticketsToCreate): array
     {
         if ($ticketsToCreate === []) {
             return [];

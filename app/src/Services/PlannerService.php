@@ -77,7 +77,7 @@ class PlannerService
         $planner = $this->session->getPlannerState();
         $planner['locked_checkout_attempt_id'] = $checkoutAttemptId;
         $planner['locked_checkout_expires_at'] = $this->computeLockExpiresAtUnix($holdExpiresAt);
-        $this->touchAndPersistPlanner($planner);
+        $this->savePlanner($planner);
     }
 
     public function unlock(): void
@@ -85,7 +85,7 @@ class PlannerService
         $planner = $this->session->getPlannerState();
         $planner['locked_checkout_attempt_id'] = null;
         $planner['locked_checkout_expires_at'] = null;
-        $this->touchAndPersistPlanner($planner);
+        $this->savePlanner($planner);
     }
 
     public function unlockIfAttemptId(int $checkoutAttemptId): bool
@@ -133,7 +133,7 @@ class PlannerService
         $this->assertQuantityWithinAvailability($event, $requestedQuantity);
 
         $planner['items'][$eventId] = $current + $quantity;
-        $this->touchAndPersistPlanner($planner);
+        $this->savePlanner($planner);
     }
 
     public function addItems(array $eventIds, int $quantity): int
@@ -161,7 +161,7 @@ class PlannerService
             $planner['items'][$eventId] = (int) ($planner['items'][$eventId] ?? 0) + $quantity;
         }
 
-        $this->touchAndPersistPlanner($planner);
+        $this->savePlanner($planner);
 
         return count($ids);
     }
@@ -182,7 +182,7 @@ class PlannerService
         $this->assertQuantityWithinAvailability($event, $quantity);
 
         $planner['items'][$eventId] = $quantity;
-        $this->touchAndPersistPlanner($planner);
+        $this->savePlanner($planner);
     }
 
     public function removeItem(int $eventId): void
@@ -192,7 +192,7 @@ class PlannerService
 
         $planner = $this->session->getPlannerState();
         unset($planner['items'][$eventId]);
-        $this->touchAndPersistPlanner($planner);
+        $this->savePlanner($planner);
     }
 
     public function clear(): void
@@ -201,7 +201,7 @@ class PlannerService
 
         $planner = $this->session->getPlannerState();
         $planner['items'] = [];
-        $this->touchAndPersistPlanner($planner);
+        $this->savePlanner($planner);
     }
 
     public function getIdempotencyKey(): string
@@ -214,7 +214,7 @@ class PlannerService
     {
         $planner = $this->session->getPlannerState();
         $planner['idempotency_key'] = $this->session->generateToken();
-        $this->touchAndPersistPlanner($planner);
+        $this->savePlanner($planner);
         return $planner['idempotency_key'];
     }
 
@@ -284,7 +284,7 @@ class PlannerService
         ];
     }
 
-    private function touchAndPersistPlanner(array $planner): void
+    private function savePlanner(array $planner): void
     {
         $planner['updated_at'] = time();
         $this->session->setPlannerState($planner);

@@ -109,7 +109,7 @@
 		}
 	}
 
-	function hidePlannerAndShowEmptyState() {
+	function renderEmptyState() {
 		var layout = document.querySelector('.planner-layout');
 		if (layout) {
 			layout.remove();
@@ -202,13 +202,13 @@
 					}
 					removeConflictEntries(eventId);
 					if (response.planner && response.planner.is_empty === true) {
-						hidePlannerAndShowEmptyState();
+						renderEmptyState();
 					}
 					return;
 				}
 
 				if (action === 'clear') {
-					hidePlannerAndShowEmptyState();
+					renderEmptyState();
 				}
 			})
 			.catch(function (error) {

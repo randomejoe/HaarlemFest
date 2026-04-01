@@ -29,7 +29,7 @@ class EventService implements CMSService
         $data = $postData;
 
         if (isset($_FILES['artist_img']) && $_FILES['artist_img']['error'] === UPLOAD_ERR_OK) {
-            $data['artist_img'] = ImageUploader::handleImageUpload($_FILES['artist_img']);
+            $data['artist_img'] = ImageUploader::upload($_FILES['artist_img']);
         } else {
             $data['artist_img'] = $postData['artist_img'] ?? null;
         }
@@ -135,7 +135,7 @@ class EventService implements CMSService
             return [];
         }
 
-        $rows = $this->repository->findArtistVenuesByEventName($artistName);
+        $rows = $this->repository->findVenuesByArtist($artistName);
         if ($rows === []) {
             return [];
         }

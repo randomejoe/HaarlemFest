@@ -109,7 +109,7 @@ final class SessionManager
 			return true;
 		}
 
-		$lastRunAt = $this->getLastExpiryCleanupRunAt();
+		$lastRunAt = $this->lastCleanupRunAt();
 		if ($lastRunAt === null) {
 			return true;
 		}
@@ -138,7 +138,7 @@ final class SessionManager
 	/**
 	 * Get the timestamp of the last expiry cleanup run.
 	 */
-	private function getLastExpiryCleanupRunAt(): ?int
+	private function lastCleanupRunAt(): ?int
 	{
 		$state = $_SESSION[self::EXPIRY_CLEANUP_KEY] ?? null;
 		if (!is_array($state)) {

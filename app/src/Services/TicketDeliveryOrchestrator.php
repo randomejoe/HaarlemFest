@@ -81,7 +81,7 @@ final class TicketDeliveryOrchestrator
     /**
      * @return array{email_warning: ?string, message: string}
      */
-    public function sendTicketsAndInvoiceWithFallback(
+    public function deliverPurchaseEmails(
         User $user,
         array $attempt,
         array $createdTickets
@@ -149,4 +149,3 @@ final class TicketDeliveryOrchestrator
         ];
     }
 }
-

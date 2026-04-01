@@ -82,7 +82,7 @@ class EventRepository extends BaseRepository
     /**
      * @return array<int, array<string, mixed>>
      */
-    public function findArtistVenuesByEventName(string $eventName): array
+    public function findVenuesByArtist(string $artistName): array
     {
         $stmt = $this->pdo->prepare(
             "SELECT
@@ -100,7 +100,7 @@ class EventRepository extends BaseRepository
             ORDER BY e.start_time ASC, e.event_id ASC"
         );
 
-        $stmt->execute(['event_name' => $eventName]);
+        $stmt->execute(['event_name' => $artistName]);
         $rows = $stmt->fetchAll();
 
         return is_array($rows) ? $rows : [];

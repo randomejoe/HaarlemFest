@@ -48,7 +48,7 @@ class CmsController
 
         echo View::render('/../Views/cms/item_list', ['items' => $items, 'type' => $type, 'categories' => $categories ?? null]);
     }
-    public function showCmsItemsInCategory(string $type, string $category): void
+    public function showItemsByCategory(string $type, string $category): void
     {
         $type = CmsType::convertToType($type);
         $service = $this->resolveService($type);
@@ -76,7 +76,7 @@ class CmsController
             $this->showCmsItems($type->value);
         }
     }
-    public function createCmsItemWithCategory(string $type, string $category): void
+    public function createItemInCategory(string $type, string $category): void
     {
         $type = CmsType::convertToType($type);
         $service = $this->resolveService($type);
@@ -89,7 +89,7 @@ class CmsController
             $_SESSION['create_title'] = $_POST['item_name'];
             header('Location: /cms/' . $type->value . 's/' . $category);
         } else {
-            $this->showCmsItemsInCategory($type->value, $category);
+            $this->showItemsByCategory($type->value, $category);
         }
     }
 

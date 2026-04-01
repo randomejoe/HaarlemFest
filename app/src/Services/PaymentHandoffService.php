@@ -35,7 +35,7 @@ final class PaymentHandoffService
         ]);
 
         if (!(bool) ($handoff['success'] ?? false)) {
-            return $this->handleFailedHandoff($attemptId, $handoff);
+            return $this->failHandoff($attemptId, $handoff);
         }
 
         $this->markAttemptAsHandedOff($attemptId, $handoff);
@@ -51,7 +51,7 @@ final class PaymentHandoffService
         );
     }
 
-    private function handleFailedHandoff(int $attemptId, array $handoff): CheckoutResult
+    private function failHandoff(int $attemptId, array $handoff): CheckoutResult
     {
         $this->stockReservation->releaseAndRestoreStock($attemptId, 'handoff_failed');
         $this->checkoutAttempts->markHandoffFailed(

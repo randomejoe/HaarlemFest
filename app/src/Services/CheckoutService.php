@@ -71,7 +71,7 @@ class CheckoutService
         $checkoutItems = $this->toCheckoutItems($items);
 
         $result = $this->transaction(function () use ($user, $planner, $items, $checkoutItems, $postedIdempotencyKey): CheckoutResult {
-            $pending = $this->createPendingCheckoutAttemptInTransaction(
+            $pending = $this->startPendingAttempt(
                 $user,
                 $planner,
                 $items,
@@ -205,7 +205,7 @@ class CheckoutService
             return $paymentResult;
         }
 
-        $emailResult = $this->deliveryOrchestrator->sendTicketsAndInvoiceWithFallback(
+        $emailResult = $this->deliveryOrchestrator->deliverPurchaseEmails(
             $user,
             $attemptData,
             $createdTickets
@@ -258,7 +258,7 @@ class CheckoutService
     /**
      * @return array{attempt_id:int, hold_expires_at:string}
      */
-    private function createPendingCheckoutAttemptInTransaction(
+    private function startPendingAttempt(
         User $user,
         array $planner,
         array $items,
