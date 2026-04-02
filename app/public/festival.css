@@ -191,7 +191,7 @@ h4 {
     inset: 0;
     background:
         linear-gradient(90deg, rgba(6, 5, 10, 0.84) 0%, rgba(6, 5, 10, 0.38) 45%, rgba(6, 5, 10, 0.2) 100%),
-        url("https://www.figma.com/api/mcp/asset/a456df6b-73d7-4fe1-bbeb-181ab683fbea") center / cover no-repeat;
+        url("/images/home_hero.jpg") center / cover no-repeat;
 }
 
 .hero-content {

@@ -8,7 +8,6 @@
                     <h1 class="mb-2">My Orders</h1>
                     <p class="text-muted mb-0">View your purchased tickets here.</p>
                 </div>
-                <a class="btn btn-outline-secondary" href="/jazz">Browse events</a>
             </div>
 
             <?php if (empty($orders)): ?>

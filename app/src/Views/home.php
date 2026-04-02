@@ -23,7 +23,7 @@
             <div class="row g-4">
                 <div class="col-12 col-md-6">
                     <article class="event-card">
-                        <img src="https://www.figma.com/api/mcp/asset/54305495-4eb0-4aa7-9a26-89bea4a94b50" alt="Live jazz performance">
+                        <img src="/images/jazz_thumb.jpg" alt="Live jazz performance">
                         <div class="event-overlay"></div>
                         <div class="event-copy">
                             <span>MUSIC EXPERIENCE</span>
@@ -34,7 +34,7 @@
                 </div>
                 <div class="col-12 col-md-6">
                     <article class="event-card">
-                        <img src="https://www.figma.com/api/mcp/asset/df156cbc-6f91-438b-9eee-cf780c260c22" alt="Crowd dancing at night">
+                        <img src="/images/dance_thumb.jpg" alt="Crowd dancing at night">
                         <div class="event-overlay"></div>
                         <div class="event-copy">
                             <span>ELECTRONIC BEATS</span>
@@ -44,7 +44,7 @@
                 </div>
                 <div class="col-12 col-md-6">
                     <article class="event-card">
-                        <img src="https://www.figma.com/api/mcp/asset/80822d65-01e3-421c-858e-47a95a65796c" alt="Street food dishes">
+                        <img src="/images/yummy_thumb.jpg" alt="Street food dishes">
                         <div class="event-overlay"></div>
                         <div class="event-copy">
                             <span>CULINARY JOURNEY</span>
@@ -54,7 +54,7 @@
                 </div>
                 <div class="col-12 col-md-6">
                     <article class="event-card">
-                        <img src="https://www.figma.com/api/mcp/asset/552facd0-03ea-4965-8867-90b6c0cc49b1" alt="Historic Haarlem architecture">
+                        <img src="/images/haarlem_thumb.jpg" alt="Historic Haarlem architecture">
                         <div class="event-overlay"></div>
                         <div class="event-copy">
                             <span>CULTURAL HERITAGE</span>
@@ -144,7 +144,7 @@
             <div class="row g-3 align-items-stretch">
                 <div class="col-12 col-lg-8">
                     <figure class="map-wrap h-100 mb-0">
-                        <img src="https://www.figma.com/api/mcp/asset/7cd14152-abf5-4853-ac8e-362560fe5c04" alt="Festival locations map">
+                        <img src="/images/Map.jpg" alt="Festival locations map">
                     </figure>
                 </div>
                 <div class="col-12 col-lg-4">
