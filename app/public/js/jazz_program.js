@@ -27,7 +27,7 @@
 		document.body.classList.add('jazz-overlay-open');
 		overlay.focus();
 		if (pushState) {
-			history.pushState({ jazzOpen: true }, '', '/jazz');
+			history.pushState({ jazzOpen: true }, '', window.location.pathname + window.location.search);
 		}
 	}
 
