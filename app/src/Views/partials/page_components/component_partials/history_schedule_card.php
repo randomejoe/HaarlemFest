@@ -20,7 +20,7 @@
             }
             ?>
             </div>
-            <div class="d-flex justify-content-center"><button class="history-add-ticket-button">Get tickets</button></div>
+            <div class="d-flex justify-content-center"><a class="history-add-ticket-button text-center" href="<?php echo $data['buy_ticket_button_link'];?> ">Get tickets</a></div>
             
         </div>
     </div>

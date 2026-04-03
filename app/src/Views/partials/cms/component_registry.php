@@ -8,32 +8,39 @@ element is only for text elements currently and refers to the element used to wr
         'fields' => [
             ['name' => 'text', 'type' => 'text', 'element' => 'p'],
             ['name' => 'has padding', 'type' => 'checkbox'],
-            ['name' => 'has horizontal padding', 'type' => 'checkbox'],
+            ['name' => 'has_horizontal_padding', 'type' => 'checkbox'],
         ],
     ],
     'image' => [
         'fields' => [
             ['name' => 'imgSource', 'type' => 'image'],
-            ['name' => 'has horizontal padding', 'type' => 'checkbox'],
+            ['name' => 'has_horizontal_padding', 'type' => 'checkbox'],
         ]
     ],
     'title' => [
         'fields' => [
             ['name' => 'text', 'type' => 'text', 'element' => 'h1'],
-            ['name' => 'has top padding', 'type' => 'checkbox'],
-            ['name' => 'has horizontal padding', 'type' => 'checkbox'],
+            ['name' => 'has_top_padding', 'type' => 'checkbox'],
+            ['name' => 'has_horizontal_padding', 'type' => 'checkbox'],
+        ]
+    ],
+    'sub_title' => [
+        'fields' => [
+            ['name' => 'text', 'type' => 'text', 'element' => 'h2'],
+            ['name' => 'has_horizontal_padding', 'type' => 'checkbox'],
         ]
     ],
     'paragraph' => [
         'fields' => [
             ['name' => 'header_text', 'type' => 'text', 'element' => 'h2'],
             ['name' => 'paragraph_text', 'type' => 'text', 'element' => 'p'],
-            ['name' => 'has horizontal padding', 'type' => 'checkbox'],
+            ['name' => 'has_horizontal_padding', 'type' => 'checkbox'],
         ]
     ],
     'history_schedule' => [
         'fields' => [
             ['name' => 'header_text', 'type' => 'text', 'element' => 'h2'],
+            ['name' => 'buy_ticket_button_link', 'type' => 'text', 'element' => 'p']
         ]
     ],
     'history_locations' => [
@@ -44,7 +51,7 @@ element is only for text elements currently and refers to the element used to wr
     'full_size_image' => [
         'fields' => [
             ['name' => 'image_source', 'type' => 'image'],
-            ['name' => 'has horizontal padding', 'type' => 'checkbox'],
+            ['name' => 'has_horizontal_padding', 'type' => 'checkbox'],
         ]
     ],
     'hero_banner' => [
