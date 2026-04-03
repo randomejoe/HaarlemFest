@@ -52,31 +52,31 @@ class PageController
             $eventService = $this->eventService;
             $locationService = $this->locationService;
             $plannerService = $this->plannerService;
-?><div class='dynamic-page-content-container'><?php
-                                                if (isset($page['page_id'])) {
-                                                    $pageContentItem = $page;
-                                                    if (isset($pageContentItem['data'])) {
-                                                        $data = json_decode($pageContentItem['data'], true);
-                                                    } else {
-                                                        $data = null;
-                                                    }
+            ?><div class='dynamic-page-content-container'><?php
+            if (isset($page['page_id'])) {
+                $pageContentItem = $page;
+                if (isset($pageContentItem['data'])) {
+                    $data = json_decode($pageContentItem['data'], true);
+                } else {
+                    $data = null;
+                }
 
-                                                    if (!empty($pageContentItem['component_name'])) {
-                                                ?><div><?php require __DIR__ . '/../Views/partials/page_components/' . $pageContentItem['component_name'] . '.php'; ?></div><?php
-                                                                                                                                                                        }
-                                                                                                                                                                    } else {
-                                                                                                                                                                        foreach ($page as $pageContentItem) {
-                                                                                                                                                                            if (isset($pageContentItem['data'])) {
-                                                                                                                                                                                $data = json_decode($pageContentItem['data'], true);
-                                                                                                                                                                            } else {
-                                                                                                                                                                                $data = null;
-                                                                                                                                                                            }
-                                                                                                                                                                            if (!empty($pageContentItem['component_name'])) {
-                                                                                                                                                                            ?><div><?php require __DIR__ . '/../Views/partials/page_components/' . $pageContentItem['component_name'] . '.php'; ?></div><?php
-                                                                                                                                                                                                                                                                                                                }
-                                                                                                                                                                                                                                                                                                            }
-                                                                                                                                                                                                                                                                                                        } ?></div><?php
-                                                                                                                                                                                                                                                                        }
-                                                                                                                                                                                                                                                                        require __DIR__ . '/../Views/partials/footer.php';
-                                                                                                                                                                                                                                                                    }
-                                                                                                                                                                                                                                                                }
+                if (!empty($pageContentItem['component_name'])) {
+                    ?><div><?php require __DIR__ . '/../Views/partials/page_components/' . $pageContentItem['component_name'] . '.php'; ?></div><?php
+                }
+            } else {
+                foreach ($page as $pageContentItem) {
+                    if (isset($pageContentItem['data'])) {
+                        $data = json_decode($pageContentItem['data'], true);
+                    } else {
+                        $data = null;
+                    }
+                    if (!empty($pageContentItem['component_name'])) {
+                        ?><div><?php require __DIR__ . '/../Views/partials/page_components/' . $pageContentItem['component_name'] . '.php'; ?></div><?php
+                    }
+                }
+            } ?></div><?php
+        }
+        require __DIR__ . '/../Views/partials/footer.php';
+    }
+}
