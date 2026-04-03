@@ -1278,8 +1278,8 @@ h4 {
 
 .dynamic-page-content-container {
     margin: 0;
-    padding: 0;
     gap: 0;
+    padding: 0;
     display: flex;
     flex-direction: column;
 }
@@ -1389,6 +1389,18 @@ h4 {
     border-radius: var(--radius-sm);
     color: var(--history-negative);
     min-width: fit-content;
+}
+
+.padding-horizontal {
+    padding: 0 1rem;
+}
+
+.padding-top {
+    padding: 1rem 0 0 0;
+}
+
+.padding-top.padding-horizontal {
+    padding: 1rem 1rem 0 1rem;
 }
 
 .full-size-image {
