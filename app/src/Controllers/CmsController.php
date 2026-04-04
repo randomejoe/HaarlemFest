@@ -153,12 +153,13 @@ class CmsController
 
     private function hasUploadedFiles(array $files): bool
     {
+        $hasFiles = false;
         foreach ($files as $file) {
             if (($file['error'] ?? UPLOAD_ERR_NO_FILE) === UPLOAD_ERR_OK) {
-                return true;
+                $hasFiles =  true;
             }
         }
 
-        return false;
+        return $hasFiles;
     }
 }

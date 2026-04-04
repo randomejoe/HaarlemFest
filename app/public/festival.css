@@ -1370,6 +1370,14 @@ h4 {
     color: var(--history-negative);
 }
 
+.history-add-ticket-button.big-button {
+    width: 40%;
+    text-align: center;
+    padding: 1rem;
+    margin: 1rem;
+    border-radius: var(--radius-md);
+}
+
 .history-location-card {
     background-color: var(--history-negative);
     width: 100%;
@@ -1429,4 +1437,8 @@ h4 {
 
 .fit-content {
     width: fit-content;
+}
+
+.w-40 {
+    width: 40%;
 }

@@ -37,6 +37,33 @@ element is only for text elements currently and refers to the element used to wr
             ['name' => 'has_horizontal_padding', 'type' => 'checkbox'],
         ]
     ],
+    'history_detailpage_top' => [
+        'fields' => [
+            ['name' => 'title_text', 'type' => 'text', 'element' => 'h1'],
+            ['name' => 'header_text', 'type' => 'text', 'element' => 'h2'],
+            ['name' => 'paragraph_text', 'type' => 'text', 'element' => 'p'],
+            ['name' => 'map_image_source', 'type' => 'image'],
+            ['name' => 'night_image_source', 'type' => 'image'],
+            ['name' => 'night_image_caption', 'type' => 'text', 'element' => 'p'],
+            ['name' => 'has_top_padding', 'type' => 'checkbox'],
+            ['name' => 'has_horizontal_padding', 'type' => 'checkbox'],
+        ]
+    ],
+    'double_caption_image' => [
+        'fields' => [
+            ['name' => 'left_image_source', 'type' => 'image'],
+            ['name' => 'left_image_caption', 'type' => 'text', 'element' => 'p'],
+            ['name' => 'right_image_source', 'type' => 'image'],
+            ['name' => 'right_image_caption', 'type' => 'text', 'element' => 'p'],
+            ['name' => 'has_horizontal_padding', 'type' => 'checkbox'],
+        ]
+    ],
+    'big_ticket_button' => [
+        'fields' => [
+            ['name' => 'button_link', 'type' => 'text', 'element' => 'p'],
+            ['name' => 'text', 'type' => 'text', 'element' => 'h2'],
+        ]
+    ],
     'history_schedule' => [
         'fields' => [
             ['name' => 'header_text', 'type' => 'text', 'element' => 'h2'],
