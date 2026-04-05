@@ -75,6 +75,9 @@ element is only for text elements currently and refers to the element used to wr
             ['name' => 'header_text', 'type' => 'text', 'element' => 'h2'],
         ]
     ],
+    'history_ticketing' => [
+        'fields' => []
+    ],
     'full_size_image' => [
         'fields' => [
             ['name' => 'image_source', 'type' => 'image'],

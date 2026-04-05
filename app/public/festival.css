@@ -1386,7 +1386,6 @@ h4 {
 
 .history-location-card img {
     height: auto;
-    padding-right: 1em;
 }
 
 .history-location-card a {
@@ -1397,6 +1396,45 @@ h4 {
     border-radius: var(--radius-sm);
     color: var(--history-negative);
     min-width: fit-content;
+}
+
+.history-ticketing-container {
+    background-color: var(--history-negative);
+}
+
+.history-ticket {
+    width: 100%;
+    background-color: white;
+    padding: 1rem;
+    border-radius: var(--radius-md);
+}
+
+.history-ticket-banner > h3 {
+    position: absolute;
+    color: white;
+    margin: 0;
+}
+
+.history-ticket-banner {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.history-ticket-banner > img {
+    object-fit: cover;
+    height: 2em;
+    width: 100%;
+    border-radius: var(--radius-md) var(--radius-md) 0px 0px;
+}
+
+.history-ticket-information {
+    background-color: var(--history-secondary);
+}
+
+.history-ticket-information > p {
+    margin: 0.5rem;
+    color: var(--history-negative)
 }
 
 .padding-horizontal {
