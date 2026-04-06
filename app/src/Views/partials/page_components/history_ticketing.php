@@ -1,7 +1,6 @@
 <?php require __DIR__ . '/component_partials/get_history_schedule.php'; ?>
 <form class="history-ticketing-container p-4 gap-4" action="/planner/items" method="POST">
     <input type="hidden" name="csrf_token" value="<?php echo hf_e(hf_csrf_token()); ?>">
-    <input type="hidden" name="return_to" value="/a_stroll_through_history">
     <div class="fit-content">
         <p class="m-0">For the tour</p>
         <div class="d-flex flex-column gap-2">

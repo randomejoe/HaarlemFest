@@ -26,6 +26,7 @@ class PlannerItem
         private float   $unitPriceValue,
         private float   $lineTotalValue,
         private int     $seatCount,
+        private bool    $familyTicket,
     ) {
     }
 
@@ -33,9 +34,15 @@ class PlannerItem
     // Factories
     // -------------------------------------------------------------------------
 
-    public static function fromEvent(int $eventId, int $quantity, Event $event): self
+    public static function fromEvent(int $eventId, int $quantity, Event $event, int $familyTicket): self
     {
         $unitPrice = $event->ticketPrice();
+
+        $totalValue = $unitPrice * $quantity;
+
+        if ($familyTicket) {
+            $totalValue = 60 * ceil($quantity/4);
+        }
 
         return new self(
             eventId:       $eventId,
@@ -48,8 +55,9 @@ class PlannerItem
             startTime:     $event->startTime(),
             endTime:       $event->endTime(),
             unitPriceValue: $unitPrice,
-            lineTotalValue: $unitPrice * $quantity,
+            lineTotalValue: $totalValue,
             seatCount:     max(0, (int) ($event->seatCount() ?? 0)),
+            familyTicket:   (bool) $familyTicket,
         );
     }
 
@@ -67,7 +75,8 @@ class PlannerItem
             endTime:       null,
             unitPriceValue: 0.0,
             lineTotalValue: 0.0,
-            seatCount:     0,
+            seatCount:      0,
+            familyTicket:   false,
         );
     }
 
@@ -104,6 +113,7 @@ class PlannerItem
             'line_total_value' => $this->lineTotalValue,
             'line_total'       => number_format($this->lineTotalValue, 2),
             'seat_count'       => $this->seatCount,
+            'familyTicket'     => $this->familyTicket,
         ];
     }
 }

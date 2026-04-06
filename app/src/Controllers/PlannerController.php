@@ -46,7 +46,7 @@ class PlannerController
 			}
 
 			if (count($eventIds) === 1) {
-				$this->planner->addItem($eventIds[0], $quantity);
+				$this->planner->addItem($eventIds[0], $quantity, $_POST['familyTicket'] ?? null);
 				$message = '';
 			} else {
 				$this->planner->addItems($eventIds, $quantity);

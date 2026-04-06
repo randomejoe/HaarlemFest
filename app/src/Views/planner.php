@@ -3,6 +3,9 @@ $extraStylesheets = [
     '/css/planner.css?v=' . rawurlencode((string) @filemtime(__DIR__ . '/../../public/css/planner.css')),
 ];
 require __DIR__ . '/partials/header.php';
+echo '<pre>';
+print_r($planner);
+echo '</pre>';
 ?>
 
 <main>
@@ -58,7 +61,6 @@ require __DIR__ . '/partials/header.php';
                         $pairedEventByEventId[$rightEventId] = $leftEventId;
                     }
                 }
-
                 foreach ((array) $planner['items'] as $item) {
                     $eventId = (int) ($item['event_id'] ?? 0);
                     $plannerItemsByEventId[$eventId] = $item;

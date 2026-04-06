@@ -168,8 +168,15 @@ final class SessionManager
 		$normalized = [];
 		foreach ($items as $eventId => $quantity) {
 			$eventId = (int) $eventId;
-			$quantity = (int) $quantity;
 
+			// Has family ticket tag
+			if (isset($quantity['familyTicket'])) {
+				$quantity = ['quantity' => $quantity['quantity'], 'familyTicket' => $quantity['familyTicket']];
+			}
+			else {
+				$quantity = (int) $quantity;
+			}
+			
 			if ($eventId <= 0 || $quantity <= 0) {
 				continue;
 			}

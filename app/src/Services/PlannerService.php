@@ -119,7 +119,7 @@ class PlannerService
         return true;
     }
 
-    public function addItem(int $eventId, int $quantity): void
+    public function addItem(int $eventId, int $quantity, ?string $familyTicket): void
     {
         $this->assertEventId($eventId);
         $this->assertQuantity($quantity);
@@ -132,7 +132,13 @@ class PlannerService
         $requestedQuantity = $current + $quantity;
         $this->assertQuantityWithinAvailability($event, $requestedQuantity);
 
-        $planner['items'][$eventId] = $current + $quantity;
+        if (isset($familyTicket) && $familyTicket == 'on') {
+            $planner['items'][$eventId] = ["quantity" => $current + $quantity, "familyTicket" => true];
+        }
+        else {
+            $planner['items'][$eventId] = $current + $quantity;
+        }
+        
         $this->savePlanner($planner);
     }
 
@@ -181,7 +187,9 @@ class PlannerService
         $event = $this->assertEventCanBePlanned($eventId);
         $this->assertQuantityWithinAvailability($event, $quantity);
 
-        $planner['items'][$eventId] = $quantity;
+        if (isset($planner['items'][$eventId]['familyTicket'])) {
+            $planner['items'][$eventId] = ['quantity' => $quantity, 'familyTicket' => $planner['items'][$eventId]['familyTicket']];
+        }
         $this->savePlanner($planner);
     }
 
@@ -402,9 +410,13 @@ class PlannerService
                 continue;
             }
 
-            $filtered[$eventId] = (int) $quantityRaw;
+            if (isset($quantityRaw['familyTicket']) && $quantityRaw['familyTicket']) {
+                $filtered[$eventId] = ['quantity' => (int) $quantityRaw['quantity'], 'familyTicket' => $quantityRaw['familyTicket']];
+            }
+            else {
+                $filtered[$eventId] = (int) $quantityRaw;
+            }
         }
-
         return $filtered;
     }
 

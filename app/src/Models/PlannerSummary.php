@@ -45,8 +45,16 @@ class PlannerSummary
         $conflictItems   = [];
 
         foreach ($rawItems as $eventIdRaw => $quantityRaw) {
+            $familyTicket = false;
             $eventId  = (int) $eventIdRaw;
-            $quantity = max(0, (int) $quantityRaw);
+            if (isset($quantityRaw['familyTicket']) && $quantityRaw['familyTicket']) {
+                $quantity = max(0, (int) $quantityRaw['quantity']);
+                $familyTicket = true;
+            }
+            else {
+                $quantity = max(0, (int) $quantityRaw);
+            }
+            
 
             if ($eventId <= 0 || $quantity <= 0) {
                 continue;
@@ -61,7 +69,7 @@ class PlannerSummary
                 continue;
             }
 
-            $plannerItem    = PlannerItem::fromEvent($eventId, $quantity, $event);
+            $plannerItem    = PlannerItem::fromEvent($eventId, $quantity, $event, $familyTicket);
             $plannerItems[] = $plannerItem;
             $totalPriceValue += $plannerItem->lineTotalValue();
 
