@@ -42,11 +42,7 @@ class AuthService
             return null;
         }
 
-        try {
-            $role = UserRole::from((string) ($_SESSION['role'] ?? UserRole::User->value));
-        } catch (\ValueError) {
-            $role = UserRole::User;
-        }
+        $role = UserRole::tryFrom((string) ($_SESSION['role'] ?? UserRole::User->value)) ?? UserRole::User;
 
         return User::fromArray([
             'user_id' => (int) $_SESSION['user_id'],

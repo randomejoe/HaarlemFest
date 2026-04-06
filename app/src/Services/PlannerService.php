@@ -446,31 +446,25 @@ class PlannerService
 
     private function detectTimeConflicts(array $items): array
     {
-        $conflicts = [];
-        $count = count($items);
-
-        for ($i = 0; $i < $count; $i++) {
-            $leftStart = new DateTimeImmutable((string) $items[$i]['start_time']);
-            $leftEnd = new DateTimeImmutable((string) $items[$i]['end_time']);
-
-            for ($j = $i + 1; $j < $count; $j++) {
-                $rightStart = new DateTimeImmutable((string) $items[$j]['start_time']);
-                $rightEnd = new DateTimeImmutable((string) $items[$j]['end_time']);
-
-                if ($leftStart < $rightEnd && $rightStart < $leftEnd) {
-                    $conflicts[] = sprintf(
-                        '%s overlaps with %s.',
-                        (string) $items[$i]['name'],
-                        (string) $items[$j]['name']
-                    );
-                }
-            }
-        }
-
-        return $conflicts;
+        return array_map(
+            static fn(array $pair): string => $pair['message'],
+            $this->findOverlappingPlannerItemPairs($items)
+        );
     }
 
     private function detectTimeConflictPairs(array $items): array
+    {
+        return $this->findOverlappingPlannerItemPairs($items);
+    }
+
+    /**
+     * Build the overlapping item pairs once, then reuse the result for both
+     * the user-facing conflict messages and the structured conflict payload.
+     *
+     * @param array<int,array<string,mixed>> $items
+     * @return array<int,array{left_event_id:int,left_name:string,right_event_id:int,right_name:string,message:string}>
+     */
+    private function findOverlappingPlannerItemPairs(array $items): array
     {
         $pairs = [];
         $count = count($items);

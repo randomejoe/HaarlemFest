@@ -67,14 +67,15 @@ class CheckoutService
         $items = $checkoutPayload['items'];
 
         $this->planner->resetExpiryCleanupRun();
+        $checkoutItems = array_map(
+            static fn(array $item): CheckoutItem => CheckoutItem::fromPlannerArray($item),
+            $items
+        );
 
-        $checkoutItems = $this->toCheckoutItems($items);
-
-        $result = $this->transaction(function () use ($user, $planner, $items, $checkoutItems, $postedIdempotencyKey): CheckoutResult {
+        $result = $this->transaction(function () use ($user, $planner, $checkoutItems, $postedIdempotencyKey): CheckoutResult {
             $pending = $this->startPendingAttempt(
                 $user,
                 $planner,
-                $items,
                 $checkoutItems,
                 $postedIdempotencyKey
             );
@@ -219,21 +220,6 @@ class CheckoutService
         );
     }
 
-    /**
-     * Convert the flat planner-item arrays from getDetailedPlanner() into
-     * typed CheckoutItem objects for the rest of the checkout flow.
-     *
-     * @param  array[]         $items  Planner-item arrays (PlannerItem::toArray() shape)
-     * @return CheckoutItem[]
-     */
-    private function toCheckoutItems(array $items): array
-    {
-        return array_map(
-            static fn(array $item): CheckoutItem => CheckoutItem::fromPlannerArray($item),
-            $items
-        );
-    }
-
     private function transaction(callable $operation): mixed
     {
         $this->pdo->beginTransaction();
@@ -261,7 +247,6 @@ class CheckoutService
     private function startPendingAttempt(
         User $user,
         array $planner,
-        array $items,
         array $checkoutItems,
         string $postedIdempotencyKey
     ): array {

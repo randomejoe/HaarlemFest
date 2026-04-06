@@ -138,7 +138,7 @@ class TicketPdfService
         $content .= $this->drawText($x + 14, $yTop - 18, 'F2', 11, 'Ticket #' . $ticketNumber, self::COLOR_BRAND_DARK);
         $content .= $this->drawText($x + 120, $yTop - 18, 'F1', 10, 'Number: ' . ($ticketId > 0 ? ('T-' . $ticketId) : 'TBD'), self::COLOR_MUTED);
 
-        $nameLines = $this->wrapText($eventName, 40);
+        $nameLines = PdfTextSanitizer::wrap($eventName, 40);
         $nameLines = array_slice($nameLines, 0, 2);
 
         $nameY = $yTop - 38;
@@ -162,7 +162,7 @@ class TicketPdfService
         $content .= $this->drawStrokeRect($badgeX, $badgeY, 152, 74, [0.953, 0.737, 0.790], 1);
         $content .= $this->drawText($badgeX + 10, $badgeY + 52, 'F2', 9, 'Verification Code', self::COLOR_BRAND_DARK);
 
-        $codeLines = $this->wrapText($verificationCode, 16);
+        $codeLines = PdfTextSanitizer::wrap($verificationCode, 16);
         $codeY = $badgeY + 34;
         foreach (array_slice($codeLines, 0, 2) as $line) {
             $content .= $this->drawText($badgeX + 10, $codeY, 'F2', 12, $line, self::COLOR_BRAND);
@@ -179,7 +179,7 @@ class TicketPdfService
         $content .= $this->drawFillRect(24, 82, 547, 1, self::COLOR_LINE);
         $content .= $this->drawText(36, 66, 'F2', 10, 'Ticket Terms & Conditions', self::COLOR_INK);
 
-        $lines = $this->wrapText($terms, 102);
+        $lines = PdfTextSanitizer::wrap($terms, 102);
         $y = 50;
         foreach ($lines as $line) {
             $content .= $this->drawText(36, $y, 'F1', 8.5, $line, self::COLOR_MUTED);
@@ -207,7 +207,10 @@ class TicketPdfService
     private function drawText(float $x, float $y, string $fontAlias, float $fontSize, string $text, array $rgb): string
     {
         [$r, $g, $b] = $rgb;
-        $escaped = $this->escapeText(PdfTextSanitizer::normalize($text));
+        $escaped = PdfTextSanitizer::normalize($text);
+        $escaped = str_replace('\\', '\\\\', $escaped);
+        $escaped = str_replace('(', '\\(', $escaped);
+        $escaped = str_replace(')', '\\)', $escaped);
 
         return sprintf(
             "BT /%s %.2f Tf %.3f %.3f %.3f rg 1 0 0 1 %.2f %.2f Tm (%s) Tj ET\n",
@@ -220,20 +223,6 @@ class TicketPdfService
             $y,
             $escaped
         );
-    }
-
-    private function escapeText(string $text): string
-    {
-        $text = str_replace('\\', '\\\\', $text);
-        $text = str_replace('(', '\\(', $text);
-        $text = str_replace(')', '\\)', $text);
-        $text = preg_replace('/[\x00-\x1F\x7F]/', ' ', $text) ?? $text;
-        return $text;
-    }
-
-    private function wrapText(string $text, int $maxChars): array
-    {
-        return PdfTextSanitizer::wrap($text, $maxChars);
     }
 
     private function buildPdf(array $pageContents): string

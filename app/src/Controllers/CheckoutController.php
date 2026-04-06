@@ -27,7 +27,9 @@ class CheckoutController
     {
         $this->checkout->releaseExpiredHoldsIfNeeded();
         $lockedId = $this->planner->getLockedCheckoutAttemptId();
-        $lockedId && $this->redirect('/checkout/pending/' . $lockedId);
+        if ($lockedId !== null) {
+            $this->redirect('/checkout/pending/' . $lockedId);
+        }
 
         $user = $this->requireCheckoutUser();
         $missing = $this->missingRequiredDetails($user);
@@ -63,7 +65,9 @@ class CheckoutController
     {
         $this->checkout->releaseExpiredHoldsIfNeeded(true);
         $lockedId = $this->planner->getLockedCheckoutAttemptId();
-        $lockedId && $this->redirect('/checkout/pending/' . $lockedId);
+        if ($lockedId !== null) {
+            $this->redirect('/checkout/pending/' . $lockedId);
+        }
 
         $user = $this->requireCheckoutUser();
         if ($this->missingRequiredDetails($user)) {
@@ -122,7 +126,9 @@ class CheckoutController
 
         if (in_array($status, ['paid', 'already_paid'])) {
             $this->unlockPlannerAttempt($id);
-            !$this->planner->isLocked() && $this->planner->clear();
+            if (!$this->planner->isLocked()) {
+                $this->planner->clear();
+            }
             $this->planner->setFlash($status === 'paid' ? 'success' : 'info', $result['message'] ?? 'Payment confirmed.');
         } else {
             $this->planner->setFlash($status === 'forbidden' ? 'error' : 'info', $result['message'] ?? 'Payment confirmation failed.');

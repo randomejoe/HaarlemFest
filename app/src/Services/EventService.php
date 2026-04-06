@@ -16,37 +16,27 @@ class EventService implements CMSService
         $this->repository = $repository;
         $this->pageRepository = $pageRepository;
     }
+
     public function getForEdit(int $id)
     {
         return $this->repository->getEventForEdit($id);
     }
+
     public function isNameEditable(): bool
     {
         return true;
     }
+
     public function updateWithImage(int $id, array $postData, array $fileData): bool
     {
-        $data = $postData;
-
-        if (isset($_FILES['artist_img']) && $_FILES['artist_img']['error'] === UPLOAD_ERR_OK) {
-            $data['artist_img'] = ImageUploader::upload($_FILES['artist_img']);
-        } else {
-            $data['artist_img'] = $postData['artist_img'] ?? null;
-        }
-
-        $data['language'] = $data['language'] ?: NULL;
-        $data['description'] = $data['description'] ?: NULL;
-
-        return $this->repository->updateEvent($id, $data);
+        return $this->repository->updateEvent($id, $this->normalizeEventData($postData, $fileData));
     }
+
     public function update(int $id, array $postData): bool
     {
-        $postData['language'] = $postData['language'] ?: NULL;
-        $postData['description'] = $postData['description'] ?: NULL;
-        $postData['artist_img'] = $postData['artist_img'] ?? null;
-
-        return $this->repository->updateEvent($id, $postData);
+        return $this->repository->updateEvent($id, $this->normalizeEventData($postData));
     }
+
     public function delete(int $id): bool
     {
         return $this->repository->deleteEvent($id);
@@ -422,9 +412,54 @@ class EventService implements CMSService
     }
     public function createForCategory(string $category, array $postData)
     {
-        $postData['language'] = $postData['language'] ?: NULL;
-        $postData['description'] = $postData['description'] ?: NULL;
+        return $this->repository->createSubEvent($category, $this->normalizeEventData($postData));
+    }
 
-        return $this->repository->createSubEvent($category, $postData);
+    /**
+     * Normalize nullable CMS fields and optionally resolve an uploaded artist image.
+     *
+     * @param array<string, mixed> $postData
+     * @param array<string, array<string, mixed>>|null $fileData
+     * @return array<string, mixed>
+     */
+    private function normalizeEventData(array $postData, ?array $fileData = null): array
+    {
+        $postData['language'] = $this->nullIfEmpty($postData['language'] ?? null);
+        $postData['description'] = $this->nullIfEmpty($postData['description'] ?? null);
+
+        if ($fileData !== null) {
+            $postData['artist_img'] = $this->resolveArtistImage($postData, $fileData);
+        } else {
+            $postData['artist_img'] = $this->nullIfEmpty($postData['artist_img'] ?? null);
+        }
+
+        return $postData;
+    }
+
+    /**
+     * @param array<string, mixed> $postData
+     * @param array<string, array<string, mixed>> $fileData
+     */
+    private function resolveArtistImage(array $postData, array $fileData): ?string
+    {
+        $artistImage = $postData['artist_img'] ?? null;
+        $uploadedImage = $fileData['artist_img'] ?? null;
+
+        if (is_array($uploadedImage) && ($uploadedImage['error'] ?? UPLOAD_ERR_NO_FILE) === UPLOAD_ERR_OK) {
+            return ImageUploader::upload($uploadedImage);
+        }
+
+        return $this->nullIfEmpty($artistImage);
+    }
+
+    private function nullIfEmpty(mixed $value): ?string
+    {
+        $value = is_string($value) ? trim($value) : $value;
+
+        if ($value === null || $value === '') {
+            return null;
+        }
+
+        return (string) $value;
     }
 }

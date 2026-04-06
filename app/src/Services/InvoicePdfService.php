@@ -131,7 +131,7 @@ class InvoicePdfService
         }
 
         if ($customerAddress !== '') {
-            $addressLines = $this->wrapText('Address: ' . $customerAddress, 62);
+            $addressLines = PdfTextSanitizer::wrap('Address: ' . $customerAddress, 62);
             $addressY = $yTop - 118;
             foreach (array_slice($addressLines, 0, 2) as $line) {
                 $content .= $this->drawText($x + 14, $addressY, 'F1', 9, $line, self::COLOR_MUTED);
@@ -186,7 +186,7 @@ class InvoicePdfService
         $lineLabel = 'Line ' . $lineNumber;
         $content .= $this->drawText($x + 12, $yTop - 16, 'F1', 9, $lineLabel, self::COLOR_BRAND_DARK);
 
-        $nameLines = $this->wrapText($eventName, 46);
+        $nameLines = PdfTextSanitizer::wrap($eventName, 46);
         $nameLines = array_slice($nameLines, 0, 2);
 
         $nameY = $yTop - 30;
@@ -238,7 +238,7 @@ class InvoicePdfService
         $content .= $this->drawFillRect(24, 82, 547, 1, self::COLOR_LINE);
         $content .= $this->drawText(36, 66, 'F2', 10, 'Invoice Terms', self::COLOR_INK);
 
-        $lines = $this->wrapText($terms, 102);
+        $lines = PdfTextSanitizer::wrap($terms, 102);
         $y = 50;
         foreach ($lines as $line) {
             $content .= $this->drawText(36, $y, 'F1', 8.5, $line, self::COLOR_MUTED);
@@ -266,7 +266,10 @@ class InvoicePdfService
     private function drawText(float $x, float $y, string $fontAlias, float $fontSize, string $text, array $rgb): string
     {
         [$r, $g, $b] = $rgb;
-        $escaped = $this->escapeText(PdfTextSanitizer::normalize($text));
+        $escaped = PdfTextSanitizer::normalize($text);
+        $escaped = str_replace('\\', '\\\\', $escaped);
+        $escaped = str_replace('(', '\\(', $escaped);
+        $escaped = str_replace(')', '\\)', $escaped);
 
         return sprintf(
             "BT /%s %.2f Tf %.3f %.3f %.3f rg 1 0 0 1 %.2f %.2f Tm (%s) Tj ET\n",
@@ -279,20 +282,6 @@ class InvoicePdfService
             $y,
             $escaped
         );
-    }
-
-    private function escapeText(string $text): string
-    {
-        $text = str_replace('\\', '\\\\', $text);
-        $text = str_replace('(', '\\(', $text);
-        $text = str_replace(')', '\\)', $text);
-        $text = preg_replace('/[\x00-\x1F\x7F]/', ' ', $text) ?? $text;
-        return $text;
-    }
-
-    private function wrapText(string $text, int $maxChars): array
-    {
-        return PdfTextSanitizer::wrap($text, $maxChars);
     }
 
     private function buildPdf(array $pageContents): string
