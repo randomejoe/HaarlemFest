@@ -5,7 +5,8 @@
         </div>
         <div class="history-schedule-card-content">
             <div class="history-schedule-card-rows"><?php
-            foreach ($scheduleTime as $language => $tourCount) {
+            foreach ($scheduleTime as $language => $languageEvents) {
+                $tourCount = count($languageEvents);
                 ?>
                     <div class="history-schedule-card-row">
                         <p class="no-margin"><?php 

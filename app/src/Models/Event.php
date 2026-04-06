@@ -3,10 +3,11 @@
 namespace App\Models;
 
 use DateTimeImmutable;
+use JsonSerializable;
 use App\Models\CmsItem;
 use App\Models\HistoryTourLanguage;
 
-class Event extends CmsItem
+class Event extends CmsItem implements JsonSerializable
 {
     public function __construct(
         private int $id,
@@ -23,6 +24,14 @@ class Event extends CmsItem
         private ?HistoryTourLanguage $language,
         private ?string $artistImg = null,
     ) {}
+
+    public function jsonSerialize(): array {
+        return [
+            'id' => $this->id,
+            'name' => $this->name,
+            'price' => $this->ticketPrice,
+        ];
+    }
 
     public static function fromArray(array $data): self
     {

@@ -76,7 +76,11 @@ element is only for text elements currently and refers to the element used to wr
         ]
     ],
     'history_ticketing' => [
-        'fields' => []
+        'fields' => [
+            ['name' => 'single_ticket_price', 'type' => 'text', 'element' => 'p'],
+            ['name' => 'family_ticket_price', 'type' => 'text', 'element' => 'p'],
+            ['name' => 'ticket_image', 'type' => 'image'],
+        ]
     ],
     'full_size_image' => [
         'fields' => [

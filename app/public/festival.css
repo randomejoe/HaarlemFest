@@ -1400,9 +1400,18 @@ h4 {
 
 .history-ticketing-container {
     background-color: var(--history-negative);
+    display: flex;
+    flex-direction: row;
+}
+
+@media (max-width: 700px) {
+    .history-ticketing-container {
+        flex-direction: column;
+    }
 }
 
 .history-ticket {
+    max-width: 600px;
     width: 100%;
     background-color: white;
     padding: 1rem;
@@ -1432,7 +1441,15 @@ h4 {
     background-color: var(--history-secondary);
 }
 
-.history-ticket-information > p {
+.history-ticket-information.left {
+    border-radius: 0 0 0 var(--radius-md);
+}
+
+.history-ticket-information.right {
+    border-radius: 0 0 var(--radius-md) 0;
+}
+
+.history-ticket-information p {
     margin: 0.5rem;
     color: var(--history-negative)
 }
