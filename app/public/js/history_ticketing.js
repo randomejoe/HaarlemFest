@@ -1,6 +1,7 @@
 const dateSelect = document.getElementById('dateSelect');
 const timeSelect = document.getElementById('timeSelect');
 const languageSelect = document.getElementById('languageSelect');
+const tourSelect = document.getElementById('tourSelect');
 const ticketCount = document.getElementById('ticketCount');
 const familyTicketSelect = document.getElementById('familyTicket')
 
@@ -10,6 +11,9 @@ const languageField = document.getElementById('language');
 const typeField = document.getElementById('type');
 const ticketField = document.getElementById('tickets');
 const priceField = document.getElementById('price');
+
+const eventIdField = document.getElementById('eventId');
+const submitButton = document.getElementById('submitButton');
 
 populate(dateSelect, Object.keys(schedule));
 
@@ -37,6 +41,7 @@ function updateTicketText() {
     const date = dateSelect.value;
     const time = timeSelect.value;
     const language = languageSelect.value;
+    const tour = tourSelect.value;
 
     dateTimeText = `${date || ''} ${time || ''}`;
     if (dateTimeText == ' ') {
@@ -55,6 +60,16 @@ function updateTicketText() {
     }
     else {
         priceField.textContent = (singleTicketPrice * ticketCount.value).toFixed(2);
+    }
+
+    if (date && time && language && tour) {
+        console.log(schedule[date][time][language][tour-1]);
+        eventIdField.value = schedule[date][time][language][tour-1].id;
+        submitButton.disabled = false;
+    }
+    else {
+        eventIdField.value = null;
+        submitButton.disabled = true;
     }
 }
 
@@ -79,6 +94,16 @@ timeSelect.addEventListener('change', () => {
     }
 });
 languageSelect.addEventListener('change', () => {
+    const selectedDate = dateSelect.value;
+    const selectedTime = timeSelect.value;
+    const selectedLanguage = languageSelect.value;
+
+    if (selectedLanguage != '') {
+        populate(tourSelect, Array.from({length: schedule[selectedDate][selectedTime][selectedLanguage].length}, (_, i) => i + 1));
+    }
+    else {
+        populate(tourSelect, null);
+    }
     updateTicketText();
 });
 ticketCount.addEventListener('change', () => {
@@ -87,3 +112,6 @@ ticketCount.addEventListener('change', () => {
 familyTicketSelect.addEventListener('change', () => {
     updateTicketText();
 });
+tourSelect.addEventListener('change', () => {
+    updateTicketText();
+})

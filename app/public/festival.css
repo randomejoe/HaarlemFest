@@ -1399,9 +1399,9 @@ h4 {
 }
 
 .history-ticketing-container {
-    background-color: var(--history-negative);
     display: flex;
     flex-direction: row;
+    justify-content: space-between;
 }
 
 @media (max-width: 700px) {

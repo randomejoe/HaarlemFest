@@ -13,7 +13,7 @@
         <div class="history-ticket-information right">
             <div class="d-flex flex-row align-items-center"><p><strong>Tickets:</strong></p><p class="ms-0" id="tickets">1</p></div>
             <div class="d-flex flex-row align-items-center"><p><strong>Price:</strong></p><p class="ms-0" id="price"><?php echo number_format(array_first(array_first(array_first(array_first($schedule))))->ticketPrice(), 2);?></p></div>
-            <div class="d-flex justify-content-center"><button>Purchase</button></div>
+            <div class="d-flex justify-content-center"><button type="submit" id="submitButton" disabled>Purchase</button></div>
         </div>
     </div> 
 </div>

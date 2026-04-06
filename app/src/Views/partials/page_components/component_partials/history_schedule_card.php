@@ -1,7 +1,7 @@
 <div class="horizontal-center"> 
     <div class="history-schedule-card"><?php 
         ?><div class="horizontal-center history-schedule-card-time">
-            <p class="no-margin"><?php echo $time; ?></p>
+            <p class="no-margin"><strong><?php echo $time; ?></strong></p>
         </div>
         <div class="history-schedule-card-content">
             <div class="history-schedule-card-rows"><?php
