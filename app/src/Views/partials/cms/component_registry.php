@@ -7,27 +7,67 @@ element is only for text elements currently and refers to the element used to wr
     'text' => [
         'fields' => [
             ['name' => 'text', 'type' => 'text', 'element' => 'p'],
+            ['name' => 'has padding', 'type' => 'checkbox'],
+            ['name' => 'has_horizontal_padding', 'type' => 'checkbox'],
         ],
     ],
     'image' => [
         'fields' => [
             ['name' => 'imgSource', 'type' => 'image'],
+            ['name' => 'has_horizontal_padding', 'type' => 'checkbox'],
         ]
     ],
     'title' => [
         'fields' => [
-            ['name' => 'text', 'type' => 'text', 'element' => 'h1']
+            ['name' => 'text', 'type' => 'text', 'element' => 'h1'],
+            ['name' => 'has_top_padding', 'type' => 'checkbox'],
+            ['name' => 'has_horizontal_padding', 'type' => 'checkbox'],
+        ]
+    ],
+    'sub_title' => [
+        'fields' => [
+            ['name' => 'text', 'type' => 'text', 'element' => 'h2'],
+            ['name' => 'has_horizontal_padding', 'type' => 'checkbox'],
         ]
     ],
     'paragraph' => [
         'fields' => [
             ['name' => 'header_text', 'type' => 'text', 'element' => 'h2'],
-            ['name' => 'paragraph_text', 'type' => 'text', 'element' => 'p']
+            ['name' => 'paragraph_text', 'type' => 'text', 'element' => 'p'],
+            ['name' => 'has_horizontal_padding', 'type' => 'checkbox'],
+        ]
+    ],
+    'history_detailpage_top' => [
+        'fields' => [
+            ['name' => 'title_text', 'type' => 'text', 'element' => 'h1'],
+            ['name' => 'header_text', 'type' => 'text', 'element' => 'h2'],
+            ['name' => 'paragraph_text', 'type' => 'text', 'element' => 'p'],
+            ['name' => 'map_image_source', 'type' => 'image'],
+            ['name' => 'night_image_source', 'type' => 'image'],
+            ['name' => 'night_image_caption', 'type' => 'text', 'element' => 'p'],
+            ['name' => 'has_top_padding', 'type' => 'checkbox'],
+            ['name' => 'has_horizontal_padding', 'type' => 'checkbox'],
+        ]
+    ],
+    'double_caption_image' => [
+        'fields' => [
+            ['name' => 'left_image_source', 'type' => 'image'],
+            ['name' => 'left_image_caption', 'type' => 'text', 'element' => 'p'],
+            ['name' => 'right_image_source', 'type' => 'image'],
+            ['name' => 'right_image_caption', 'type' => 'text', 'element' => 'p'],
+            ['name' => 'has_horizontal_padding', 'type' => 'checkbox'],
+        ]
+    ],
+    'big_ticket_button' => [
+        'fields' => [
+            ['name' => 'button_link', 'type' => 'text', 'element' => 'p'],
+            ['name' => 'text', 'type' => 'text', 'element' => 'h2'],
         ]
     ],
     'history_schedule' => [
         'fields' => [
             ['name' => 'header_text', 'type' => 'text', 'element' => 'h2'],
+            ['name' => 'buy_ticket_button_link', 'type' => 'text', 'element' => 'p']
         ]
     ],
     'history_locations' => [
@@ -35,9 +75,17 @@ element is only for text elements currently and refers to the element used to wr
             ['name' => 'header_text', 'type' => 'text', 'element' => 'h2'],
         ]
     ],
+    'history_ticketing' => [
+        'fields' => [
+            ['name' => 'single_ticket_price', 'type' => 'text', 'element' => 'p'],
+            ['name' => 'family_ticket_price', 'type' => 'text', 'element' => 'p'],
+            ['name' => 'ticket_image', 'type' => 'image'],
+        ]
+    ],
     'full_size_image' => [
         'fields' => [
             ['name' => 'image_source', 'type' => 'image'],
+            ['name' => 'has_horizontal_padding', 'type' => 'checkbox'],
         ]
     ],
     'hero_banner' => [

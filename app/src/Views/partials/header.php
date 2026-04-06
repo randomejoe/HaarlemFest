@@ -63,7 +63,7 @@ require_once __DIR__ . '/../helpers.php';
                                     <a href="/account" class="user-menu-item">Account</a>
                                     <a href="/orders" class="user-menu-item">Orders</a>
                                     <form method="post" action="/logout" class="m-0">
-                                        <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars((string) ($csrf_token ?? ''), ENT_QUOTES, 'UTF-8'); ?>">
+                                        <input type="hidden" name="csrf_token" value="<?php echo hf_e(hf_csrf_token()); ?>">
                                         <button type="submit" class="user-menu-item user-menu-logout">Logout</button>
                                     </form>
                                 </div>

@@ -1278,8 +1278,8 @@ h4 {
 
 .dynamic-page-content-container {
     margin: 0;
-    padding: 0;
     gap: 0;
+    padding: 0;
     display: flex;
     flex-direction: column;
 }
@@ -1370,6 +1370,14 @@ h4 {
     color: var(--history-negative);
 }
 
+.history-add-ticket-button.big-button {
+    width: 40%;
+    text-align: center;
+    padding: 1rem;
+    margin: 1rem;
+    border-radius: var(--radius-md);
+}
+
 .history-location-card {
     background-color: var(--history-negative);
     width: 100%;
@@ -1378,7 +1386,6 @@ h4 {
 
 .history-location-card img {
     height: auto;
-    padding-right: 1em;
 }
 
 .history-location-card a {
@@ -1389,6 +1396,74 @@ h4 {
     border-radius: var(--radius-sm);
     color: var(--history-negative);
     min-width: fit-content;
+}
+
+.history-ticketing-container {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+}
+
+@media (max-width: 700px) {
+    .history-ticketing-container {
+        flex-direction: column;
+    }
+}
+
+.history-ticket {
+    max-width: 600px;
+    width: 100%;
+    background-color: white;
+    padding: 1rem;
+    border-radius: var(--radius-md);
+}
+
+.history-ticket-banner > h3 {
+    position: absolute;
+    color: white;
+    margin: 0;
+}
+
+.history-ticket-banner {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.history-ticket-banner > img {
+    object-fit: cover;
+    height: 2em;
+    width: 100%;
+    border-radius: var(--radius-md) var(--radius-md) 0px 0px;
+}
+
+.history-ticket-information {
+    background-color: var(--history-secondary);
+}
+
+.history-ticket-information.left {
+    border-radius: 0 0 0 var(--radius-md);
+}
+
+.history-ticket-information.right {
+    border-radius: 0 0 var(--radius-md) 0;
+}
+
+.history-ticket-information p {
+    margin: 0.5rem;
+    color: var(--history-negative)
+}
+
+.padding-horizontal {
+    padding: 0 1rem;
+}
+
+.padding-top {
+    padding: 1rem 0 0 0;
+}
+
+.padding-top.padding-horizontal {
+    padding: 1rem 1rem 0 1rem;
 }
 
 .full-size-image {
@@ -1417,4 +1492,8 @@ h4 {
 
 .fit-content {
     width: fit-content;
+}
+
+.w-40 {
+    width: 40%;
 }

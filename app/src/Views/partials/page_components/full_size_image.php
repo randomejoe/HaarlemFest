@@ -1,1 +1,1 @@
-<img class="full-size-image" src="<?php echo '/images/' . $data['image_source']; ?>">
+<img class="full-size-image <?php if (isset($data['has_horizontal_padding']) && $data['has_horizontal_padding'] == "1") {echo 'padding-horizontal ';} ?>" src="<?php echo '/images/' . $data['image_source']; ?>">
