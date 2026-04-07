@@ -9,7 +9,6 @@ class SeedJazzPageContent extends AbstractMigration
 		$rows = [
 			[
 				'page_id' => 5,
-				'sort_order' => 0,
 				'component_name' => 'hero_banner',
 				'data' => json_encode([
 					'date_badge' => '30th July to 2nd August',
@@ -25,7 +24,6 @@ class SeedJazzPageContent extends AbstractMigration
 			],
 			[
 				'page_id' => 5,
-				'sort_order' => 0,
 				'component_name' => 'split_content_block',
 				'data' => json_encode([
 					'heading' => 'Haarlem Jazz - Back and better than ever',
@@ -36,7 +34,6 @@ class SeedJazzPageContent extends AbstractMigration
 			],
 			[
 				'page_id' => 5,
-				'sort_order' => 0,
 				'component_name' => 'split_content_block',
 				'data' => json_encode([
 					'heading' => 'Three nights at Patronaat, one huge free Sunday',
@@ -47,7 +44,6 @@ class SeedJazzPageContent extends AbstractMigration
 			],
 			[
 				'page_id' => 5,
-				'sort_order' => 0,
 				'component_name' => 'split_content_block',
 				'data' => json_encode([
 					'heading' => 'Grab your spot or go all-in',
@@ -58,13 +54,11 @@ class SeedJazzPageContent extends AbstractMigration
 			],
 			[
 				'page_id' => 5,
-				'sort_order' => 0,
 				'component_name' => 'lineup_section',
 				'data' => null,
 			],
 			[
 				'page_id' => 5,
-				'sort_order' => 0,
 				'component_name' => 'tickets_passes',
 				'data' => json_encode([
 					'section_id' => 'tickets',
@@ -94,7 +88,6 @@ class SeedJazzPageContent extends AbstractMigration
 			],
 			[
 				'page_id' => 5,
-				'sort_order' => 0,
 				'component_name' => 'venues_map',
 				'data' => json_encode([
 					'section_id' => '',
