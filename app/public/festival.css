@@ -1419,6 +1419,38 @@ h4 {
     justify-content: space-between;
 }
 
+.history-detailpage-top, .double-caption-image {
+    flex-direction: row;
+    gap: 1.5rem;
+}
+.history-detailpage-top .text {
+    width: 50%;
+}
+.history-detailpage-top .images {
+    width: 25%;
+    flex-direction: column;
+}
+.double-caption-image > * {
+    width: 40%;
+}
+
+@media (max-width: 900px) {
+    .history-detailpage-top {
+        flex-direction: column;
+        gap: 0;
+    }
+    .history-detailpage-top .text, .history-detailpage-top .images {
+        width: 100%;
+    }
+    .history-detailpage-top .images {
+        flex-direction: row;
+        padding-bottom: 1em;
+    }
+    .history-detailpage-top .images > * {
+        width: 50%;
+    }
+}
+
 @media (max-width: 700px) {
     .history-ticketing-container {
         flex-direction: column;
@@ -1436,6 +1468,25 @@ h4 {
     }
     .history-location-card img {
         width: auto;
+    }
+    .history-detailpage-top .images {
+        flex-direction: column;
+        padding-bottom: 0px;
+    }
+    .history-detailpage-top .images > * {
+        width: 100%;
+    }
+    .double-caption-image {
+        flex-direction: column;
+        gap: 0px;
+    }
+    .double-caption-image > * {
+        width: 100%;
+        padding: 0rem 1rem;
+    }
+
+    .history-add-ticket-button.big-button {
+        width: 75%;
     }
 }
 
