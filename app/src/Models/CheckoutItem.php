@@ -19,6 +19,7 @@ class CheckoutItem
         private int   $quantity,
         private float $unitPrice,
         private float $lineTotal,
+        private bool $familyTicket,
     ) {
     }
 
@@ -37,6 +38,7 @@ class CheckoutItem
             quantity:  (int)   ($item['quantity']          ?? 0),
             unitPrice: (float) ($item['unit_price_value']  ?? 0.0),
             lineTotal: (float) ($item['line_total_value']  ?? 0.0),
+            familyTicket: (bool) ($item['familyTicket']    ?? false),
         );
     }
 
@@ -61,6 +63,7 @@ class CheckoutItem
             'quantity'   => $this->quantity,
             'unit_price' => $this->unitPrice,
             'line_total' => $this->lineTotal,
+            'family_ticket' => $this->familyTicket,
         ];
     }
 }

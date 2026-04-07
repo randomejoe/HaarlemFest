@@ -26,6 +26,7 @@ class OrderRepository
                 t.ticket_id,
                 t.ticket_price,
                 t.verification_code,
+                t.family_ticket,
                 e.event_id,
                 e.name AS event_name,
                 e.start_time,
@@ -88,6 +89,7 @@ class OrderRepository
                     'line_total' => number_format(0, 2),
                     'ticket_numbers' => [],
                     'verification_codes' => [],
+                    'family_ticket' => isset($row['family_ticket']) ? (bool)$row['family_ticket'] : null,
                 ];
             }
 

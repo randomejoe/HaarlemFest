@@ -111,12 +111,13 @@ class CheckoutRepository
                 }
             }
 
-            $valuesSql[] = '(?, ?, ?, ?, ?)';
+            $valuesSql[] = '(?, ?, ?, ?, ?, ?)';
             $params[] = $checkoutAttemptId;
             $params[] = (int) $item['event_id'];
             $params[] = (int) $item['quantity'];
             $params[] = (float) $item['unit_price'];
             $params[] = (float) $item['line_total'];
+            $params[] = (bool) $item['family_ticket'];
         }
 
         $sql = 'INSERT INTO checkout_attempt_items (
@@ -124,7 +125,8 @@ class CheckoutRepository
                 event_id,
                 quantity,
                 unit_price,
-                line_total
+                line_total, 
+                family_ticket
             ) VALUES ' . implode(', ', $valuesSql);
 
         $stmt = $this->pdo->prepare($sql);
@@ -241,7 +243,8 @@ class CheckoutRepository
                 event_id,
                 quantity,
                 unit_price,
-                line_total
+                line_total,
+                family_ticket
             FROM checkout_attempt_items
             WHERE checkout_attempt_id = :checkout_attempt_id
             ORDER BY checkout_attempt_item_id ASC'
@@ -288,6 +291,7 @@ class CheckoutRepository
             $eventId = (int) ($item['event_id'] ?? 0);
             $quantity = max(0, (int) ($item['quantity'] ?? 0));
             $ticketPrice = (float) ($item['unit_price'] ?? 0.0);
+            $familyTicket = (bool) ($item['family_ticket'] ?? false);
 
             if ($eventId <= 0 || $quantity <= 0) {
                 continue;
@@ -296,12 +300,13 @@ class CheckoutRepository
             for ($i = 0; $i < $quantity; $i++) {
                 $verificationCode = $this->generateVerificationCode($checkoutAttemptId, $eventId);
 
-                $valuesSql[] = '(?, ?, ?, ?, ?)';
+                $valuesSql[] = '(?, ?, ?, ?, ?, ?)';
                 $insertParams[] = $eventId;
                 $insertParams[] = $userId;
                 $insertParams[] = $invoiceId;
                 $insertParams[] = $ticketPrice;
                 $insertParams[] = $verificationCode;
+                $insertParams[] = $familyTicket;
 
                 $ticketsToCreate[] = [
                     'event_id' => $eventId,
@@ -320,7 +325,8 @@ class CheckoutRepository
                 user_id,
                 invoice_id,
                 ticket_price,
-                verification_code
+                verification_code,
+                family_ticket
             ) VALUES ' . implode(', ', $valuesSql);
 
         $stmt = $this->pdo->prepare($sql);
@@ -355,7 +361,8 @@ class CheckoutRepository
                 ticket_id,
                 event_id,
                 ticket_price,
-                verification_code
+                verification_code,
+                family_ticket
             FROM tickets
             WHERE invoice_id = ?
               AND verification_code IN (' . $placeholders . ')'

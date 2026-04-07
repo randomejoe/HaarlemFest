@@ -50,7 +50,7 @@
                                                 </tr>
                                             </thead>
                                             <tbody>
-                                                <?php foreach ($order['items'] as $item): ?>
+                                                <?php foreach ($order['items'] as $item):?>
                                                     <tr>
                                                         <td>
                                                             <div class="fw-semibold"><?php echo htmlspecialchars((string) ($item['event_name'] ?? 'Event'), ENT_QUOTES, 'UTF-8'); ?></div>

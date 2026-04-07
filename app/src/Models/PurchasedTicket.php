@@ -25,6 +25,7 @@ class PurchasedTicket
         private float  $lineTotalValue,
         private array  $ticketNumbers,
         private array  $verificationCodes,
+        private bool   $familyTicket,
     ) {
     }
 
@@ -37,6 +38,11 @@ class PurchasedTicket
      */
     public static function fromAggregated(array $data): self
     {
+        $quantity = ($data['quantity']          ?? 0);
+        $totalValue = ($data['line_total_value']  ?? 0.0);
+        if ($data['family_ticket']) {
+            $totalValue = 60 * ceil($quantity/4);
+        }
         return new self(
             eventId:           isset($data['event_id']) && $data['event_id'] !== null
                                    ? (int) $data['event_id']
@@ -45,10 +51,11 @@ class PurchasedTicket
             venue:             (string) ($data['venue']        ?? 'Venue to be announced'),
             schedule:          (string) ($data['schedule']     ?? 'Schedule unavailable'),
             unitPriceValue:    (float)  ($data['unit_price_value']  ?? 0.0),
-            quantity:          (int)    ($data['quantity']          ?? 0),
-            lineTotalValue:    (float)  ($data['line_total_value']  ?? 0.0),
+            quantity:          (int)    $quantity,
+            lineTotalValue:    (float)  $totalValue,
             ticketNumbers:     (array)  ($data['ticket_numbers']    ?? []),
             verificationCodes: (array)  ($data['verification_codes'] ?? []),
+            familyTicket:      ($data['family_ticket'] == 1 ? true : false),
         );
     }
 
@@ -89,6 +96,7 @@ class PurchasedTicket
             'line_total'         => number_format($this->lineTotalValue, 2),
             'ticket_numbers'     => $this->ticketNumbers,
             'verification_codes' => $this->verificationCodes,
+            'family_ticket'      => $this->familyTicket,
         ];
     }
 }

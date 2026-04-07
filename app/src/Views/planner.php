@@ -3,9 +3,6 @@ $extraStylesheets = [
     '/css/planner.css?v=' . rawurlencode((string) @filemtime(__DIR__ . '/../../public/css/planner.css')),
 ];
 require __DIR__ . '/partials/header.php';
-echo '<pre>';
-print_r($planner);
-echo '</pre>';
 ?>
 
 <main>
