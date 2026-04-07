@@ -84,6 +84,12 @@ class PageRepository extends BaseRepository
         $stmt->execute(['page_id' => $id]);
         $pageContent = $stmt->fetchAll();
 
+        // No page found to edit
+        if ($pageContent == null) {
+            header('Location: /cms/pages');
+            return null;
+        }
+
         $page = ['page_id' => $id, 'title' => $pageContent[0]['title'], 'content' => []];
         foreach ($pageContent as $contentItem) {
             if (isset($contentItem['component_name'])) {
@@ -91,9 +97,7 @@ class PageRepository extends BaseRepository
             }
         }
 
-        $returnPage = Page::fromArray($page);
-
-        return $returnPage;
+        return Page::fromArray($page);
     }
     public function getContentForEdit(int $id)
     {

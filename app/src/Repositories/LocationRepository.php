@@ -57,6 +57,12 @@ class LocationRepository extends BaseRepository
         $stmt->execute(['id' => $id]);
         $location = $stmt->fetch();
 
+        // No location found to edit
+        if ($location == null) {
+            header('Location: /cms/locations');
+            return null;
+        }
+
         return Location::fromArray($location);
     }
     public function deleteLocation(int $locationId) {

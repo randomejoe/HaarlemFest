@@ -16,7 +16,8 @@ class UserService implements CMSService
 
     public function getForEdit(int $id)
     {
-        return $this->repository->getUserForEdit($id);
+        header('Location: /cms/users');
+        return null;
     }
 
     public function isNameEditable(): bool

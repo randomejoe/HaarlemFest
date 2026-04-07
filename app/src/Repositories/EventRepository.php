@@ -295,6 +295,12 @@ class EventRepository extends BaseRepository
         $stmt->execute(['id' => $id]);
         $event = $stmt->fetch();
 
+        // No event found to edit
+        if ($event == null) {
+            header('Location: /cms/events');
+            return null;
+        }
+
         return Event::fromArray($event);
     }
 
