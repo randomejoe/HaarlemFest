@@ -1383,9 +1383,16 @@ h4 {
     width: 100%;
     padding: 1em;
 }
+.history-location-card > div.left {
+    flex-direction: row;
+}
+.history-location-card > div.right {
+    flex-direction: row-reverse;
+}
 
 .history-location-card img {
     height: auto;
+    width: 200px;
 }
 
 .history-location-card a {
@@ -1398,6 +1405,14 @@ h4 {
     min-width: fit-content;
 }
 
+.history-location-card-learn-more.left {
+    justify-content: start;
+}
+
+.history-location-card-learn-more.right {
+    justify-content: end;
+}
+
 .history-ticketing-container {
     display: flex;
     flex-direction: row;
@@ -1407,6 +1422,20 @@ h4 {
 @media (max-width: 700px) {
     .history-ticketing-container {
         flex-direction: column;
+    }
+    .history-location-card > div.left, .history-location-card > div.right {
+        flex-direction: column;
+        align-items: center;
+    }
+    .history-location-card-learn-more.left, .history-location-card-learn-more.right {
+        justify-content: center;
+    }
+    .history-location-card-learn-more.left > a, .history-location-card-learn-more.right > a {
+        width: 60%;
+        text-align: center;
+    }
+    .history-location-card img {
+        width: auto;
     }
 }
 
