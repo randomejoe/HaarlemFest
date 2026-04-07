@@ -185,7 +185,7 @@ class CheckoutServiceTest extends TestCase
             ->method('createHolds')
             ->with(
                 $attemptId,
-                $this->user->id(),
+                $this->user->getId(),
                 'planner-token-abc',
                 $this->isType('array'),
                 $this->callback(function (string $expiresAt) use (&$capturedHoldExpiresAt): bool {

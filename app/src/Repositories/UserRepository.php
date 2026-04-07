@@ -8,7 +8,7 @@ use App\Models\UserRole;
 use PDO;
 use PDOException;
 
-class UserRepository
+class UserRepository extends BaseRepository
 {
     public const USERNAME_MAX_LENGTH = 255;
     public const EMAIL_MAX_LENGTH = 255;
@@ -167,5 +167,29 @@ class UserRepository
         $driverCode = (int) ($e->errorInfo[1] ?? 0);
 
         return $sqlState === '23000' || $driverCode === 1062;
+    }
+
+    public function getAllUsers(): array
+    {
+        $stmt = $this->pdo->prepare('SELECT ' . self::USER_COLUMNS . ' FROM users');
+        $stmt->execute();
+        $results = $stmt->fetchAll();
+        $users = [];
+
+        foreach ($results as $user) {
+            $users[] = User::fromArray($user);
+        }
+        return $users;
+    }
+
+    public function deleteUser(int $id): bool
+    {
+        $this->requireAdmin();
+
+        $stmt = $this->pdo->prepare("DELETE FROM users WHERE user_id = :user_id");
+        $stmt->execute([
+            'user_id' => $id
+        ]);
+        return true;
     }
 }

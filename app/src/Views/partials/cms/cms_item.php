@@ -1,3 +1,4 @@
+<?php use App\Models\CmsType; ?>
 <div class='cms-item'>
     <div class='cms-item-content vertical-center'>
         <p><?php echo str_replace('_', ' ', $item->getName()); ?></p><?php
@@ -6,9 +7,13 @@
         }
         ?>
         <div class='cms-item-buttons vertical-center'>
-            <a class='edit-btn button' href=<?php echo '/cms/' . $itemType . 's/' . $item->getId() . '/edit'?>>
-                <p>Edit <?php echo $itemType ?></p>
-            </a>
+            <?php
+            if ($itemType != CmsType::User->value) 
+                {?>
+                <a class='edit-btn button' href=<?php echo '/cms/' . $itemType . 's/' . $item->getId() . '/edit'?>>
+                    <p>Edit <?php echo $itemType ?></p>
+                </a>
+            <?php }?>
             <form method="POST" class="no-margin" action=<?php echo '/cms/' . $itemType . 's/' . $item->getId() . '/delete'?>>
                 <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars((string) ($csrf_token ?? ''), ENT_QUOTES, 'UTF-8'); ?>">
                 <input type="hidden" name="return_url" value="<?php echo $_SERVER['REQUEST_URI'] ?>">

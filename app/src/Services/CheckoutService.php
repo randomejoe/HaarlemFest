@@ -93,7 +93,7 @@ class CheckoutService
 
             $result = $this->handoffService->initiatePaymentHandoff(
                 $attemptId,
-                $user->id(),
+                $user->getId(),
                 $this->planner->getPlannerToken(),
                 (float) $planner['total_price_value'],
                 'EUR',
@@ -112,7 +112,7 @@ class CheckoutService
 
     public function confirmPendingPayment(int $checkoutAttemptId, User $user): PaymentConfirmationResult
     {
-        $userId = $user->id();
+        $userId = $user->getId();
 
         if ($checkoutAttemptId <= 0) {
             return new PaymentConfirmationResult(
@@ -265,7 +265,7 @@ class CheckoutService
         );
 
         $attemptId = $this->checkoutAttempts->createAttempt([
-            'user_id'          => $user->id(),
+            'user_id'          => $user->getId(),
             'planner_token'    => $this->planner->getPlannerToken(),
             'status'           => 'initiated',
             'total_price'      => (float) ($planner['total_price_value'] ?? 0),
@@ -282,7 +282,7 @@ class CheckoutService
         $this->checkoutAttempts->createAttemptItems($attemptId, $attemptItemArrays);
         $this->holdManager->createHoldsForAttempt(
             $attemptId,
-            $user->id(),
+            $user->getId(),
             $this->planner->getPlannerToken(),
             $attemptItemArrays,
             $expiresAt

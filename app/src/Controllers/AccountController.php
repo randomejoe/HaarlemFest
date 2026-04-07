@@ -27,7 +27,7 @@ class AccountController
             exit;
         }
 
-        $user = $this->users->findById($sessionUser->id());
+        $user = $this->users->findById($sessionUser->getId());
         if ($user === null) {
             $this->auth->logout();
             header('Location: /login');
@@ -48,7 +48,7 @@ class AccountController
             exit;
         }
 
-        $userId = $sessionUser->id();
+        $userId = $sessionUser->getId();
 
         $username = trim($_POST['username'] ?? '');
         $firstName = trim($_POST['first_name'] ?? '');
@@ -80,7 +80,7 @@ class AccountController
         }
 
         $existing = $this->users->findByUsername($username);
-        if ($existing !== null && $existing->id() !== $userId) {
+        if ($existing !== null && $existing->getId() !== $userId) {
             $this->renderAccountError($submittedUser, 'Username is already in use.');
             return;
         }

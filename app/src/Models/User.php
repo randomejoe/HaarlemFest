@@ -120,9 +120,15 @@ class User
         return $errors;
     }
 
-    public function id(): int
+    public function getId(): int
     {
         return $this->id;
+    }
+
+    // For cms system
+    public function getName(): string
+    {
+        return $this->username;
     }
 
     public function username(): string

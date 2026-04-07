@@ -33,7 +33,7 @@ class PasswordResetService
         $expiresAt = (new DateTime('+1 hour'))->format('Y-m-d H:i:s');
 
         try {
-            $this->users->setPasswordResetToken($user->id(), $tokenHash, $expiresAt);
+            $this->users->setPasswordResetToken($user->getId(), $tokenHash, $expiresAt);
         } catch (\Throwable $e) {
             throw new AuthException('Failed to store reset token.', 0, $e);
         }
@@ -49,7 +49,7 @@ class PasswordResetService
         try {
             $this->mailer->send($user->email(), $user->username(), $subject, $body);
         } catch (Throwable $e) {
-            error_log('Password reset email delivery failed for user ' . $user->id() . ': ' . $e->getMessage());
+            error_log('Password reset email delivery failed for user ' . $user->getId() . ': ' . $e->getMessage());
         }
     }
 
@@ -69,7 +69,7 @@ class PasswordResetService
         $passwordHash = $this->auth->hashPassword($newPassword);
 
         try {
-            $this->users->updatePassword($user->id(), $passwordHash);
+            $this->users->updatePassword($user->getId(), $passwordHash);
         } catch (\Throwable $e) {
             throw new AuthException('Failed to update password.', 0, $e);
         }

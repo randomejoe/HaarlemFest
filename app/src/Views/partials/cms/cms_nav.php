@@ -12,9 +12,6 @@
     <a href="/cms/locations" class='navItem'>
         <p>Locations</p>
     </a>
-    <a href="/cms/tickets" class='navItem'>
-        <p>Tickets</p>
-    </a>
     <a href="/cms/users" class='navItem'>
         <p>Users</p>
     </a>

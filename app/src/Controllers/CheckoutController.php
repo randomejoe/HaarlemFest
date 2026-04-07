@@ -56,7 +56,7 @@ class CheckoutController
             }
         }
 
-        $this->users->updateCheckoutDetails($user->id(), $details);
+        $this->users->updateCheckoutDetails($user->getId(), $details);
         $this->planner->setFlash('success', 'Your checkout details were saved.');
         $this->redirect(self::CHECKOUT_PATH);
     }
@@ -93,7 +93,7 @@ class CheckoutController
         $user = $this->requireSessionUser();
         $attempt = $this->checkoutAttempts->findById($id);
 
-        if (!$attempt || $attempt['user_id'] != $user->id()) {
+        if (!$attempt || $attempt['user_id'] != $user->getId()) {
             http_response_code($attempt ? 403 : 404);
             echo $attempt ? 'Forbidden' : 'Checkout attempt not found.';
             return;
@@ -119,7 +119,7 @@ class CheckoutController
     public function confirmPendingPayment(int $id): void
     {
         $this->checkout->releaseExpiredHoldsIfNeeded(true);
-        $user = $this->requireCheckoutUser($this->requireSessionUser()->id());
+        $user = $this->requireCheckoutUser($this->requireSessionUser()->getId());
 
         $result = $this->checkout->confirmPendingPayment($id, $user)->toArray();
         $status = $result['status'] ?? 'unknown';
@@ -162,7 +162,7 @@ class CheckoutController
 
     private function requireCheckoutUser(?int $id = null): User
     {
-        $id ??= $this->requireSessionUser()->id();
+        $id ??= $this->requireSessionUser()->getId();
         if (!$user = $this->users->findById($id)) {
             $this->auth->logout();
             $this->redirect('/login?redirect=' . urlencode(self::CHECKOUT_PATH));

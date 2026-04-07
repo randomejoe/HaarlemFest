@@ -30,6 +30,7 @@ use App\Services\ContentService;
 use App\Services\CsrfService;
 use App\Services\EventService;
 use App\Services\InvoicePdfService;
+use App\Services\UserService;
 use App\Services\Mailer;
 use App\Services\PageService;
 use App\Services\PasswordResetService;
@@ -180,6 +181,9 @@ class Container
         $this->singleton(PageService::class, fn(self $c): PageService => new PageService(
             $c->get(PageRepository::class)
         ));
+        $this->singleton(UserService::class, fn(self $c): UserService => new UserService(
+            $c->get(UserRepository::class)
+        ));
         $this->singleton(EventService::class, fn(self $c): EventService => new EventService(
             $c->get(EventRepository::class),
             $c->get(PageRepository::class)
@@ -230,6 +234,7 @@ class Container
             $c->get(ContentService::class),
             $c->get(EventService::class),
             $c->get(LocationService::class),
+            $c->get(UserService::class),
         ));
     }
 
