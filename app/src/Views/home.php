@@ -60,6 +60,7 @@
                             <span>CULTURAL HERITAGE</span>
                             <h3>History</h3>
                         </div>
+                        <a class="stretched-link" href="/A stroll through history" aria-label="Open History program"></a>
                     </article>
                 </div>
             </div>
