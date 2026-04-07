@@ -190,6 +190,9 @@ class PlannerService
         if (isset($planner['items'][$eventId]['familyTicket'])) {
             $planner['items'][$eventId] = ['quantity' => $quantity, 'familyTicket' => $planner['items'][$eventId]['familyTicket']];
         }
+        else {
+            $planner['items'][$eventId] = $quantity;
+        }
         $this->savePlanner($planner);
     }
 
