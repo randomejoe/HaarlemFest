@@ -73,6 +73,7 @@ element is only for text elements currently and refers to the element used to wr
     'history_locations' => [
         'fields' => [
             ['name' => 'header_text', 'type' => 'text', 'element' => 'h2'],
+            ['name' => 'has_top_padding', 'type' => 'checkbox'],
         ]
     ],
     'history_ticketing' => [
@@ -86,6 +87,7 @@ element is only for text elements currently and refers to the element used to wr
         'fields' => [
             ['name' => 'image_source', 'type' => 'image'],
             ['name' => 'has_horizontal_padding', 'type' => 'checkbox'],
+            ['name' => 'has_top_padding', 'type' => 'checkbox'],
         ]
     ],
     'hero_banner' => [
