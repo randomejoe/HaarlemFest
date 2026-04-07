@@ -117,7 +117,7 @@ class CheckoutRepository
             $params[] = (int) $item['quantity'];
             $params[] = (float) $item['unit_price'];
             $params[] = (float) $item['line_total'];
-            $params[] = (bool) $item['family_ticket'];
+            $params[] = (($item['family_ticket'] == true ? 1 : 0));
         }
 
         $sql = 'INSERT INTO checkout_attempt_items (
@@ -306,7 +306,7 @@ class CheckoutRepository
                 $insertParams[] = $invoiceId;
                 $insertParams[] = $ticketPrice;
                 $insertParams[] = $verificationCode;
-                $insertParams[] = $familyTicket;
+                $insertParams[] = ($familyTicket == true ? 1 : 0);
 
                 $ticketsToCreate[] = [
                     'event_id' => $eventId,
