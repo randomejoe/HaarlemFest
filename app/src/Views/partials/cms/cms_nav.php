@@ -15,4 +15,7 @@
     <a href="/cms/users" class='navItem'>
         <p>Users</p>
     </a>
+    <a href="/cms/orders" class='navItem'>
+        <p>Orders</p>
+    </a>
 </div></nav>

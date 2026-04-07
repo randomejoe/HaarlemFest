@@ -30,6 +30,7 @@ use App\Services\ContentService;
 use App\Services\CsrfService;
 use App\Services\EventService;
 use App\Services\InvoicePdfService;
+use App\Services\OrderService;
 use App\Services\UserService;
 use App\Services\Mailer;
 use App\Services\PageService;
@@ -194,6 +195,9 @@ class Container
         $this->singleton(LocationService::class, fn(self $c): LocationService => new LocationService(
             $c->get(LocationRepository::class)
         ));
+        $this->singleton(OrderService::class, fn(self $c): OrderService => new OrderService(
+            $c->get(OrderRepository::class)
+        ));
 
         $this->transient(HomeController::class, static fn(self $c): HomeController => new HomeController());
         $this->transient(PageController::class, fn(self $c): PageController => new PageController(
@@ -235,6 +239,7 @@ class Container
             $c->get(EventService::class),
             $c->get(LocationService::class),
             $c->get(UserService::class),
+            $c->get(OrderService::class),
         ));
     }
 

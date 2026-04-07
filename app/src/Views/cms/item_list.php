@@ -19,7 +19,7 @@
                 }
             ?>
             <div class='between row'>
-                <?php if ($type != CmsType::User) {?>
+                <?php if ($type != CmsType::User && $type != CmsType::Order) {?>
                 <button id='add-item-btn' class='add-item-btn button'><p>Add <?php if (isset($currentCategory) || $type != CmsType::Event) {echo $type->value;} else {
                     echo 'main event';
                 } ?></p></button>
@@ -107,6 +107,9 @@
                 }
                 else if ($type == CmsType::User) {
                     $extraFields = 'cms_item_user_fields.php';
+                }
+                else if ($type == CmsType::Order) {
+                    $extraFields = 'cms_item_order_fields.php';
                 }
                 require __DIR__ . '/../partials/cms/cms_item.php';
             } ?>

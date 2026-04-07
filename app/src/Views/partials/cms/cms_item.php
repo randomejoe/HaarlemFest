@@ -8,7 +8,7 @@
         ?>
         <div class='cms-item-buttons vertical-center'>
             <?php
-            if ($itemType != CmsType::User->value) 
+            if ($itemType != CmsType::User->value && $itemType != CmsType::Order->value) 
                 {?>
                 <a class='edit-btn button' href=<?php echo '/cms/' . $itemType . 's/' . $item->getId() . '/edit'?>>
                     <p>Edit <?php echo $itemType ?></p>
@@ -17,6 +17,7 @@
             <form method="POST" class="no-margin" action=<?php echo '/cms/' . $itemType . 's/' . $item->getId() . '/delete'?>>
                 <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars((string) ($csrf_token ?? ''), ENT_QUOTES, 'UTF-8'); ?>">
                 <input type="hidden" name="return_url" value="<?php echo $_SERVER['REQUEST_URI'] ?>">
+                <?php if ($itemType != CmsType::Order->value) {?>
                 <button type="submit" class='delete-btn button'>
                     <p><?php 
                     if (isset($remove) && $remove == true) 
@@ -27,6 +28,7 @@
                     } 
                     echo $itemType ?></p>
                 </button>
+                <?php } ?>
             </form>
         </div>
         

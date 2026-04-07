@@ -82,4 +82,25 @@ class OrderSummary
             ),
         ];
     }
+
+    public function getName() {
+        return '';
+    }
+    public function getId() {
+        return $this->invoiceId;
+    }
+    public function getTicketCount() {
+        return $this->ticketCount;
+    }
+    public function getTotalPrice() {
+        return $this->formattedTotalPrice();
+    }
+    public function getEventNames() {
+        $events = $this->items;
+        $names = [];
+        foreach ($events as $event) {
+            $names[] = $event->eventName();
+        }
+        return array_unique($names);
+    }
 }

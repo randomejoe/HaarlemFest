@@ -7,6 +7,7 @@ use App\Services\PageService;
 use App\Services\EventService;
 use App\Services\LocationService;
 use App\Services\UserService;
+use App\Services\OrderService;
 use App\View;
 use App\Models\UserRole;
 use App\Models\CmsType;
@@ -18,14 +19,16 @@ class CmsController
     private EventService $eventService;
     private LocationService $locationService;
     private UserService $userService;
+    private OrderService $orderService;
 
-    public function __construct(PageService $pageService, ContentService $contentService, EventService $eventService, LocationService $locationService, UserService $userService)
+    public function __construct(PageService $pageService, ContentService $contentService, EventService $eventService, LocationService $locationService, UserService $userService, OrderService $orderService)
     {
         $this->pageService = $pageService;
         $this->contentService = $contentService;
         $this->eventService = $eventService;
         $this->locationService = $locationService;
         $this->userService = $userService;
+        $this->orderService = $orderService;
 
         if (!isset($_SESSION['role'])) {
             header('Location: /');
@@ -144,7 +147,7 @@ class CmsController
         header('Location: ' . $_POST['return_url']);
     }
 
-    private function resolveService(CmsType $type): PageService|ContentService|EventService|LocationService|UserService
+    private function resolveService(CmsType $type): PageService|ContentService|EventService|LocationService|UserService|OrderService
     {
         return match ($type) {
             CmsType::Page => $this->pageService,
@@ -152,6 +155,7 @@ class CmsController
             CmsType::Event => $this->eventService,
             CmsType::Location => $this->locationService,
             CmsType::User => $this->userService,
+            CmsType::Order => $this->orderService,
             default => throw new \InvalidArgumentException('Unknown CMS type.'),
         };
     }
