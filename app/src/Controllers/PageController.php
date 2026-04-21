@@ -43,6 +43,6 @@ class PageController
         $locationService = $this->locationService;
         $plannerService = $this->plannerService;
 
-        require __DIR__ . '/../Views/DynamicPage.php';
+        require __DIR__ . '/../Views/dynamicPage.php';
     }
 }
