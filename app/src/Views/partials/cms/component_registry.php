@@ -68,12 +68,18 @@ element is only for text elements currently and refers to the element used to wr
         'fields' => [
             ['name' => 'header_text', 'type' => 'text', 'element' => 'h2'],
             ['name' => 'buy_ticket_button_link', 'type' => 'text', 'element' => 'p']
+        ],
+        'methods' => [
+            ['name' => 'schedule', 'service' => \App\Services\EventService::class, 'method' => 'getSchedule', 'parameters' => ['A stroll through history']]
         ]
     ],
     'history_locations' => [
         'fields' => [
             ['name' => 'header_text', 'type' => 'text', 'element' => 'h2'],
             ['name' => 'has_top_padding', 'type' => 'checkbox'],
+        ],
+        'methods' => [
+            ['name' => 'locations', 'service' => \App\Services\LocationService::class, 'method' => 'getAll'],
         ]
     ],
     'history_ticketing' => [
@@ -81,6 +87,9 @@ element is only for text elements currently and refers to the element used to wr
             ['name' => 'single_ticket_price', 'type' => 'text', 'element' => 'p'],
             ['name' => 'family_ticket_price', 'type' => 'text', 'element' => 'p'],
             ['name' => 'ticket_image', 'type' => 'image'],
+        ],
+        'methods' => [
+            ['name' => 'schedule', 'service' => \App\Services\EventService::class, 'method' => 'getSchedule', 'parameters' => ['A stroll through history']]
         ]
     ],
     'full_size_image' => [

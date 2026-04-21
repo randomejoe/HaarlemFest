@@ -47,6 +47,8 @@ use App\Services\TicketDeliveryService;
 use App\Services\TicketPdfService;
 use App\Services\PaymentHandoffService;
 use App\Services\LocationService;
+use App\Services\PageRenderer;
+use App\Container;
 use PDO;
 use RuntimeException;
 
@@ -99,6 +101,7 @@ class Container
     private function register(): void
     {
         $this->singleton(PDO::class, static fn(self $c): PDO => Connection::get());
+        $this->singleton(Container::class, static fn(self $c): Container => new Container());
 
         $this->singleton(EventRepository::class, fn(self $c): EventRepository => new EventRepository($c->pdo()));
         $this->singleton(UserRepository::class, fn(self $c): UserRepository => new UserRepository($c->pdo()));
@@ -198,13 +201,14 @@ class Container
         $this->singleton(OrderService::class, fn(self $c): OrderService => new OrderService(
             $c->get(OrderRepository::class)
         ));
+        $this->singleton(PageRenderer::class, fn(self $c): PageRenderer => new PageRenderer(
+            $c->get(Container::class)
+        ));
 
         $this->transient(HomeController::class, static fn(self $c): HomeController => new HomeController());
         $this->transient(PageController::class, fn(self $c): PageController => new PageController(
+            $c->get(PageRenderer::class),
             $c->get(PageService::class),
-            $c->get(EventService::class),
-            $c->get(LocationService::class),
-            $c->get(PlannerService::class),
         ));
         $this->transient(CheckoutController::class, fn(self $c): CheckoutController => new CheckoutController(
             $c->get(PlannerService::class),

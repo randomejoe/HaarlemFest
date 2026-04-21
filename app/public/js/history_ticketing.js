@@ -62,8 +62,16 @@ function updateTicketText() {
         priceField.textContent = (singleTicketPrice * ticketCount.value).toFixed(2);
     }
 
+    if (tourSelect.options.length == 2) {
+        tourSelect.value = 1;
+        tourSelect.disabled = true;
+    }
+    // 1 option is empty option
+    if (tourSelect.options.length == 1) {
+        tourSelect.selectedIndex = 0;
+    }
+
     if (date && time && language && tour) {
-        console.log(schedule[date][time][language][tour-1]);
         eventIdField.value = schedule[date][time][language][tour-1].id;
         submitButton.disabled = false;
     }
@@ -82,6 +90,7 @@ dateSelect.addEventListener('change', () => {
         populate(timeSelect, null);
     }
     populate(languageSelect, null);
+    populate(tourSelect, null);
 });
 timeSelect.addEventListener('change', () => {
     const selectedDate = dateSelect.value;
@@ -92,6 +101,7 @@ timeSelect.addEventListener('change', () => {
     else {
         populate(languageSelect, null);
     }
+    populate(tourSelect, null);
 });
 languageSelect.addEventListener('change', () => {
     const selectedDate = dateSelect.value;

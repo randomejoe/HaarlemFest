@@ -3,7 +3,7 @@
     ?><div class='dynamic-page-content-container'><?php
     foreach ($page->getContent() as $pageContentItem) {
         if ($pageContentItem->getData() != null) {
-            $data = $pageContentItem->getData();
+            $data = $pageContentItem->getPageData();
         } else {
             $data = null;
         }

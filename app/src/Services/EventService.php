@@ -51,6 +51,21 @@ class EventService implements CMSServiceInterface
         return $this->repository->getAllEventsInCategory($category);
     }
 
+    public function getSchedule(string $event): array {
+        // $event is the main event which is the category
+        $events =  $this->repository->getAllEventsInCategory($event);
+
+        $schedule = [];
+        foreach ($events as $event) {
+            $date = date('Y-m-d', strtotime($event->startTime()));
+            $time = date('H:i', strtotime($event->startTime()));
+            $language = $event->getLanguage();
+            $schedule[$date][$time][$language->value][] = $event;
+        }
+
+        return $schedule;
+    }
+
     public function findById(int $eventId)
     {
         return $this->repository->findById($eventId);

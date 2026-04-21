@@ -1,4 +1,3 @@
-<?php require __DIR__ . '/component_partials/get_history_schedule.php'; ?>
 <form class="history-ticketing-container p-4 gap-4" action="/planner/items" method="POST">
     <input type="hidden" name="csrf_token" value="<?php echo hf_e(hf_csrf_token()); ?>">
     <div class="fit-content">
@@ -52,7 +51,7 @@
 </form>
 
 <script>
-    const schedule = <?php echo json_encode($schedule); ?>;
+    const schedule = <?php echo json_encode($data['schedule']); ?>;
     const singleTicketPrice = <?php echo $data['single_ticket_price']; ?>;
     const familyTicketPrice = <?php echo $data['family_ticket_price']; ?>;
 </script>

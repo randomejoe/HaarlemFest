@@ -15,16 +15,6 @@ class LocationService implements CMSServiceInterface
         $this->repository = $repository;
     }
 
-    public function resolveMethod(string $methodName, array $params = []) 
-    {
-        switch($methodName) {
-            case 'getAll':
-                return $this->getAll(...$params);
-            default:
-                throw new \InvalidArgumentException("Method '{$methodName}' not supported.");
-        }
-    }
-
     public function getForEdit(int $id)
     {
         return $this->repository->getLocationForEdit($id);

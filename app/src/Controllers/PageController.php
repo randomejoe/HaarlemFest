@@ -3,33 +3,22 @@
 namespace App\Controllers;
 
 use App\Services\PageService;
-use App\Services\EventService;
-use App\Services\LocationService;
-use App\Services\PlannerService;
+use App\Services\PageRenderer;
 
 class PageController
 {
+    private PageRenderer $renderer;
     private PageService $pageService;
-    private EventService $eventService;
-    private LocationService $locationService;
-    private PlannerService $plannerService;
 
-    public function __construct(PageService $pageService, EventService $eventService, LocationService $locationService, PlannerService $plannerService)
+    public function __construct(PageRenderer $renderer, PageService $pageService)
     {
+        $this->renderer = $renderer;
         $this->pageService = $pageService;
-        $this->eventService = $eventService;
-        $this->locationService = $locationService;
-        $this->plannerService = $plannerService;
     }
 
     public function showPage($page): void
     {
         $page = $this->pageService->getPage(urldecode($page));
-
-        $eventService = $this->eventService;
-        $locationService = $this->locationService;
-        $plannerService = $this->plannerService;
-
-        require __DIR__ . '/../Views/dynamicPage.php';
+        $this->renderer->renderPage($page);
     }
 }
