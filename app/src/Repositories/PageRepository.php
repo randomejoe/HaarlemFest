@@ -35,29 +35,33 @@ class PageRepository extends BaseRepository
         $pageId = $stmt->fetch();
         return $pageId;
     }
-    public function getPageById(int $id)
+    public function getPageById(int $id): Page
     {
+        return $this->getPageBy('WHERE pages.page_id = :id', ['id' => $id]);
+    }
+    public function getPageByName(string $name): Page
+    {
+        return $this->getPageBy('WHERE LOWER(title) = LOWER(:title)', ['title' => $name]);
+    }
+    // to reduce code duplication
+    private function getPageBy(string $whereStatement, array $params): Page {
         $stmt = $this->pdo->prepare(
             'SELECT title, pages.page_id, is_main_event, pc.component_name, pc.data
             FROM pages
             JOIN page_content pc ON pc.page_id = pages.page_id
-            WHERE pages.page_id = :id'
+            ' . $whereStatement
         );
-        $stmt->execute(['id' => $id]);
-        $pageContent = $stmt->fetchAll();
-        return $pageContent;
-    }
-    public function getPageByName(string $name)
-    {
-        $stmt = $this->pdo->prepare(
-            'SELECT title, pages.page_id, is_main_event, pc.component_name, pc.data
-        FROM pages
-        JOIN page_content pc ON pc.page_id = pages.page_id
-        WHERE LOWER(title) = LOWER(:title)'
+        $stmt->execute($params);
+        $rows = $stmt->fetchAll();
+
+        $pageContent = array_map(
+        fn($row) => PageContent::fromArray($row),
+            $rows
         );
-        $stmt->execute(['title' => $name]);
-        $pageContent = $stmt->fetchAll();
-        return $pageContent;
+        $page = Page::fromArray($rows[0]);
+        $page->setContent($pageContent);
+
+        return $page;
     }
 
     public function createPage(string $title, int $isMainEvent): bool
@@ -99,6 +103,7 @@ class PageRepository extends BaseRepository
 
         return Page::fromArray($page);
     }
+
     public function getContentForEdit(int $id)
     {
         $this->requireAdmin();

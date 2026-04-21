@@ -26,19 +26,6 @@ class PageController
     {
         $page = $this->pageService->getPage(urldecode($page));
 
-        // Collect all components on the page to register their assets
-        $pageComponents = [];
-        if (count($page) > 0 && !isset($page['page_id'])) {
-            foreach ($page as $pageContentItem) {
-                if (!empty($pageContentItem['component_name'])) {
-                    $componentName = $pageContentItem['component_name'];
-                    if (!isset($pageComponents[$componentName])) {
-                        $pageComponents[$componentName] = true;
-                    }
-                }
-            }
-        }
-
         $eventService = $this->eventService;
         $locationService = $this->locationService;
         $plannerService = $this->plannerService;
