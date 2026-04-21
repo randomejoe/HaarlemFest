@@ -4,7 +4,7 @@ require_once __DIR__ . '/../../helpers.php';
 hf_register_component('artist_venues');
 
 $componentData = is_array($data ?? null) ? $data : [];
-$artistName = trim((string) ($pageContentItem['title'] ?? ''));
+$artistName = trim((string) ($pageContentItem->getName() ?? ''));
 
 if ($artistName === '') {
 	return;
@@ -19,10 +19,6 @@ $mapImage = hf_data($componentData, 'map_image');
 $mapImageAlt = hf_data($componentData, 'map_image_alt', 'Festival map with venue locations');
 $mapImageUrl = hf_image_url($mapImage);
 
-$artistVenues = [];
-if (isset($eventService) && method_exists($eventService, 'getArtistVenuesData')) {
-	$artistVenues = $eventService->getArtistVenuesData($artistName);
-}
 ?>
 
 <section class="avn-venues" id="<?php echo hf_e($sectionId); ?>">
@@ -33,8 +29,8 @@ if (isset($eventService) && method_exists($eventService, 'getArtistVenuesData'))
 				<p class="avn-subtitle"><?php echo hf_e($venuesSubtitle); ?></p>
 			<?php endif; ?>
 
-			<?php if ($artistVenues !== []): ?>
-				<?php foreach ($artistVenues as $venue): ?>
+			<?php if ($data['artistVenues'] !== []): ?>
+				<?php foreach ($data['artistVenues'] as $venue): ?>
 					<article class="avn-venue-card">
 						<div class="avn-venue-head">
 							<div>

@@ -3,24 +3,17 @@ require_once __DIR__ . '/../../helpers.php';
 
 hf_register_component('jazz_program');
 
-// Fetch program data — all days with full event details for client-side tab switching
-$jazzDays = [];
-if (isset($eventService)) {
-	$jazzDays = $eventService->getProgramDataForCategory('jazz');
-}
-
 // Planner state for the sticky bar at the bottom of the overlay
 $jazzPlannerCount  = 0;
 $jazzPlannerTotal  = '0.00';
 $jazzPlannerLocked = false;
 $jazzPlannerFlash  = null;
-if (isset($plannerService)) {
-	$jazzPlannerDetails = $plannerService->getDetailedPlanner();
-	$jazzPlannerCount   = (int) $jazzPlannerDetails['total_quantity'];
-	$jazzPlannerTotal   = (string) $jazzPlannerDetails['total_price'];
-	$jazzPlannerLocked  = (bool) $jazzPlannerDetails['is_locked'];
-	$jazzPlannerFlash   = $plannerService->consumeFlash();
-}
+
+$jazzPlannerDetails = $data['jazzPlannerDetails'];
+$jazzPlannerCount   = (int) $jazzPlannerDetails['total_quantity'];
+$jazzPlannerTotal   = (string) $jazzPlannerDetails['total_price'];
+$jazzPlannerLocked  = (bool) $jazzPlannerDetails['is_locked'];
+$jazzPlannerFlash   = $data['jazzPlannerFlash'];
 
 // After a planner POST, the PlannerController redirects here.
 // Appending #jazz-open tells jazz_program.js to auto-open the overlay on load.
@@ -47,11 +40,11 @@ $jazzReturnTo = (parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?: '/')
 	</header>
 
 	<div class="jazz-overlay-body">
-		<?php if (!empty($jazzDays)): ?>
+		<?php if (!empty($data['jazzDays'])): ?>
 			<div class="jazz-tabs-wrap">
 				<div class="container">
 					<div class="jazz-day-tabs" role="tablist" aria-label="Festival days">
-						<?php foreach ($jazzDays as $i => $day): ?>
+						<?php foreach ($data['jazzDays'] as $i => $day): ?>
 							<button
 								type="button"
 								class="jazz-day-tab<?php echo $i === 0 ? ' active' : ''; ?>"
@@ -75,10 +68,10 @@ $jazzReturnTo = (parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?: '/')
 					</p>
 				<?php endif; ?>
 
-				<?php if (empty($jazzDays)): ?>
+				<?php if (empty($data['jazzDays'])): ?>
 					<div class="jazz-empty-state">No Jazz events are available yet.</div>
 				<?php else: ?>
-					<?php foreach ($jazzDays as $i => $day): ?>
+					<?php foreach ($data['jazzDays'] as $i => $day): ?>
 						<div
 							data-jazz-panel="<?php echo hf_e($day['key']); ?>"
 							<?php echo $i > 0 ? 'hidden' : ''; ?>>

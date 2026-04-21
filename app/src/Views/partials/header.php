@@ -18,7 +18,7 @@ require_once __DIR__ . '/../helpers.php';
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@400;500;600;700;800&family=Manrope:wght@400;500;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/festival.css?v=<?php echo rawurlencode((string) @filemtime(__DIR__ . '/../../../public/festival.css')); ?>">
+    <link rel='stylesheet' href='/festival.css'>
     <?php foreach ((array) ($extraStylesheets ?? []) as $stylesheetPath): ?>
         <link rel="stylesheet" href="<?php echo htmlspecialchars((string) $stylesheetPath, ENT_QUOTES, 'UTF-8'); ?>">
     <?php endforeach; ?>

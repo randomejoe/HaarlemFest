@@ -3,28 +3,25 @@ require_once __DIR__ . '/../../helpers.php';
 
 hf_register_component('lineup_section');
 
-$category = trim((string) ($pageContentItem['title'] ?? ''));
+$category = trim((string) ($page->getName()['title'] ?? ''));
 $days = [];
 $artistDetailsLinks = [
     'Ntjam Rosie' => '/Ntjam%20Rosie',
     'Jonna Frazer' => '/Jonna%20Frazer',
 ];
-
-if (isset($eventService) && $category !== '' && method_exists($eventService, 'getLineupDataForCategory')) {
-    $days = $eventService->getLineupDataForCategory($category);
-}
 ?>
 <section class="lineup-component" id="lineup" data-lineup-root>
     <div class="lineup-shell">
         <h2 class="lineup-title">Line-up</h2>
 
-        <?php if ($days === []): ?>
+
+        <?php if ($data['days'] == []): ?>
             <div class="lineup-empty-state">
                 No line-up items are available for this festival page yet.
             </div>
         <?php else: ?>
             <div class="lineup-tabs" role="tablist" aria-label="Festival days">
-                <?php foreach ($days as $index => $day): ?>
+                <?php foreach ($data['days'] as $index => $day): ?>
                     <button
                         type="button"
                         class="date-tab<?php echo $index === 0 ? ' is-active' : ''; ?>"
@@ -37,7 +34,7 @@ if (isset($eventService) && $category !== '' && method_exists($eventService, 'ge
                 <?php endforeach; ?>
             </div>
 
-            <?php foreach ($days as $index => $day): ?>
+            <?php foreach ($data['days'] as $index => $day): ?>
                 <div
                     class="lineup-day-panel<?php echo $index === 0 ? ' is-active' : ''; ?>"
                     data-lineup-panel="<?php echo hf_e($day['key']); ?>"

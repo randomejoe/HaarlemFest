@@ -132,6 +132,9 @@ element is only for text elements currently and refers to the element used to wr
             ['name' => 'tickets_cta_url', 'type' => 'text', 'element' => 'p'],
             ['name' => 'artist_image', 'type' => 'image'],
             ['name' => 'artist_image_alt', 'type' => 'text', 'element' => 'p'],
+        ],
+        'methods' => [
+            ['name' => 'featuredEvent', 'service' => \App\Services\EventService::class, 'method' => 'findById', 'parameters' => ['data.featured_event_id']]
         ]
     ],
     'artist_story' => [
@@ -173,6 +176,9 @@ element is only for text elements currently and refers to the element used to wr
         'fields' => [
             ['name' => 'section_id', 'type' => 'text', 'element' => 'p'],
             ['name' => 'tickets_cta_url', 'type' => 'text', 'element' => 'p'],
+        ],
+        'methods' => [
+            ['name' => 'scheduleEvents', 'service' => \App\Services\EventService::class, 'method' => 'getArtistScheduleData', 'parameters' => ['page.title']]
         ]
     ],
     'artist_listening' => [
@@ -225,13 +231,24 @@ element is only for text elements currently and refers to the element used to wr
             ['name' => 'map_title', 'type' => 'text', 'element' => 'h2'],
             ['name' => 'map_image', 'type' => 'image'],
             ['name' => 'map_image_alt', 'type' => 'text', 'element' => 'p'],
+        ],
+        'methods' => [
+            ['name' => 'artistVenues', 'service' => \App\Services\EventService::class, 'method' => 'getArtistVenuesData', 'parameters' => ['page.title']]
         ]
     ],
     'lineup_section' => [
-        'fields' => []
+        'fields' => [],
+        'methods' => [
+            ['name' => 'days', 'service' => \App\Services\EventService::class, 'method' => 'getLineupDataForCategory', 'parameters' => ['jazz']]
+        ]
     ],
     'jazz_program' => [
-        'fields' => []
+        'fields' => [],
+        'methods' => [
+            ['name' => 'jazzPlannerDetails', 'service' => \App\Services\PlannerService::class, 'method' => 'getDetailedPlanner'],
+            ['name' => 'jazzPlannerFlash', 'service' => \App\Services\PlannerService::class, 'method' => 'consumeFlash'],
+            ['name' => 'jazzDays', 'service' => \App\Services\EventService::class, 'method' => 'getProgramDataForCategory', 'parameters' => ['jazz']]
+        ]
     ],
     'tickets_passes' => [
         'fields' => [

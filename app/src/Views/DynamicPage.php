@@ -2,7 +2,7 @@
     require __DIR__ . '/../Views/partials/header.php';
     ?><div class='dynamic-page-content-container'><?php
     foreach ($page->getContent() as $pageContentItem) {
-        if ($pageContentItem->getData() != null) {
+        if ($pageContentItem->getPageData() != null) {
             $data = $pageContentItem->getPageData();
         } else {
             $data = null;
