@@ -4,7 +4,7 @@ namespace App\Services;
 
 use App\Repositories\PageRepository;
 
-class PageService implements CMSService
+class PageService implements CMSServiceInterface
 {
     private PageRepository $repository;
 

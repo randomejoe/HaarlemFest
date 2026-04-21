@@ -5,7 +5,7 @@ namespace App\Services;
 use App\Repositories\PageRepository;
 use App\Services\ImageUploader;
 
-class ContentService implements CMSService
+class ContentService implements CMSServiceInterface
 {
     private PageRepository $repository;
 

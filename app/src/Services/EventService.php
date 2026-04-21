@@ -6,7 +6,7 @@ use App\Models\Event;
 use App\Repositories\EventRepository;
 use App\Repositories\PageRepository;
 
-class EventService implements CMSService
+class EventService implements CMSServiceInterface
 {
     private EventRepository $repository;
     private PageRepository $pageRepository;

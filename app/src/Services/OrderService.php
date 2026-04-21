@@ -5,7 +5,7 @@ namespace App\Services;
 use App\Models\Event;
 use App\Repositories\OrderRepository;
 
-class OrderService implements CMSService
+class OrderService implements CMSServiceInterface
 {
     private OrderRepository $repository;
     

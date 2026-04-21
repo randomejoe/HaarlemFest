@@ -5,7 +5,7 @@ namespace App\Services;
 use App\Models\Event;
 use App\Repositories\UserRepository;
 
-class UserService implements CMSService
+class UserService implements CMSServiceInterface
 {
     private UserRepository $repository;
     

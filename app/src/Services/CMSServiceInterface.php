@@ -2,7 +2,7 @@
 
 namespace App\Services;
 
-interface CMSService
+interface CMSServiceInterface
 {
     public function getForEdit(int $id);
 
