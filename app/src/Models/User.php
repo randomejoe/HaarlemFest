@@ -20,7 +20,8 @@ class User
         private ?string $phoneNumber = null,
         private ?string $createdAt = null,
         private ?string $passwordResetToken = null,
-        private ?string $passwordResetExpiresAt = null
+        private ?string $passwordResetExpiresAt = null,
+        private bool $enabled = false,
     ) {
     }
 
@@ -46,7 +47,8 @@ class User
             phoneNumber: isset($data['phone_number']) && $data['phone_number'] !== '' ? (string) $data['phone_number'] : null,
             createdAt: isset($data['created_at']) ? (string) $data['created_at'] : null,
             passwordResetToken: isset($data['password_reset_token']) ? (string) $data['password_reset_token'] : null,
-            passwordResetExpiresAt: isset($data['password_reset_expires_at']) ? (string) $data['password_reset_expires_at'] : null
+            passwordResetExpiresAt: isset($data['password_reset_expires_at']) ? (string) $data['password_reset_expires_at'] : null,
+            enabled: isset($data['enabled']) ? (int)$data['enabled'] == 1 : false,
         );
     }
 
@@ -129,6 +131,11 @@ class User
     public function getName(): string
     {
         return $this->username;
+    }
+
+    public function isEnabled(): bool
+    {
+        return $this->enabled;
     }
 
     public function username(): string

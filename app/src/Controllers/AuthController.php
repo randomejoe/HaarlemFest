@@ -111,6 +111,11 @@ class AuthController
             return;
         }
 
+        if (!$user->isEnabled()) {
+            $this->renderLoginError($redirect, 'That account has been disabled.', $old);
+            return;
+        }
+
         $this->auth->login($user);
         header('Location: ' . $redirect);
         exit;

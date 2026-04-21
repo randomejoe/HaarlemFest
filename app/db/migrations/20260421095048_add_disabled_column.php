@@ -21,7 +21,7 @@ final class AddDisabledColumn extends AbstractMigration
     {
         $table = $this->table('users');
 
-        $table->addColumn('active', 'boolean', [
+        $table->addColumn('enabled', 'boolean', [
             'default' => true,
         ])->update();
     }
