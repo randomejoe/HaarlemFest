@@ -29,14 +29,14 @@ class UserRepository extends BaseRepository
 
     public function findByEmail(string $email): ?User
     {
-        $stmt = $this->pdo->prepare('SELECT ' . self::USER_COLUMNS . ' FROM users WHERE email = :email LIMIT 1');
+        $stmt = $this->pdo->prepare('SELECT ' . self::USER_COLUMNS . ' FROM users WHERE email = :email AND active = 1 LIMIT 1');
         $stmt->execute(['email' => $email]);
         return ($row = $stmt->fetch()) !== false ? User::fromArray($row) : null;
     }
 
     public function findByUsername(string $username): ?User
     {
-        $stmt = $this->pdo->prepare('SELECT ' . self::USER_COLUMNS . ' FROM users WHERE username = :username LIMIT 1');
+        $stmt = $this->pdo->prepare('SELECT ' . self::USER_COLUMNS . ' FROM users WHERE username = :username AND active = 1 LIMIT 1');
         $stmt->execute(['username' => $username]);
         return ($row = $stmt->fetch()) !== false ? User::fromArray($row) : null;
     }
@@ -171,7 +171,7 @@ class UserRepository extends BaseRepository
 
     public function getAllUsers(): array
     {
-        $stmt = $this->pdo->prepare('SELECT ' . self::USER_COLUMNS . ' FROM users');
+        $stmt = $this->pdo->prepare('SELECT ' . self::USER_COLUMNS . ' FROM users WHERE active = 1');
         $stmt->execute();
         $results = $stmt->fetchAll();
         $users = [];
@@ -186,7 +186,7 @@ class UserRepository extends BaseRepository
     {
         $this->requireAdmin();
 
-        $stmt = $this->pdo->prepare("DELETE FROM users WHERE user_id = :user_id");
+        $stmt = $this->pdo->prepare("UPDATE users SET active = 0 WHERE user_id = :user_id");
         $stmt->execute([
             'user_id' => $id
         ]);
