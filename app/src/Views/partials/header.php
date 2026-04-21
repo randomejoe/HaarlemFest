@@ -22,11 +22,6 @@ require_once __DIR__ . '/../helpers.php';
     <?php foreach ((array) ($extraStylesheets ?? []) as $stylesheetPath): ?>
         <link rel="stylesheet" href="<?php echo htmlspecialchars((string) $stylesheetPath, ENT_QUOTES, 'UTF-8'); ?>">
     <?php endforeach; ?>
-    <?php
-    // Render all component assets that are used on this page
-    $pageComponentsForAssets = $pageComponents ?? [];
-    echo hf_render_component_assets($pageComponentsForAssets);
-    ?>
 </head>
 
 <body>

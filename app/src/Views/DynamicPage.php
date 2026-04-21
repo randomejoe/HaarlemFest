@@ -1,4 +1,3 @@
-<link rel='stylesheet' href='/festival.css'>
 <?php
     require __DIR__ . '/../Views/partials/header.php';
     if (count($page) == 0) {

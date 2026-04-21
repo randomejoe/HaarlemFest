@@ -37,10 +37,6 @@ class PageController
                     }
                 }
             }
-        } elseif (count($page) > 0 && isset($page['page_id'])) {
-            if (!empty($page['component_name'])) {
-                $pageComponents[$page['component_name']] = true;
-            }
         }
 
         $eventService = $this->eventService;
