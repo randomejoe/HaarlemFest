@@ -4,33 +4,33 @@ declare(strict_types=1);
 
 namespace App\Services;
 
-use App\Repositories\CheckoutRepository;
-use App\Repositories\EventRepository;
-use App\Repositories\TicketHoldRepository;
-use App\Services\Results\HoldExpiryResult;
+use App\Models\HoldExpiryResult;
+use App\Repositories\Interfaces\ICheckoutRepository;
+use App\Repositories\Interfaces\IEventRepository;
+use App\Repositories\Interfaces\ITicketHoldRepository;
+use App\Services\Interfaces\ICheckoutHoldManager;
 use PDO;
 
-final class CheckoutHoldManager
+final class CheckoutHoldManager implements ICheckoutHoldManager
 {
-    private const EXPIRY_CLEANUP_COOLDOWN_SECONDS = 60;
     private const HOLD_DURATION_SECONDS = 600;
 
     public function __construct(
-        private TicketHoldRepository $ticketHolds,
-        private CheckoutRepository $checkoutAttempts,
-        private EventRepository $events,
+        private ITicketHoldRepository $ticketHolds,
+        private ICheckoutRepository $checkoutAttempts,
+        private IEventRepository $events,
         private DateTimeFormatter $dateTimeFormatter,
-        private HoldExpiryEvaluator $expiryEvaluator,
-        private ExpiryCleanupLogger $logger,
         private PDO $pdo,
-    ) {}
+    ) {
+    }
 
     public function createHoldsForAttempt(
         int $attemptId,
         int $userId,
         string $plannerToken,
         array $attemptItems,
-        string $expiresAt
+        string $expiresAt,
+        PDO $pdo
     ): void {
         $this->ticketHolds->createHolds(
             $attemptId,
@@ -53,29 +53,33 @@ final class CheckoutHoldManager
 
             $expiredHolds = $this->ticketHolds->findExpiredHoldsForUpdate($releaseCutoff);
             if ($expiredHolds === []) {
-                if ($this->pdo->inTransaction()) {
-                    $this->pdo->commit();
-                }
+                $this->pdo->commit();
+                $this->logCleanup('executed', [
+                    'released_count' => 0,
+                    'expired_attempt_count' => 0,
+                ]);
 
-                return new HoldExpiryResult(0, []);
+                return HoldExpiryResult::executed(0, []);
             }
 
             $holdIds = [];
             foreach ($expiredHolds as $hold) {
-                $holdIds[] = (int) $hold['ticket_hold_id'];
-                $expiredAttemptIds[] = (int) $hold['checkout_attempt_id'];
-                $this->events->incrementTicketAmount((int) $hold['event_id'], (int) $hold['quantity']);
+                $holdIds[] = (int) ($hold['ticket_hold_id'] ?? 0);
+                $expiredAttemptIds[] = (int) ($hold['checkout_attempt_id'] ?? 0);
+                $this->events->incrementTicketAmount((int) ($hold['event_id'] ?? 0), (int) ($hold['quantity'] ?? 0));
                 $releasedCount++;
             }
 
             $this->ticketHolds->markReleasedByIds($holdIds, 'expired', $releasedAt);
             $this->checkoutAttempts->markExpiredByIds($expiredAttemptIds);
 
-            if ($this->pdo->inTransaction()) {
-                $this->pdo->commit();
-            }
+            $this->pdo->commit();
+            $this->logCleanup('executed', [
+                'released_count' => $releasedCount,
+                'expired_attempt_count' => count(array_unique($expiredAttemptIds)),
+            ]);
 
-            return new HoldExpiryResult(
+            return HoldExpiryResult::executed(
                 $releasedCount,
                 array_values(array_unique($expiredAttemptIds))
             );
@@ -88,40 +92,45 @@ final class CheckoutHoldManager
         }
     }
 
-    public function releaseExpiredHoldsIfNeeded(PlannerService $planner, bool $force = false): HoldExpiryResult
+    public function releaseExpiredHoldsIfNeeded(bool $force = false): HoldExpiryResult
     {
-        if (!$force && !$planner->shouldRunExpiryCleanup(self::EXPIRY_CLEANUP_COOLDOWN_SECONDS)) {
-            $this->logger->logSkipped($force, 'cooldown', self::EXPIRY_CLEANUP_COOLDOWN_SECONDS);
-            return new HoldExpiryResult(0, [], false, 'cooldown');
-        }
-
-        $result = $this->releaseExpiredHolds();
-        $planner->markExpiryCleanupRun();
-
-        $this->logger->logExecuted(
-            $result->getReleasedCount(),
-            count($result->getExpiredAttemptIds()),
-            $force
-        );
-
-        return $result;
+        return $this->releaseExpiredHolds();
     }
 
     public function isHoldPastGracePeriod(string $holdExpiresAt): bool
     {
-        return $this->expiryEvaluator->isExpired($holdExpiresAt);
+        if ($holdExpiresAt === '') {
+            return false;
+        }
+
+        $expiryTimestamp = strtotime($holdExpiresAt);
+        if ($expiryTimestamp === false) {
+            return false;
+        }
+
+        return $expiryTimestamp <= $this->dateTimeFormatter->currentTimestamp();
     }
 
-    public function markHoldsAsTransferred(int $attemptId): void
+    public function markHoldsAsTransferred(int $attemptId, PDO $pdo): void
     {
         $this->ticketHolds->markTransferredByAttemptId($attemptId);
     }
 
-    public function markHoldsAsPaid(int $attemptId, ?string $paidAt = null): void
+    public function markHoldsAsPaid(int $attemptId, ?string $paidAt, PDO $pdo): void
     {
         $this->ticketHolds->markPaidByAttemptId(
             $attemptId,
             $paidAt ?? $this->dateTimeFormatter->currentDateTime()
         );
+    }
+
+    private function logCleanup(string $event, array $context): void
+    {
+        $parts = [];
+        foreach ($context as $key => $value) {
+            $parts[] = $key . '=' . (is_bool($value) ? ($value ? 'true' : 'false') : (string) $value);
+        }
+
+        error_log('checkout_hold_cleanup ' . $event . ' ' . implode(' ', $parts));
     }
 }

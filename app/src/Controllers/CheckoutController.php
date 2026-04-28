@@ -3,11 +3,8 @@
 namespace App\Controllers;
 
 use App\Models\User;
-use App\Repositories\CheckoutRepository;
-use App\Repositories\UserRepository;
 use App\Services\AuthService;
-use App\Services\CheckoutService;
-use App\Services\PlannerService;
+use App\Services\Interfaces\ICheckoutService;
 use App\View;
 
 class CheckoutController
@@ -16,32 +13,22 @@ class CheckoutController
     private const CHECKOUT_PATH = '/checkout';
 
     public function __construct(
-        private PlannerService $planner,
-        private CheckoutService $checkout,
+        private ICheckoutService $checkout,
         private AuthService $auth,
-        private UserRepository $users,
-        private CheckoutRepository $checkoutAttempts
-    ) {}
+    ) {
+    }
 
     public function show(): void
     {
         $this->checkout->releaseExpiredHoldsIfNeeded();
-        $lockedId = $this->planner->getLockedCheckoutAttemptId();
+        $lockedId = $this->checkout->getLockedAttemptId();
         if ($lockedId !== null) {
             $this->redirect('/checkout/pending/' . $lockedId);
         }
 
         $user = $this->requireCheckoutUser();
-        $missing = $this->missingRequiredDetails($user);
 
-        echo View::render('checkout', [
-            'planner' => $this->planner->getDetailedPlanner(),
-            'user' => $user,
-            'flash' => $this->planner->consumeFlash(),
-            'missing_fields' => $missing,
-            'requires_details' => !empty($missing),
-            'idempotency_key' => $this->planner->getIdempotencyKey(),
-        ]);
+        echo View::render('checkout', $this->checkout->buildCheckoutView($user));
     }
 
     public function saveDetails(): void
@@ -51,27 +38,27 @@ class CheckoutController
 
         foreach (self::REQUIRED_FIELDS as $field) {
             if (empty($details[$field])) {
-                $this->planner->setFlash('error', 'Please complete all required checkout details.');
+                $this->checkout->setFlash('error', 'Please complete all required checkout details.');
                 $this->redirect(self::CHECKOUT_PATH);
             }
         }
 
-        $this->users->updateCheckoutDetails($user->getId(), $details);
-        $this->planner->setFlash('success', 'Your checkout details were saved.');
+        $this->checkout->saveCheckoutDetails($user->getId(), $details);
+        $this->checkout->setFlash('success', 'Your checkout details were saved.');
         $this->redirect(self::CHECKOUT_PATH);
     }
 
     public function confirm(): void
     {
         $this->checkout->releaseExpiredHoldsIfNeeded(true);
-        $lockedId = $this->planner->getLockedCheckoutAttemptId();
+        $lockedId = $this->checkout->getLockedAttemptId();
         if ($lockedId !== null) {
             $this->redirect('/checkout/pending/' . $lockedId);
         }
 
         $user = $this->requireCheckoutUser();
-        if ($this->missingRequiredDetails($user)) {
-            $this->planner->setFlash('error', 'Please complete your required details before checkout.');
+        if ($this->checkout->missingCheckoutDetails($user)) {
+            $this->checkout->setFlash('error', 'Please complete your required details before checkout.');
             $this->redirect(self::CHECKOUT_PATH);
         }
 
@@ -91,7 +78,8 @@ class CheckoutController
     {
         $this->checkout->releaseExpiredHoldsIfNeeded(true);
         $user = $this->requireSessionUser();
-        $attempt = $this->checkoutAttempts->findById($id);
+        $viewData = $this->checkout->buildPendingView($id, $user);
+        $attempt = $viewData['attempt'];
 
         if (!$attempt || $attempt['user_id'] != $user->getId()) {
             http_response_code($attempt ? 403 : 404);
@@ -100,20 +88,18 @@ class CheckoutController
         }
 
         $status = $attempt['status'] ?? '';
-        if (in_array($status, ['expired', 'handoff_failed'])) {
-            $this->unlockPlannerAttempt($id);
+        if (in_array($status, ['expired', 'handoff_failed'], true)) {
+            $this->checkout->unlockIfAttemptId($id);
             $msg = $status === 'expired' ? 'Your payment hold expired.' : ($attempt['error_message'] ?? 'Payment failed.');
-            $this->planner->setFlash('info', $msg . ' Please retry checkout.');
+            $this->checkout->setFlash('info', $msg . ' Please retry checkout.');
             $this->redirect(self::CHECKOUT_PATH);
         }
 
-        $status === 'paid' && $this->unlockPlannerAttempt($id);
+        if ($status === 'paid') {
+            $this->checkout->unlockIfAttemptId($id);
+        }
 
-        echo View::render('checkout_pending', [
-            'attempt' => $attempt,
-            'items' => $this->checkoutAttempts->findItemsWithEventData($id),
-            'flash' => $this->planner->consumeFlash(),
-        ]);
+        echo View::render('checkout_pending', $viewData);
     }
 
     public function confirmPendingPayment(int $id): void
@@ -124,32 +110,15 @@ class CheckoutController
         $result = $this->checkout->confirmPendingPayment($id, $user)->toArray();
         $status = $result['status'] ?? 'unknown';
 
-        if (in_array($status, ['paid', 'already_paid'])) {
-            $this->unlockPlannerAttempt($id);
-            if (!$this->planner->isLocked()) {
-                $this->planner->clear();
-            }
-            $this->planner->setFlash($status === 'paid' ? 'success' : 'info', $result['message'] ?? 'Payment confirmed.');
+        if (in_array($status, ['paid', 'already_paid'], true)) {
+            $this->checkout->unlockIfAttemptId($id);
+            $this->checkout->clearPlannerIfUnlocked();
+            $this->checkout->setFlash($status === 'paid' ? 'success' : 'info', $result['message'] ?? 'Payment confirmed.');
         } else {
-            $this->planner->setFlash($status === 'forbidden' ? 'error' : 'info', $result['message'] ?? 'Payment confirmation failed.');
+            $this->checkout->setFlash($status === 'forbidden' ? 'error' : 'info', $result['message'] ?? 'Payment confirmation failed.');
         }
 
         $this->redirect('/checkout/pending/' . $id);
-    }
-
-    private function missingRequiredDetails(User $user): array
-    {
-        $missing = [];
-        foreach (self::REQUIRED_FIELDS as $field) {
-            $method = match ($field) {
-                'first_name' => 'firstName',
-                'last_name' => 'lastName',
-                'phone_number' => 'phoneNumber',
-                default => $field
-            };
-            trim((string) $user->$method()) === '' && $missing[] = $field;
-        }
-        return $missing;
     }
 
     private function requireSessionUser(): User
@@ -157,16 +126,18 @@ class CheckoutController
         if (!$user = $this->auth->currentUser()) {
             $this->redirect('/login?redirect=' . urlencode(self::CHECKOUT_PATH));
         }
+
         return $user;
     }
 
     private function requireCheckoutUser(?int $id = null): User
     {
         $id ??= $this->requireSessionUser()->getId();
-        if (!$user = $this->users->findById($id)) {
+        if (!$user = $this->checkout->loadCheckoutUser($id)) {
             $this->auth->logout();
             $this->redirect('/login?redirect=' . urlencode(self::CHECKOUT_PATH));
         }
+
         return $user;
     }
 
@@ -174,24 +145,24 @@ class CheckoutController
     {
         $conflicts = $result['conflicts'] ?? [];
         if (!$conflicts) {
-            $this->planner->setFlash('error', $result['message'] ?? 'Some events are no longer available.');
+            $this->checkout->setFlash('error', $result['message'] ?? 'Some events are no longer available.');
             $this->redirect(self::CHECKOUT_PATH);
         }
 
-        $parts = array_map(fn($c) => sprintf(
+        $parts = array_map(static fn($c) => sprintf(
             '%s (req %d, avail %d)',
             $c['event_name'] ?? 'Event',
             $c['requested'] ?? 0,
             $c['available'] ?? 0
         ), $conflicts);
-        $this->planner->setFlash('error', 'Out of stock: ' . implode('; ', $parts) . '.');
+        $this->checkout->setFlash('error', 'Out of stock: ' . implode('; ', $parts) . '.');
         $this->redirect(self::CHECKOUT_PATH);
     }
 
     private function redirectConfirmError(array $result): void
     {
         $type = ($result['status'] ?? '') === 'handoff_failed' ? 'error' : 'info';
-        $this->planner->setFlash($type, $result['message'] ?? 'Checkout could not be completed.');
+        $this->checkout->setFlash($type, $result['message'] ?? 'Checkout could not be completed.');
         $this->redirect(self::CHECKOUT_PATH);
     }
 
@@ -201,12 +172,7 @@ class CheckoutController
         $this->redirect(self::CHECKOUT_PATH);
     }
 
-    private function unlockPlannerAttempt(int $id): void
-    {
-        $this->planner->unlockIfAttemptId($id);
-    }
-
-    private function redirect(string $location): void
+    protected function redirect(string $location): void
     {
         header('Location: ' . $location);
         exit;

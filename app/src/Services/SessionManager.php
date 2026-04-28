@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use App\Services\Interfaces\ISessionManager;
+
 /**
  * Centralizes all session state management for planner and checkout flows.
  *
@@ -19,7 +21,7 @@ namespace App\Services;
  * - Centralized initialization logic
  * - Easier to add session concerns (e.g., CSRF tokens)
  */
-final class SessionManager
+final class SessionManager implements ISessionManager
 {
 	private const SESSION_KEY = 'planner';
 	private const TOKEN_KEY = 'planner_token';

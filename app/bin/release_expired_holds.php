@@ -2,8 +2,12 @@
 
 declare(strict_types=1);
 
-use App\Container;
-use App\Services\CheckoutService;
+use App\Database\Connection;
+use App\Repositories\CheckoutRepository;
+use App\Repositories\EventRepository;
+use App\Repositories\TicketHoldRepository;
+use App\Services\CheckoutHoldManager;
+use App\Services\DateTimeFormatter;
 
 require __DIR__ . '/../vendor/autoload.php';
 
@@ -11,9 +15,14 @@ if (session_status() !== PHP_SESSION_ACTIVE) {
     session_start();
 }
 
-/** @var CheckoutService $checkout */
-$checkout = (new Container())->get(CheckoutService::class);
-$resultObject = $checkout->releaseExpiredHolds();
+$pdo = Connection::get();
+$resultObject = (new CheckoutHoldManager(
+    new TicketHoldRepository($pdo),
+    new CheckoutRepository($pdo),
+    new EventRepository($pdo),
+    new DateTimeFormatter(),
+    $pdo
+))->releaseExpiredHolds();
 $result = $resultObject->toArray();
 
 fwrite(STDOUT, json_encode([

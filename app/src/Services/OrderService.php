@@ -2,16 +2,21 @@
 
 namespace App\Services;
 
-use App\Models\Event;
-use App\Repositories\OrderRepository;
+use App\Repositories\Interfaces\IOrderRepository;
+use App\Services\Interfaces\IOrderService;
 
-class OrderService implements CMSService
+class OrderService implements CMSService, IOrderService
 {
-    private OrderRepository $repository;
+    private IOrderRepository $repository;
     
-    public function __construct(OrderRepository $repository)
+    public function __construct(IOrderRepository $repository)
     {
         $this->repository = $repository;
+    }
+
+    public function getOrdersForUser(int $userId): array
+    {
+        return $this->repository->findByUserId($userId);
     }
 
     public function getForEdit(int $id)

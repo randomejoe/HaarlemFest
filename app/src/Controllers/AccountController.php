@@ -4,18 +4,18 @@ namespace App\Controllers;
 
 use App\Exceptions\UserConflictException;
 use App\Models\User;
-use App\Repositories\UserRepository;
-use App\Services\AuthService;
+use App\Services\Interfaces\IAccountService;
+use App\Services\Interfaces\IAuthService;
 use App\View;
 
 class AccountController
 {
-    private UserRepository $users;
-    private AuthService $auth;
+    private IAccountService $account;
+    private IAuthService $auth;
 
-    public function __construct(UserRepository $users, AuthService $auth)
+    public function __construct(IAccountService $account, IAuthService $auth)
     {
-        $this->users = $users;
+        $this->account = $account;
         $this->auth = $auth;
     }
 
@@ -27,7 +27,7 @@ class AccountController
             exit;
         }
 
-        $user = $this->users->findById($sessionUser->getId());
+        $user = $this->account->loadProfile($sessionUser->getId());
         if ($user === null) {
             $this->auth->logout();
             header('Location: /login');
@@ -79,14 +79,8 @@ class AccountController
             return;
         }
 
-        $existing = $this->users->findByUsername($username);
-        if ($existing !== null && $existing->getId() !== $userId) {
-            $this->renderAccountError($submittedUser, 'Username is already in use.');
-            return;
-        }
-
         try {
-            $this->users->updateProfile($userId, [
+            $updatedUser = $this->account->updateProfile($userId, [
                 'username' => $username,
                 'first_name' => $firstName !== '' ? $firstName : null,
                 'last_name' => $lastName !== '' ? $lastName : null,
@@ -100,10 +94,7 @@ class AccountController
             return;
         }
 
-        $updatedUser = $this->users->findById($userId);
-        if ($updatedUser !== null) {
-            $this->auth->syncCurrentUser($updatedUser);
-        }
+        $this->auth->syncCurrentUser($updatedUser);
 
         header('Location: /account?updated=1');
         exit;
@@ -136,13 +127,13 @@ class AccountController
     private function validateProfileLengths(User $user): ?string
     {
         $limits = [
-            'username' => UserRepository::USERNAME_MAX_LENGTH,
-            'first_name' => UserRepository::FIRST_NAME_MAX_LENGTH,
-            'last_name' => UserRepository::LAST_NAME_MAX_LENGTH,
-            'address' => UserRepository::ADDRESS_MAX_LENGTH,
-            'city' => UserRepository::CITY_MAX_LENGTH,
-            'country' => UserRepository::COUNTRY_MAX_LENGTH,
-            'phone_number' => UserRepository::PHONE_NUMBER_MAX_LENGTH,
+            'username' => User::USERNAME_MAX_LENGTH,
+            'first_name' => User::FIRST_NAME_MAX_LENGTH,
+            'last_name' => User::LAST_NAME_MAX_LENGTH,
+            'address' => User::ADDRESS_MAX_LENGTH,
+            'city' => User::CITY_MAX_LENGTH,
+            'country' => User::COUNTRY_MAX_LENGTH,
+            'phone_number' => User::PHONE_NUMBER_MAX_LENGTH,
         ];
 
         $labels = [

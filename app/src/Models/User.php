@@ -4,6 +4,15 @@ namespace App\Models;
 
 class User
 {
+    public const USERNAME_MAX_LENGTH = 255;
+    public const EMAIL_MAX_LENGTH = 255;
+    public const FIRST_NAME_MAX_LENGTH = 100;
+    public const LAST_NAME_MAX_LENGTH = 100;
+    public const ADDRESS_MAX_LENGTH = 255;
+    public const CITY_MAX_LENGTH = 120;
+    public const COUNTRY_MAX_LENGTH = 120;
+    public const PHONE_NUMBER_MAX_LENGTH = 40;
+
     private const PASSWORD_MIN_LENGTH = 12;
 
     public function __construct(

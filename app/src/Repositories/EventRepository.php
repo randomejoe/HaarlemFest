@@ -4,10 +4,11 @@ namespace App\Repositories;
 
 use App\Models\Event;
 use App\Models\HistoryTourLanguage;
+use App\Repositories\Interfaces\IEventRepository;
 use PDO;
 use RuntimeException;
 
-class EventRepository extends BaseRepository
+class EventRepository extends BaseRepository implements IEventRepository
 {
     private PDO $pdo;
 

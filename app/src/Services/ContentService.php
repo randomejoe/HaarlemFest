@@ -2,16 +2,20 @@
 
 namespace App\Services;
 
-use App\Repositories\PageRepository;
-use App\Services\ImageUploader;
+use App\Repositories\Interfaces\IPageRepository;
+use App\Services\Interfaces\ITransactionManager;
+use RuntimeException;
+use Throwable;
 
 class ContentService implements CMSService
 {
-    private PageRepository $repository;
+    private IPageRepository $repository;
+    private ITransactionManager $transactions;
 
-    public function __construct(PageRepository $repository)
+    public function __construct(IPageRepository $repository, ITransactionManager $transactions)
     {
         $this->repository = $repository;
+        $this->transactions = $transactions;
     }
     public function getForEdit(int $id)
     {
@@ -67,7 +71,7 @@ class ContentService implements CMSService
             $data = $this->normalizeVenuesMapFields($data);
         }
 
-        return $this->repository->updateContentItem($id, $data);
+        return $this->persistSanitized($id, $data);
     }
     public function update(int $id, array $postData): bool
     {
@@ -95,7 +99,7 @@ class ContentService implements CMSService
             $data = $this->normalizeVenuesMapFields($data);
         }
 
-        return $this->repository->updateContentItem($id, $data);
+        return $this->persistSanitized($id, $data);
     }
     public function delete(int $id): bool
     {
@@ -113,6 +117,31 @@ class ContentService implements CMSService
             }
         }
         return $this->stripExistingImageKeys($data);
+    }
+
+    private function persistSanitized(int $id, array $data): bool
+    {
+        $this->repository->assertAdmin();
+        unset($data['name'], $data['csrf_token']);
+
+        foreach ($data as $key => $value) {
+            $data[$key] = preg_replace('/^<[^>]+>|<\/[^>]+>$/', '', (string) $value);
+        }
+
+        try {
+            $encodedJson = json_encode($data);
+            if ($encodedJson === false) {
+                throw new RuntimeException('Failed to encode content item data.');
+            }
+
+            return $this->transactions->run(
+                fn(): bool => $this->repository->updateContentItem($id, $encodedJson)
+            );
+        } catch (Throwable $e) {
+            error_log('ContentService::persistSanitized: ' . $e->getMessage());
+
+            return false;
+        }
     }
 
     private function stripExistingImageKeys(array $data): array

@@ -4,19 +4,15 @@ declare(strict_types=1);
 
 namespace App\Services;
 
-use App\Repositories\CheckoutRepository;
-use App\Services\Results\CheckoutResult;
-use PDO;
+use App\Models\PaymentHandoffResponse;
+use App\Services\Interfaces\IPaymentHandoffService;
 
-final class PaymentHandoffService
+final class PaymentHandoffService implements IPaymentHandoffService
 {
     public function __construct(
         private PaymentGatewayStubService $paymentGateway,
-        private CheckoutRepository $checkoutAttempts,
-        private StockReservationService $stockReservation,
-        private PlannerService $planner,
-        private PDO $pdo,
-    ) {}
+    ) {
+    }
 
     public function initiatePaymentHandoff(
         int $attemptId,
@@ -25,7 +21,7 @@ final class PaymentHandoffService
         float $amount,
         string $currency,
         string $holdExpiresAt
-    ): CheckoutResult {
+    ): PaymentHandoffResponse {
         $handoff = $this->paymentGateway->createTransaction([
             'checkout_attempt_id' => $attemptId,
             'user_id' => $userId,
@@ -34,51 +30,12 @@ final class PaymentHandoffService
             'currency' => $currency,
         ]);
 
-        if (!(bool) ($handoff['success'] ?? false)) {
-            return $this->failHandoff($attemptId, $handoff);
-        }
-
-        $this->markAttemptAsHandedOff($attemptId, $handoff);
-        $this->planner->lock($attemptId, $holdExpiresAt);
-        $this->planner->rotateIdempotencyKey();
-
-        return new CheckoutResult(
-            'handoff_created',
-            'Payment handoff created. Continue to pending payment status.',
-            $attemptId,
-            (string) ($handoff['redirect_url'] ?? '/checkout/pending/' . $attemptId),
-            (string) ($handoff['provider_reference'] ?? '')
-        );
-    }
-
-    private function failHandoff(int $attemptId, array $handoff): CheckoutResult
-    {
-        $this->stockReservation->releaseAndRestoreStock($attemptId, 'handoff_failed');
-        $this->checkoutAttempts->markHandoffFailed(
-            $attemptId,
-            (string) ($handoff['error_code'] ?? 'HANDOFF_FAILED'),
-            (string) ($handoff['error_message'] ?? 'Payment provider handoff failed.')
-        );
-
-        // Only release the planner lock (and rotate the idempotency key) if this
-        // failed handoff actually owns the currently stored lock.
-        if ($this->planner->unlockIfAttemptId($attemptId)) {
-            $this->planner->rotateIdempotencyKey();
-        }
-
-        return new CheckoutResult(
-            'handoff_failed',
-            (string) ($handoff['error_message'] ?? 'Payment provider handoff failed. Please try again.'),
-            $attemptId
-        );
-    }
-
-    private function markAttemptAsHandedOff(int $attemptId, array $handoff): void
-    {
-        $this->checkoutAttempts->markHandoffCreated(
-            $attemptId,
-            'stub_provider',
-            (string) ($handoff['provider_reference'] ?? '')
+        return new PaymentHandoffResponse(
+            (bool) ($handoff['success'] ?? false),
+            isset($handoff['provider_reference']) ? (string) $handoff['provider_reference'] : null,
+            isset($handoff['redirect_url']) ? (string) $handoff['redirect_url'] : null,
+            isset($handoff['error_code']) ? (string) $handoff['error_code'] : null,
+            isset($handoff['error_message']) ? (string) $handoff['error_message'] : null,
         );
     }
 }

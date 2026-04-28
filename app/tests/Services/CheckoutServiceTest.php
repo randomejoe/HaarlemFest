@@ -4,24 +4,21 @@ declare(strict_types=1);
 
 namespace App\Tests\Services;
 
+use App\Models\CheckoutResult;
 use App\Models\User;
 use App\Repositories\CheckoutRepository;
 use App\Repositories\EventRepository;
 use App\Repositories\TicketHoldRepository;
+use App\Repositories\Interfaces\IUserRepository;
 use App\Services\CheckoutHoldManager;
 use App\Services\CheckoutService;
-use App\Services\CheckoutValidationService;
 use App\Services\DateTimeFormatter;
-use App\Services\ExpiryCleanupLogger;
-use App\Services\HoldExpiryEvaluator;
 use App\Services\PaymentGatewayStubService;
 use App\Services\PaymentHandoffService;
 use App\Services\PlannerService;
 use App\Services\SessionManager;
 use App\Services\StockReservationService;
-use App\Services\TicketDeliveryOrchestrator;
-use App\Services\TicketDeliveryService;
-use App\Services\Results\CheckoutResult;
+use App\Services\Interfaces\ITicketDeliveryService;
 use PDO;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
@@ -34,7 +31,8 @@ class CheckoutServiceTest extends TestCase
     private TicketHoldRepository&MockObject $ticketHolds;
     private EventRepository&MockObject $events;
     private PaymentGatewayStubService&MockObject $paymentGateway;
-    private TicketDeliveryService&MockObject $ticketDelivery;
+    private ITicketDeliveryService&MockObject $ticketDelivery;
+    private IUserRepository&MockObject $users;
 
     private CheckoutService $sut;
     private User $user;
@@ -47,15 +45,15 @@ class CheckoutServiceTest extends TestCase
         $this->ticketHolds = $this->createMock(TicketHoldRepository::class);
         $this->events = $this->createMock(EventRepository::class);
         $this->paymentGateway = $this->createMock(PaymentGatewayStubService::class);
-        $this->ticketDelivery = $this->createMock(TicketDeliveryService::class);
+        $this->ticketDelivery = $this->createMock(ITicketDeliveryService::class);
+        $this->users = $this->createMock(IUserRepository::class);
 
         $dateTimeFormatter = new DateTimeFormatter();
 
         $stockReservation = new StockReservationService(
             $this->events,
             $this->ticketHolds,
-            $dateTimeFormatter,
-            $this->pdo
+            $dateTimeFormatter
         );
 
         $holdManager = new CheckoutHoldManager(
@@ -63,44 +61,33 @@ class CheckoutServiceTest extends TestCase
             $this->checkoutAttempts,
             $this->events,
             $dateTimeFormatter,
-            new HoldExpiryEvaluator($dateTimeFormatter),
-            new ExpiryCleanupLogger(),
             $this->pdo
         );
 
-        $validation = new CheckoutValidationService($this->planner);
-
-        $handoffService = new PaymentHandoffService(
-            $this->paymentGateway,
-            $this->checkoutAttempts,
-            $stockReservation,
-            $this->planner,
-            $this->pdo
-        );
-
-        $deliveryOrchestrator = new TicketDeliveryOrchestrator(
-            $this->ticketDelivery,
-            $this->events,
-            $dateTimeFormatter
-        );
+        $handoffService = new PaymentHandoffService($this->paymentGateway);
 
         $this->sut = new CheckoutService(
             $this->pdo,
             $this->planner,
             $this->checkoutAttempts,
             $holdManager,
-            new HoldExpiryEvaluator($dateTimeFormatter),
             $dateTimeFormatter,
-            $validation,
             $stockReservation,
             $handoffService,
-            $deliveryOrchestrator
+            $this->ticketDelivery,
+            $this->users
         );
 
         $this->user = User::fromArray([
             'user_id' => 1,
             'username' => 'testuser',
             'email' => 'test@example.com',
+            'first_name' => 'Test',
+            'last_name' => 'User',
+            'address' => 'Test Street 1',
+            'city' => 'Haarlem',
+            'country' => 'NL',
+            'phone_number' => '+31 555 0101',
         ]);
     }
 
@@ -152,22 +139,19 @@ class CheckoutServiceTest extends TestCase
     {
         $this->planner->method('isLocked')->willReturn(false);
         $this->planner->method('getIdempotencyKey')->willReturn('test-key');
-
         $this->checkoutAttempts->method('findByIdempotencyKey')->with('test-key')->willReturn(null);
-
         $this->planner->method('getDetailedPlanner')->willReturn($this->validPlannerPayload(30.0));
         $this->planner->expects($this->once())->method('resetExpiryCleanupRun');
         $this->planner->method('getPlannerToken')->willReturn('planner-token-abc');
 
-        // Stock reservation succeeds.
         $this->events->method('decrementTicketAmountIfAvailable')->willReturn(true);
 
         $attemptId = 42;
         $capturedHoldExpiresAt = null;
 
-        $this->pdo->expects($this->once())->method('beginTransaction')->willReturn(true);
+        $this->pdo->expects($this->exactly(2))->method('beginTransaction')->willReturn(true);
         $this->pdo->method('inTransaction')->willReturn(true);
-        $this->pdo->expects($this->once())->method('commit')->willReturn(true);
+        $this->pdo->expects($this->exactly(2))->method('commit')->willReturn(true);
 
         $this->checkoutAttempts->expects($this->once())
             ->method('createAttempt')
@@ -206,7 +190,7 @@ class CheckoutServiceTest extends TestCase
 
         $this->checkoutAttempts->expects($this->once())
             ->method('markHandoffCreated')
-            ->with($attemptId, 'stub_provider', $this->isType('string'));
+            ->with($attemptId, 'stub_provider', 'ref-xyz');
 
         $this->planner->expects($this->once())
             ->method('lock')
@@ -223,6 +207,9 @@ class CheckoutServiceTest extends TestCase
         $this->ticketHolds->expects($this->once())
             ->method('markTransferredByAttemptId')
             ->with($attemptId);
+
+        $this->ticketDelivery->expects($this->never())
+            ->method('deliverPurchaseEmails');
 
         $result = $this->sut->confirmCheckout($this->user, 'test-key')->toArray();
 
@@ -252,7 +239,7 @@ class PlannerServiceLockTtlTest extends TestCase
     public function test_lock_auto_unlocks_after_hold_expires_at(): void
     {
         $attemptId = 123;
-        $holdExpiresAt = date('Y-m-d H:i:s', time() - 1); // already expired => must unlock
+        $holdExpiresAt = date('Y-m-d H:i:s', time() - 1);
 
         $this->planner->lock($attemptId, $holdExpiresAt);
 
@@ -266,13 +253,11 @@ class PlannerServiceLockTtlTest extends TestCase
         $attemptId = 1;
         $this->planner->lock($attemptId, date('Y-m-d H:i:s', time() + 3600));
 
-        $unlocked = $this->planner->unlockIfAttemptId(2);
-        $this->assertFalse($unlocked);
+        $this->planner->unlockIfAttemptId(2);
         $this->assertTrue($this->planner->isLocked());
         $this->assertSame($attemptId, $this->planner->getLockedCheckoutAttemptId());
 
-        $unlocked = $this->planner->unlockIfAttemptId($attemptId);
-        $this->assertTrue($unlocked);
+        $this->planner->unlockIfAttemptId($attemptId);
         $this->assertFalse($this->planner->isLocked());
         $this->assertNull($this->planner->getLockedCheckoutAttemptId());
     }

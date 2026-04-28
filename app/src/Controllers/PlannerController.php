@@ -2,23 +2,23 @@
 
 namespace App\Controllers;
 
-use App\Services\PlannerService;
+use App\Services\Interfaces\IPlannerService;
 use App\View;
 use InvalidArgumentException;
 use RuntimeException;
 
 class PlannerController
 {
-	private PlannerService $planner;
+	private IPlannerService $planner;
 
-	public function __construct(PlannerService $planner)
+	public function __construct(IPlannerService $planner)
 	{
 		$this->planner = $planner;
 	}
 
 	public function show(): void
 	{
-		$planner = $this->planner->getDetailedPlanner();
+		$planner = $this->normalizeViewData($this->planner->getDetailedPlanner());
 		$flash = $this->planner->consumeFlash();
 
 		echo View::render('planner', [
@@ -59,7 +59,7 @@ class PlannerController
 		}
 
 		if ($isAjax) {
-			$planner = $this->planner->getDetailedPlanner();
+			$planner = $this->normalizeViewData($this->planner->getDetailedPlanner());
 			$this->sendPlannerJsonResponse($success, $message, $planner);
 		}
 
@@ -82,7 +82,7 @@ class PlannerController
 		}
 
 		if ($isAjax) {
-			$planner = $this->planner->getDetailedPlanner();
+			$planner = $this->normalizeViewData($this->planner->getDetailedPlanner());
 			$item = null;
 
 			foreach ((array) ($planner['items'] ?? []) as $plannerItem) {
@@ -119,7 +119,7 @@ class PlannerController
 		}
 
 		if ($isAjax) {
-			$planner = $this->planner->getDetailedPlanner();
+			$planner = $this->normalizeViewData($this->planner->getDetailedPlanner());
 			$this->sendPlannerJsonResponse($success, $message, $planner, [
 				'event_id' => $eventId,
 				'action' => 'remove',
@@ -215,5 +215,24 @@ class PlannerController
 		}
 
 		return $fallbackEventId > 0 ? [$fallbackEventId] : [];
+	}
+
+	/**
+	 * @param mixed $planner
+	 * @return array<string, mixed>
+	 */
+	private function normalizeViewData(mixed $planner): array
+	{
+		if (is_array($planner)) {
+			return $planner;
+		}
+
+		if (is_object($planner) && method_exists($planner, 'toArray')) {
+			/** @var array<string, mixed> $normalized */
+			$normalized = $planner->toArray();
+			return $normalized;
+		}
+
+		throw new RuntimeException('Planner data must be an array or expose toArray().');
 	}
 }

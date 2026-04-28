@@ -1,56 +1,164 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Services;
 
+use App\Models\CheckoutAttempt;
 use App\Models\CheckoutItem;
+use App\Models\CheckoutResult;
+use App\Models\HoldExpiryResult;
+use App\Models\Invoice;
+use App\Models\PaymentConfirmationResult;
+use App\Models\Ticket;
 use App\Models\User;
-use App\Repositories\CheckoutRepository;
-use App\Services\Results\CheckoutResult;
-use App\Services\Results\HoldExpiryResult;
-use App\Services\Results\PaymentConfirmationResult;
+use App\Repositories\Interfaces\ICheckoutRepository;
+use App\Repositories\Interfaces\IUserRepository;
+use App\Services\Interfaces\ICheckoutHoldManager;
+use App\Services\Interfaces\ICheckoutService;
+use App\Services\Interfaces\IPlannerService;
+use App\Services\Interfaces\IPaymentHandoffService;
+use App\Services\Interfaces\IStockReservationService;
+use App\Services\Interfaces\ITicketDeliveryService;
 use PDO;
+use PDOException;
 use Throwable;
 
-class CheckoutService
+final class CheckoutService implements ICheckoutService
 {
+    private const REQUIRED_FIELDS = ['first_name', 'last_name', 'address', 'city', 'country', 'phone_number'];
+    private const CHECKOUT_PATH = '/checkout';
+    private const HOLD_DURATION_SECONDS = 600;
+    private const EXPIRY_CLEANUP_COOLDOWN_SECONDS = 60;
+
     public function __construct(
         private PDO $pdo,
-        private PlannerService $planner,
-        private CheckoutRepository $checkoutAttempts,
-        private CheckoutHoldManager $holdManager,
-        private HoldExpiryEvaluator $expiryEvaluator,
+        private IPlannerService $planner,
+        private ICheckoutRepository $checkoutAttempts,
+        private ICheckoutHoldManager $holdManager,
         private DateTimeFormatter $dateTimeFormatter,
-        private CheckoutValidationService $validation,
-        private StockReservationService $stockReservation,
-        private PaymentHandoffService $handoffService,
-        private TicketDeliveryOrchestrator $deliveryOrchestrator
-    ) {}
+        private IStockReservationService $stockReservation,
+        private IPaymentHandoffService $handoffService,
+        private ITicketDeliveryService $ticketDelivery,
+        private IUserRepository $users,
+    ) {
+    }
+
+    public function isPlannerLocked(): bool
+    {
+        return $this->planner->isLocked();
+    }
+
+    public function getLockedAttemptId(): ?int
+    {
+        return $this->planner->getLockedCheckoutAttemptId();
+    }
+
+    public function unlockIfAttemptId(int $attemptId): void
+    {
+        $this->planner->unlockIfAttemptId($attemptId);
+    }
+
+    public function clearPlannerIfUnlocked(): void
+    {
+        if (!$this->planner->isLocked()) {
+            $this->planner->clear();
+        }
+    }
+
+    public function consumeFlash(): ?array
+    {
+        return $this->planner->consumeFlash();
+    }
+
+    public function setFlash(string $type, string $message): void
+    {
+        $this->planner->setFlash($type, $message);
+    }
+
+    public function getIdempotencyKey(): string
+    {
+        return $this->planner->getIdempotencyKey();
+    }
+
+    public function buildCheckoutView(User $user): array
+    {
+        $missing = $this->missingCheckoutDetails($user);
+
+        return [
+            'planner' => $this->planner->getDetailedPlanner(),
+            'user' => $user,
+            'flash' => $this->planner->consumeFlash(),
+            'missing_fields' => $missing,
+            'requires_details' => $missing !== [],
+            'idempotency_key' => $this->planner->getIdempotencyKey(),
+        ];
+    }
+
+    public function buildPendingView(int $attemptId, User $user): array
+    {
+        return [
+            'attempt' => $this->checkoutAttempts->findById($attemptId),
+            'items' => $this->checkoutAttempts->findItemsWithEventData($attemptId),
+            'flash' => $this->planner->consumeFlash(),
+            'user' => $user,
+        ];
+    }
+
+    public function loadCheckoutUser(int $userId): ?User
+    {
+        return $this->users->findById($userId);
+    }
+
+    public function missingCheckoutDetails(User $user): array
+    {
+        $missing = [];
+        foreach (self::REQUIRED_FIELDS as $field) {
+            $method = match ($field) {
+                'first_name' => 'firstName',
+                'last_name' => 'lastName',
+                'phone_number' => 'phoneNumber',
+                default => $field,
+            };
+
+            if (trim((string) $user->{$method}()) === '') {
+                $missing[] = $field;
+            }
+        }
+
+        return $missing;
+    }
+
+    public function saveCheckoutDetails(int $userId, array $details): void
+    {
+        $this->users->updateCheckoutDetails($userId, $details);
+    }
+
+    public function releaseExpiredHoldsIfNeeded(bool $force = false): HoldExpiryResult
+    {
+        if (!$force && !$this->planner->shouldRunExpiryCleanup(self::EXPIRY_CLEANUP_COOLDOWN_SECONDS)) {
+            return HoldExpiryResult::skipped('cooldown');
+        }
+
+        $result = $this->holdManager->releaseExpiredHoldsIfNeeded(true);
+        $this->planner->markExpiryCleanupRun();
+
+        return $result;
+    }
 
     public function releaseExpiredHolds(): HoldExpiryResult
     {
         return $this->holdManager->releaseExpiredHolds();
     }
 
-    public function releaseExpiredHoldsIfNeeded(bool $force = false): HoldExpiryResult
-    {
-        return $this->holdManager->releaseExpiredHoldsIfNeeded($this->planner, $force);
-    }
-
     public function confirmCheckout(User $user, string $postedIdempotencyKey): CheckoutResult
     {
         if ($this->planner->isLocked()) {
-            return new CheckoutResult(
-                'locked',
-                'Your planner is locked while payment is pending.',
-                $this->planner->getLockedCheckoutAttemptId()
-            );
+            return CheckoutResult::locked((int) $this->planner->getLockedCheckoutAttemptId());
         }
 
-        if (!$this->validation->isValidIdempotencyKey($postedIdempotencyKey)) {
-            return new CheckoutResult(
-                'invalid_request',
-                'This checkout request is no longer valid. Please try again.'
-            );
+        if ($postedIdempotencyKey === '' || !hash_equals($this->planner->getIdempotencyKey(), $postedIdempotencyKey)) {
+            return CheckoutResult::invalidRequest();
         }
 
         $existingAttempt = $this->checkoutAttempts->findByIdempotencyKey($postedIdempotencyKey);
@@ -58,180 +166,93 @@ class CheckoutService
             return $this->resolveExistingAttempt($existingAttempt);
         }
 
-        $checkoutPayload = $this->validation->prepareCheckoutPayload();
-        if ($checkoutPayload['error'] instanceof CheckoutResult) {
-            return $checkoutPayload['error'];
+        $planner = $this->planner->getDetailedPlanner();
+        if ((bool) ($planner['is_empty'] ?? false)) {
+            return CheckoutResult::emptyPlanner();
         }
 
-        $planner = $checkoutPayload['planner'];
-        $items = $checkoutPayload['items'];
+        if ((bool) ($planner['has_invalid_items'] ?? false)) {
+            return CheckoutResult::invalidPlanner();
+        }
+
+        $missingFields = $this->missingCheckoutDetails($user);
+        if ($missingFields !== []) {
+            return new CheckoutResult(
+                'details_required',
+                'Please complete your required details before checkout.'
+            );
+        }
+
+        $plannerItems = $this->extractValidPlannerItems($planner);
+        if ($plannerItems === []) {
+            return CheckoutResult::invalidPlanner('No valid planner items were found.');
+        }
 
         $this->planner->resetExpiryCleanupRun();
+
         $checkoutItems = array_map(
             static fn(array $item): CheckoutItem => CheckoutItem::fromPlannerArray($item),
-            $items
+            $plannerItems
         );
 
-        $result = $this->transaction(function () use ($user, $planner, $checkoutItems, $postedIdempotencyKey): CheckoutResult {
-            $pending = $this->startPendingAttempt(
-                $user,
-                $planner,
-                $checkoutItems,
-                $postedIdempotencyKey
-            );
+        $attemptId = 0;
+        $holdExpiresAt = $this->dateTimeFormatter->addSeconds(
+            $this->dateTimeFormatter->currentTimestamp(),
+            self::HOLD_DURATION_SECONDS
+        );
 
-            $attemptId = (int) ($pending['attempt_id'] ?? 0);
-            $holdExpiresAt = (string) ($pending['hold_expires_at'] ?? '');
+        $this->pdo->beginTransaction();
+        try {
+            $stockResult = $this->stockReservation->reserveStockForItems($checkoutItems, $this->pdo);
+            if (!$stockResult->ok) {
+                $this->pdo->rollBack();
 
-            if ($attemptId === 0) {
-                return new CheckoutResult(
-                    'out_of_stock',
-                    'Some items are no longer available in the requested quantities.',
-                    conflicts: $this->stockReservation->getStockConflicts($items)
-                );
+                return CheckoutResult::outOfStock($this->stockReservation->getStockConflicts($plannerItems));
             }
 
-            $result = $this->handoffService->initiatePaymentHandoff(
+            $attemptId = $this->checkoutAttempts->createAttempt([
+                'user_id' => $user->getId(),
+                'planner_token' => $this->planner->getPlannerToken(),
+                'status' => 'initiated',
+                'total_price' => (float) ($planner['total_price_value'] ?? 0),
+                'currency' => 'EUR',
+                'hold_expires_at' => $holdExpiresAt,
+                'idempotency_key' => $postedIdempotencyKey,
+                'payment_provider' => null,
+                'payment_reference' => null,
+                'error_code' => null,
+                'error_message' => null,
+            ]);
+
+            $attemptItemArrays = array_map(
+                static fn(CheckoutItem $item): array => $item->toArray(),
+                $checkoutItems
+            );
+
+            $this->checkoutAttempts->createAttemptItems($attemptId, $attemptItemArrays);
+            $this->holdManager->createHoldsForAttempt(
                 $attemptId,
                 $user->getId(),
                 $this->planner->getPlannerToken(),
-                (float) $planner['total_price_value'],
-                'EUR',
-                $holdExpiresAt
+                $attemptItemArrays,
+                $holdExpiresAt,
+                $this->pdo
             );
 
-            if ($result->isSuccess()) {
-                $this->holdManager->markHoldsAsTransferred($attemptId);
-            }
-
-            return $result;
-        });
-
-        return $result;
-    }
-
-    public function confirmPendingPayment(int $checkoutAttemptId, User $user): PaymentConfirmationResult
-    {
-        $userId = $user->getId();
-
-        if ($checkoutAttemptId <= 0) {
-            return new PaymentConfirmationResult(
-                'not_found',
-                'Checkout attempt not found.'
-            );
-        }
-
-        if ($userId <= 0) {
-            return new PaymentConfirmationResult(
-                'forbidden',
-                'You are not allowed to confirm this payment.'
-            );
-        }
-
-        $attemptData = [];
-        $createdTickets = [];
-
-        $paymentResult = $this->transaction(function () use ($checkoutAttemptId, $userId, &$attemptData, &$createdTickets): PaymentConfirmationResult {
-            $attempt = $this->checkoutAttempts->findByIdForUpdate($checkoutAttemptId);
-            if ($attempt === null) {
-                return new PaymentConfirmationResult(
-                    'not_found',
-                    'Checkout attempt not found.'
-                );
-            }
-
-            if ((int) ($attempt['user_id'] ?? 0) !== $userId) {
-                return new PaymentConfirmationResult(
-                    'forbidden',
-                    'You are not allowed to confirm this payment.'
-                );
-            }
-
-            $attempt = (array) $attempt;
-
-            $holdExpiresAt = (string) ($attempt['hold_expires_at'] ?? '');
-            if ($this->expiryEvaluator->isExpired($holdExpiresAt)) {
-                $this->stockReservation->releaseAndRestoreStock($checkoutAttemptId, 'expired');
-                $this->checkoutAttempts->markExpiredByIds([$checkoutAttemptId]);
-
-                return new PaymentConfirmationResult(
-                    'expired',
-                    'This hold expired before payment confirmation.'
-                );
-            }
-
-            $status = (string) ($attempt['status'] ?? '');
-            if ($status === 'paid') {
-                return new PaymentConfirmationResult(
-                    'already_paid',
-                    'Payment was already confirmed for this attempt.'
-                );
-            }
-            if ($status === 'expired') {
-                return new PaymentConfirmationResult(
-                    'expired',
-                    'This hold has already expired.'
-                );
-            }
-            if ($status === 'handoff_failed') {
-                return new PaymentConfirmationResult(
-                    'failed',
-                    'This checkout handoff failed and cannot be confirmed.'
-                );
-            }
-            if ($status !== 'handoff_created') {
-                return new PaymentConfirmationResult(
-                    'invalid_status',
-                    'This checkout attempt is not waiting for payment confirmation.'
-                );
-            }
-
-            $invoiceId = $this->checkoutAttempts->createInvoice($userId, (float) ($attempt['total_price'] ?? 0));
-            $createdTicketsLocal = $this->checkoutAttempts->createTicketsForAttempt($checkoutAttemptId, $userId, $invoiceId);
-            $this->holdManager->markHoldsAsPaid($checkoutAttemptId, $this->dateTimeFormatter->currentDateTime());
-            $this->checkoutAttempts->markPaid($checkoutAttemptId);
-
-            $attempt['invoice_id'] = $invoiceId;
-            $attemptData = $attempt;
-            $createdTickets = $createdTicketsLocal;
-
-            return new PaymentConfirmationResult(
-                'paid',
-                'Payment confirmed.',
-                $invoiceId
-            );
-        });
-
-        if (!$paymentResult->isPaid()) {
-            return $paymentResult;
-        }
-
-        $emailResult = $this->deliveryOrchestrator->deliverPurchaseEmails(
-            $user,
-            $attemptData,
-            $createdTickets
-        );
-
-        return new PaymentConfirmationResult(
-            'paid',
-            $emailResult['message'],
-            $paymentResult->getInvoiceId(),
-            $emailResult['email_warning']
-        );
-    }
-
-    private function transaction(callable $operation): mixed
-    {
-        $this->pdo->beginTransaction();
-
-        try {
-            $result = $operation();
-
+            $this->pdo->commit();
+        } catch (PDOException $e) {
             if ($this->pdo->inTransaction()) {
-                $this->pdo->commit();
+                $this->pdo->rollBack();
             }
 
-            return $result;
+            if ($this->isUniqueViolation($e)) {
+                $existing = $this->checkoutAttempts->findByIdempotencyKey($postedIdempotencyKey);
+                if ($existing !== null) {
+                    return $this->resolveExistingAttempt($existing);
+                }
+            }
+
+            throw $e;
         } catch (Throwable $e) {
             if ($this->pdo->inTransaction()) {
                 $this->pdo->rollBack();
@@ -239,70 +260,205 @@ class CheckoutService
 
             throw $e;
         }
-    }
 
-    /**
-     * @return array{attempt_id:int, hold_expires_at:string}
-     */
-    private function startPendingAttempt(
-        User $user,
-        array $planner,
-        array $checkoutItems,
-        string $postedIdempotencyKey
-    ): array {
-        $failedEventIds = $this->stockReservation->reserveStockForItems($checkoutItems);
-        if ($failedEventIds !== []) {
+        $handoff = $this->handoffService->initiatePaymentHandoff(
+            $attemptId,
+            $user->getId(),
+            $this->planner->getPlannerToken(),
+            (float) ($planner['total_price_value'] ?? 0),
+            'EUR',
+            $holdExpiresAt
+        );
+
+        if ($handoff->isSuccess()) {
+            $this->pdo->beginTransaction();
+            try {
+                $this->checkoutAttempts->markHandoffCreated(
+                    $attemptId,
+                    'stub_provider',
+                    (string) ($handoff->providerReference() ?? '')
+                );
+                $this->holdManager->markHoldsAsTransferred($attemptId, $this->pdo);
+                $this->pdo->commit();
+            } catch (Throwable $e) {
+                if ($this->pdo->inTransaction()) {
+                    $this->pdo->rollBack();
+                }
+
+                return CheckoutResult::retryRequired();
+            }
+
+            $this->planner->lock($attemptId, $holdExpiresAt);
+            $this->planner->rotateIdempotencyKey();
+
+            return CheckoutResult::handoffCreated(
+                $attemptId,
+                (string) ($handoff->redirectUrl() ?? '/checkout/pending/' . $attemptId)
+            );
+        }
+
+        $this->pdo->beginTransaction();
+        try {
+            $this->stockReservation->restoreStockForAttempt($attemptId, 'handoff_failed', $this->pdo);
+            $this->checkoutAttempts->markHandoffFailed(
+                $attemptId,
+                (string) ($handoff->errorCode() ?? 'HANDOFF_FAILED'),
+                (string) ($handoff->errorMessage() ?? 'Payment provider handoff failed.')
+            );
+            $this->pdo->commit();
+        } catch (Throwable $e) {
             if ($this->pdo->inTransaction()) {
                 $this->pdo->rollBack();
             }
 
-            return ['attempt_id' => 0, 'hold_expires_at' => ''];
+            return CheckoutResult::retryRequired();
         }
 
-        $expiresAt = $this->dateTimeFormatter->addSeconds(
-            $this->dateTimeFormatter->currentTimestamp(),
-            600
-        );
+        $this->planner->rotateIdempotencyKey();
 
-        $attemptId = $this->checkoutAttempts->createAttempt([
-            'user_id'          => $user->getId(),
-            'planner_token'    => $this->planner->getPlannerToken(),
-            'status'           => 'initiated',
-            'total_price'      => (float) ($planner['total_price_value'] ?? 0),
-            'currency'         => 'EUR',
-            'hold_expires_at'  => $expiresAt,
-            'idempotency_key'  => $postedIdempotencyKey,
-            'payment_provider' => null,
-            'payment_reference' => null,
-            'error_code'       => null,
-            'error_message'    => null,
+        return CheckoutResult::handoffFailed(
+            (string) ($handoff->errorMessage() ?? 'Payment provider handoff failed. Please try again.'),
+            $attemptId
+        );
+    }
+
+    public function confirmPendingPayment(int $checkoutAttemptId, User $user): PaymentConfirmationResult
+    {
+        $userId = $user->getId();
+
+        if ($checkoutAttemptId <= 0) {
+            return PaymentConfirmationResult::notFound();
+        }
+
+        if ($userId <= 0) {
+            return PaymentConfirmationResult::forbidden();
+        }
+
+        $createdTickets = [];
+        $invoiceId = 0;
+        $attemptData = [];
+
+        $this->pdo->beginTransaction();
+        try {
+            $attempt = $this->checkoutAttempts->findByIdForUpdate($checkoutAttemptId);
+            if ($attempt === null) {
+                $this->pdo->rollBack();
+                return PaymentConfirmationResult::notFound();
+            }
+
+            if ((int) ($attempt['user_id'] ?? 0) !== $userId) {
+                $this->pdo->rollBack();
+                return PaymentConfirmationResult::forbidden();
+            }
+
+            $attemptData = $attempt;
+            $holdExpiresAt = (string) ($attempt['hold_expires_at'] ?? '');
+            if ($this->holdManager->isHoldPastGracePeriod($holdExpiresAt)) {
+                $this->stockReservation->restoreStockForAttempt($checkoutAttemptId, 'expired', $this->pdo);
+                $this->checkoutAttempts->markExpiredByIds([$checkoutAttemptId]);
+                $this->pdo->commit();
+
+                return PaymentConfirmationResult::expired();
+            }
+
+            $status = (string) ($attempt['status'] ?? '');
+            if ($status === 'paid') {
+                $this->pdo->rollBack();
+                return PaymentConfirmationResult::alreadyPaid();
+            }
+            if ($status === 'expired') {
+                $this->pdo->rollBack();
+                return PaymentConfirmationResult::expired('This hold has already expired.');
+            }
+            if ($status === 'handoff_failed') {
+                $this->pdo->rollBack();
+                return PaymentConfirmationResult::failed();
+            }
+            if ($status !== 'handoff_created') {
+                $this->pdo->rollBack();
+                return PaymentConfirmationResult::invalidStatus();
+            }
+
+            $invoiceId = $this->checkoutAttempts->createInvoice($userId, (float) ($attempt['total_price'] ?? 0));
+            $createdTickets = $this->checkoutAttempts->createTicketsForAttempt($checkoutAttemptId, $userId, $invoiceId);
+            $this->holdManager->markHoldsAsPaid($checkoutAttemptId, $this->dateTimeFormatter->currentDateTime(), $this->pdo);
+            $this->checkoutAttempts->markPaid($checkoutAttemptId);
+            $this->pdo->commit();
+        } catch (Throwable $e) {
+            if ($this->pdo->inTransaction()) {
+                $this->pdo->rollBack();
+            }
+
+            throw $e;
+        }
+
+        $invoiceRow = $this->checkoutAttempts->findInvoiceById($invoiceId) ?? [
+            'invoice_id' => $invoiceId,
+            'user_id' => $userId,
+            'total_price' => (float) ($attemptData['total_price'] ?? 0),
+            'issued_at' => $this->dateTimeFormatter->currentDateTime(),
+            'invoice_number' => 'INV-' . $invoiceId,
+            'currency' => 'EUR',
+        ];
+
+        $ticketRows = $this->checkoutAttempts->findTicketsByInvoiceId($invoiceId);
+        if ($ticketRows === []) {
+            $ticketRows = array_map(
+                static fn(array $ticket): array => [
+                    'ticket_id' => (int) ($ticket['ticket_id'] ?? 0),
+                    'event_id' => (int) ($ticket['event_id'] ?? 0),
+                    'event_name' => (string) ($ticket['event_name'] ?? 'Event'),
+                    'event_date' => (string) ($ticket['event_date'] ?? ''),
+                    'event_time' => (string) ($ticket['event_time'] ?? ''),
+                    'venue' => (string) ($ticket['venue'] ?? 'Venue to be announced'),
+                    'verification_code' => (string) ($ticket['verification_code'] ?? ''),
+                    'family_ticket' => (bool) ($ticket['family_ticket'] ?? false),
+                ],
+                $createdTickets
+            );
+        }
+
+        $invoiceItems = $this->buildInvoiceItemsForDelivery($ticketRows);
+
+        $attemptDomain = CheckoutAttempt::hydrate($attemptData + [
+            'checkout_attempt_id' => $checkoutAttemptId,
+            'invoice_id' => $invoiceId,
+            'status' => 'paid',
         ]);
-
-        $attemptItemArrays = array_map(static fn(CheckoutItem $ci): array => $ci->toArray(), $checkoutItems);
-        $this->checkoutAttempts->createAttemptItems($attemptId, $attemptItemArrays);
-        $this->holdManager->createHoldsForAttempt(
-            $attemptId,
-            $user->getId(),
-            $this->planner->getPlannerToken(),
-            $attemptItemArrays,
-            $expiresAt
+        $invoiceDomain = Invoice::hydrate(
+            $invoiceRow + ['invoice_id' => $invoiceId, 'user_id' => $userId],
+            $invoiceItems,
+            $checkoutAttemptId
+        );
+        $ticketDomains = array_map(
+            static fn(array $ticket): Ticket => Ticket::hydrate($ticket),
+            $ticketRows
         );
 
-        return ['attempt_id' => $attemptId, 'hold_expires_at' => $expiresAt];
+        $delivery = $this->ticketDelivery->deliverPurchaseEmails(
+            $user,
+            $attemptDomain,
+            $ticketDomains,
+            $invoiceDomain
+        );
+
+        return PaymentConfirmationResult::paid(
+            $invoiceId,
+            'Payment confirmed.',
+            $delivery->emailWarning()
+        );
     }
 
     private function resolveExistingAttempt(array $existingAttempt): CheckoutResult
     {
         $status = (string) ($existingAttempt['status'] ?? '');
+        $attemptId = (int) ($existingAttempt['checkout_attempt_id'] ?? 0);
 
         if ($status === 'handoff_created') {
-            $attemptId = (int) ($existingAttempt['checkout_attempt_id'] ?? 0);
             $holdExpiresAt = (string) ($existingAttempt['hold_expires_at'] ?? '');
             $this->planner->lock($attemptId, $holdExpiresAt !== '' ? $holdExpiresAt : null);
 
-            return new CheckoutResult(
-                'already_pending',
-                'Payment is already pending for this checkout.',
+            return CheckoutResult::alreadyPending(
                 $attemptId,
                 '/checkout/pending/' . $attemptId
             );
@@ -310,24 +466,68 @@ class CheckoutService
 
         if ($status === 'handoff_failed' || $status === 'expired') {
             $this->planner->rotateIdempotencyKey();
-
-            return new CheckoutResult(
-                'retry_required',
-                'Please retry checkout. The previous attempt could not be completed.'
-            );
+            return CheckoutResult::retryRequired();
         }
 
         if ($status === 'paid') {
-            return new CheckoutResult(
-                'already_paid',
-                'This checkout attempt was already confirmed as paid.',
-                (int) ($existingAttempt['checkout_attempt_id'] ?? 0)
-            );
+            return CheckoutResult::alreadyPaid($attemptId);
         }
 
-        return new CheckoutResult(
-            'already_processing',
-            'Checkout is already being processed. Please wait.'
-        );
+        return CheckoutResult::alreadyProcessing();
+    }
+
+    /**
+     * @return array<int, array<string, mixed>>
+     */
+    private function extractValidPlannerItems(array $planner): array
+    {
+        $items = array_values(array_filter(
+            (array) ($planner['items'] ?? []),
+            static fn(array $item): bool => (bool) ($item['is_valid'] ?? false)
+        ));
+
+        usort($items, static fn(array $a, array $b): int => (int) ($a['event_id'] ?? 0) <=> (int) ($b['event_id'] ?? 0));
+
+        return $items;
+    }
+
+    private function isUniqueViolation(PDOException $e): bool
+    {
+        $sqlState = (string) ($e->errorInfo[0] ?? $e->getCode());
+        $driverCode = (int) ($e->errorInfo[1] ?? 0);
+
+        return $sqlState === '23000' || $driverCode === 1062;
+    }
+
+    /**
+     * @param array<int, array<string, mixed>> $tickets
+     * @return array<int, array<string, mixed>>
+     */
+    private function buildInvoiceItemsForDelivery(array $tickets): array
+    {
+        $linesByKey = [];
+
+        foreach ($tickets as $ticket) {
+            $eventId = (int) ($ticket['event_id'] ?? 0);
+            $ticketPrice = (float) ($ticket['ticket_price_value'] ?? ($ticket['ticket_price'] ?? 0));
+            $key = $eventId . '|' . number_format($ticketPrice, 2, '.', '');
+
+            if (!isset($linesByKey[$key])) {
+                $linesByKey[$key] = [
+                    'event_name' => (string) ($ticket['event_name'] ?? 'Event'),
+                    'event_date' => (string) ($ticket['event_date'] ?? '-'),
+                    'event_time' => (string) ($ticket['event_time'] ?? '-'),
+                    'venue' => (string) ($ticket['venue'] ?? 'Venue to be announced'),
+                    'quantity' => 0,
+                    'unit_price_value' => $ticketPrice,
+                    'line_total_value' => 0.0,
+                ];
+            }
+
+            $linesByKey[$key]['quantity']++;
+            $linesByKey[$key]['line_total_value'] += $ticketPrice;
+        }
+
+        return array_values($linesByKey);
     }
 }

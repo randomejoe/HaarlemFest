@@ -2,21 +2,18 @@
 
 namespace App\Controllers;
 
-use App\Repositories\OrderRepository;
-use App\Repositories\UserRepository;
-use App\Services\AuthService;
+use App\Services\Interfaces\IAuthService;
+use App\Services\Interfaces\IOrderService;
 use App\View;
 
 class OrdersController
 {
-    private AuthService $auth;
-    private UserRepository $users;
-    private OrderRepository $orders;
+    private IAuthService $auth;
+    private IOrderService $orders;
 
-    public function __construct(AuthService $auth, UserRepository $users, OrderRepository $orders)
+    public function __construct(IAuthService $auth, IOrderService $orders)
     {
         $this->auth = $auth;
-        $this->users = $users;
         $this->orders = $orders;
     }
 
@@ -28,14 +25,7 @@ class OrdersController
             exit;
         }
 
-        $user = $this->users->findById($sessionUser->getId());
-        if ($user === null) {
-            $this->auth->logout();
-            header('Location: /login?redirect=' . urlencode('/orders'));
-            exit;
-        }
-
-        $orders = $this->orders->findByUserId($user->getId());
+        $orders = $this->orders->getOrdersForUser($sessionUser->getId());
 
         echo View::render('orders', [
             'orders' => $orders,

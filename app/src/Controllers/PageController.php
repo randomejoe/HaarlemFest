@@ -5,16 +5,16 @@ namespace App\Controllers;
 use App\Services\PageService;
 use App\Services\EventService;
 use App\Services\LocationService;
-use App\Services\PlannerService;
+use App\Services\Interfaces\IPlannerService;
 
 class PageController
 {
     private PageService $pageService;
     private EventService $eventService;
     private LocationService $locationService;
-    private PlannerService $plannerService;
+    private IPlannerService $plannerService;
 
-    public function __construct(PageService $pageService, EventService $eventService, LocationService $locationService, PlannerService $plannerService)
+    public function __construct(PageService $pageService, EventService $eventService, LocationService $locationService, IPlannerService $plannerService)
     {
         $this->pageService = $pageService;
         $this->eventService = $eventService;

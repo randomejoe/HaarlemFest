@@ -2,9 +2,10 @@
 
 namespace App\Repositories;
 
+use App\Repositories\Interfaces\ITicketHoldRepository;
 use PDO;
 
-class TicketHoldRepository
+class TicketHoldRepository implements ITicketHoldRepository
 {
     private PDO $pdo;
 

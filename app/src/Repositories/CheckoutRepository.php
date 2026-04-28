@@ -2,10 +2,11 @@
 
 namespace App\Repositories;
 
+use App\Repositories\Interfaces\ICheckoutRepository;
 use InvalidArgumentException;
 use PDO;
 
-class CheckoutRepository
+class CheckoutRepository implements ICheckoutRepository
 {
     private PDO $pdo;
 
@@ -333,6 +334,77 @@ class CheckoutRepository
         $stmt->execute($insertParams);
 
         return $this->findCreatedTickets($invoiceId, $ticketsToCreate);
+    }
+
+    public function findInvoiceById(int $invoiceId): ?array
+    {
+        $stmt = $this->pdo->prepare(
+            'SELECT
+                i.invoice_id,
+                i.user_id,
+                i.total_price,
+                i.created_at AS issued_at,
+                CONCAT(\'INV-\', i.invoice_id) AS invoice_number
+             FROM invoices i
+             WHERE i.invoice_id = :invoice_id
+             LIMIT 1'
+        );
+
+        $stmt->execute(['invoice_id' => $invoiceId]);
+        $row = $stmt->fetch();
+
+        if ($row === false) {
+            return null;
+        }
+
+        $row['currency'] = 'EUR';
+
+        return $row;
+    }
+
+    public function findTicketsByInvoiceId(int $invoiceId): array
+    {
+        $stmt = $this->pdo->prepare(
+            'SELECT
+                t.ticket_id,
+                t.event_id,
+                t.user_id,
+                t.invoice_id,
+                t.ticket_price,
+                t.verification_code,
+                t.family_ticket,
+                e.name AS event_name,
+                DATE_FORMAT(e.start_time, \'%Y-%m-%d\') AS event_date,
+                DATE_FORMAT(e.start_time, \'%H:%i\') AS event_time,
+                COALESCE(NULLIF(e.location, \'\'), v.location) AS venue
+             FROM tickets t
+             LEFT JOIN events e ON e.event_id = t.event_id
+             LEFT JOIN venues v ON v.venue_id = e.venue_id
+             WHERE t.invoice_id = :invoice_id
+             ORDER BY t.ticket_id ASC'
+        );
+
+        $stmt->execute(['invoice_id' => $invoiceId]);
+        $rows = $stmt->fetchAll() ?: [];
+
+        return array_map(
+            static function (array $row): array {
+                return [
+                    'ticket_id' => (int) ($row['ticket_id'] ?? 0),
+                    'event_id' => (int) ($row['event_id'] ?? 0),
+                    'user_id' => (int) ($row['user_id'] ?? 0),
+                    'invoice_id' => (int) ($row['invoice_id'] ?? 0),
+                    'event_name' => (string) ($row['event_name'] ?? 'Event'),
+                    'event_date' => (string) ($row['event_date'] ?? ''),
+                    'event_time' => (string) ($row['event_time'] ?? ''),
+                    'venue' => (string) ($row['venue'] ?? 'Venue to be announced'),
+                    'ticket_price_value' => (float) ($row['ticket_price'] ?? 0),
+                    'verification_code' => (string) ($row['verification_code'] ?? ''),
+                    'family_ticket' => (bool) ($row['family_ticket'] ?? false),
+                ];
+            },
+            $rows
+        );
     }
 
     private function generateVerificationCode(int $checkoutAttemptId, int $eventId): string

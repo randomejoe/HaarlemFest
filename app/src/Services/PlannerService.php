@@ -5,19 +5,21 @@ namespace App\Services;
 use App\Models\Event;
 use App\Models\PlannerItem;
 use App\Models\PlannerSummary;
-use App\Repositories\EventRepository;
+use App\Repositories\Interfaces\IEventRepository;
+use App\Services\Interfaces\IPlannerService;
+use App\Services\Interfaces\ISessionManager;
 use DateTimeImmutable;
 use InvalidArgumentException;
 use RuntimeException;
 
-class PlannerService
+class PlannerService implements IPlannerService
 {
     private const LOCK_HOLD_DURATION_SECONDS = 600;
 
-    private EventRepository $events;
-    private SessionManager $session;
+    private IEventRepository $events;
+    private ISessionManager $session;
 
-    public function __construct(EventRepository $events, SessionManager $session)
+    public function __construct(IEventRepository $events, ISessionManager $session)
     {
         $this->events = $events;
         $this->session = $session;
@@ -88,19 +90,18 @@ class PlannerService
         $this->savePlanner($planner);
     }
 
-    public function unlockIfAttemptId(int $checkoutAttemptId): bool
+    public function unlockIfAttemptId(int $checkoutAttemptId): void
     {
         $lockedAttemptId = $this->getLockedCheckoutAttemptId();
         if ($lockedAttemptId === null) {
-            return false;
+            return;
         }
 
         if ($lockedAttemptId !== $checkoutAttemptId) {
-            return false;
+            return;
         }
 
         $this->unlock();
-        return true;
     }
 
     public function unlockIfExpired(array $expiredAttemptIds): bool
