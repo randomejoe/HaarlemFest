@@ -4,6 +4,7 @@
     <div class='horizontal-center vertical-center'>
         <div class='cms-container'>
             <?php 
+                print_r($flash);
                 if (isset($_SESSION['create_success']) && isset($_SESSION['create_title'])) {
                     if ($_SESSION['create_success']) {
                         $message = 'Successfully added ' . $type->value . ' ' . $_SESSION['create_title'];

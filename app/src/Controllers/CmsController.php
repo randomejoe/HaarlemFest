@@ -8,10 +8,11 @@ use App\Services\EventService;
 use App\Services\LocationService;
 use App\Services\UserService;
 use App\Services\OrderService;
+use App\Services\SessionManager;
 use App\View;
 use App\Models\UserRole;
 use App\Models\CmsType;
-
+use App\Models\FlashType;
 class CmsController
 {
     private PageService $pageService;
@@ -21,7 +22,9 @@ class CmsController
     private UserService $userService;
     private OrderService $orderService;
 
-    public function __construct(PageService $pageService, ContentService $contentService, EventService $eventService, LocationService $locationService, UserService $userService, OrderService $orderService)
+    private SessionManager $sessionManager;
+
+    public function __construct(PageService $pageService, ContentService $contentService, EventService $eventService, LocationService $locationService, UserService $userService, OrderService $orderService, SessionManager $manager)
     {
         $this->pageService = $pageService;
         $this->contentService = $contentService;
@@ -29,6 +32,7 @@ class CmsController
         $this->locationService = $locationService;
         $this->userService = $userService;
         $this->orderService = $orderService;
+        $this->sessionManager = $manager;
 
         if (!isset($_SESSION['role'])) {
             header('Location: /');
@@ -53,7 +57,9 @@ class CmsController
             $categories = $service->getCategories();
         }
 
-        echo View::render('/../Views/cms/item_list', ['items' => $items, 'type' => $type, 'categories' => $categories ?? null]);
+        $flash = $this->sessionManager->consumeFlash();
+        echo View::render('/../Views/cms/item_list', ['items' => $items, 'type' => $type, 'categories' => $categories ?? null, 'flash' => $flash]);
+        $this->sessionManager->setFlash(FlashType::Info, 'this is a flash');
     }
     public function showItemsByCategory(string $type, string $category): void
     {

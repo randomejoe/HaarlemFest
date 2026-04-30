@@ -9,6 +9,7 @@ use App\Services\AuthService;
 use App\Services\CheckoutService;
 use App\Services\PlannerService;
 use App\View;
+use App\Models\FlashType;
 
 class CheckoutController
 {
@@ -51,13 +52,13 @@ class CheckoutController
 
         foreach (self::REQUIRED_FIELDS as $field) {
             if (empty($details[$field])) {
-                $this->planner->setFlash('error', 'Please complete all required checkout details.');
+                $this->planner->setFlash(FlashType::Error, 'Please complete all required checkout details.');
                 $this->redirect(self::CHECKOUT_PATH);
             }
         }
 
         $this->users->updateCheckoutDetails($user->getId(), $details);
-        $this->planner->setFlash('success', 'Your checkout details were saved.');
+        $this->planner->setFlash(FlashType::Success, 'Your checkout details were saved.');
         $this->redirect(self::CHECKOUT_PATH);
     }
 
@@ -71,7 +72,7 @@ class CheckoutController
 
         $user = $this->requireCheckoutUser();
         if ($this->missingRequiredDetails($user)) {
-            $this->planner->setFlash('error', 'Please complete your required details before checkout.');
+            $this->planner->setFlash(FlashType::Error, 'Please complete your required details before checkout.');
             $this->redirect(self::CHECKOUT_PATH);
         }
 
@@ -103,7 +104,7 @@ class CheckoutController
         if (in_array($status, ['expired', 'handoff_failed'])) {
             $this->unlockPlannerAttempt($id);
             $msg = $status === 'expired' ? 'Your payment hold expired.' : ($attempt['error_message'] ?? 'Payment failed.');
-            $this->planner->setFlash('info', $msg . ' Please retry checkout.');
+            $this->planner->setFlash(FlashType::Info, $msg . ' Please retry checkout.');
             $this->redirect(self::CHECKOUT_PATH);
         }
 
@@ -129,9 +130,9 @@ class CheckoutController
             if (!$this->planner->isLocked()) {
                 $this->planner->clear();
             }
-            $this->planner->setFlash($status === 'paid' ? 'success' : 'info', $result['message'] ?? 'Payment confirmed.');
+            $this->planner->setFlash($status === 'paid' ? FlashType::Success : FlashType::Info, $result['message'] ?? 'Payment confirmed.');
         } else {
-            $this->planner->setFlash($status === 'forbidden' ? 'error' : 'info', $result['message'] ?? 'Payment confirmation failed.');
+            $this->planner->setFlash($status === 'forbidden' ? FlashType::Error : FlashType::Info, $result['message'] ?? 'Payment confirmation failed.');
         }
 
         $this->redirect('/checkout/pending/' . $id);
@@ -174,7 +175,7 @@ class CheckoutController
     {
         $conflicts = $result['conflicts'] ?? [];
         if (!$conflicts) {
-            $this->planner->setFlash('error', $result['message'] ?? 'Some events are no longer available.');
+            $this->planner->setFlash(FlashType::Error, $result['message'] ?? 'Some events are no longer available.');
             $this->redirect(self::CHECKOUT_PATH);
         }
 
@@ -184,13 +185,13 @@ class CheckoutController
             $c['requested'] ?? 0,
             $c['available'] ?? 0
         ), $conflicts);
-        $this->planner->setFlash('error', 'Out of stock: ' . implode('; ', $parts) . '.');
+        $this->planner->setFlash(FlashType::Error, 'Out of stock: ' . implode('; ', $parts) . '.');
         $this->redirect(self::CHECKOUT_PATH);
     }
 
     private function redirectConfirmError(array $result): void
     {
-        $type = ($result['status'] ?? '') === 'handoff_failed' ? 'error' : 'info';
+        $type = ($result['status'] ?? '') === 'handoff_failed' ? FlashType::Error : FlashType::Info;
         $this->planner->setFlash($type, $result['message'] ?? 'Checkout could not be completed.');
         $this->redirect(self::CHECKOUT_PATH);
     }

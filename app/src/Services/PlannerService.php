@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\Event;
 use App\Models\PlannerItem;
 use App\Models\PlannerSummary;
+use App\Models\FlashType;
 use App\Repositories\EventRepository;
 use DateTimeImmutable;
 use InvalidArgumentException;
@@ -244,7 +245,7 @@ class PlannerService
         $this->session->resetExpiryCleanupRun();
     }
 
-    public function setFlash(string $type, string $message): void
+    public function setFlash(FlashType $type, string $message): void
     {
         $this->session->setFlash($type, $message);
     }

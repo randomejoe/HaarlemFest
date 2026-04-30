@@ -244,6 +244,7 @@ class Container
             $c->get(LocationService::class),
             $c->get(UserService::class),
             $c->get(OrderService::class),
+            $c->get(SessionManager::class),
         ));
     }
 

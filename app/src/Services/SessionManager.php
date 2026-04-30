@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use App\Models\FlashType;
+
 /**
  * Centralizes all session state management for planner and checkout flows.
  *
@@ -72,10 +74,10 @@ final class SessionManager
 	/**
 	 * Set a flash message to be consumed on the next page load.
 	 */
-	public function setFlash(string $type, string $message): void
+	public function setFlash(FlashType $type, string $message): void
 	{
 		$_SESSION[self::FLASH_KEY] = [
-			'type' => $type,
+			'type' => $type->value,
 			'message' => $message,
 		];
 	}
@@ -95,7 +97,7 @@ final class SessionManager
 		unset($_SESSION[self::FLASH_KEY]);
 
 		return [
-			'type' => (string) ($flash['type'] ?? 'info'),
+			'type' => $flash['type'],
 			'message' => (string) ($flash['message'] ?? ''),
 		];
 	}

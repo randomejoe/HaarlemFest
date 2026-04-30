@@ -14,16 +14,27 @@ class PageService implements CMSServiceInterface
     }
 
     public function getAll() {
-        return $this->repository->getAllPages();
+        try {
+            return $this->repository->getAllPages();
+        }
+        catch (\Throwable $e) {
+            return [];
+        }
+        
     }
     public function getPage($page) {
-        if (is_numeric($page)) {
-            return $this->repository->getPageById($page);
+        try {
+            $result = is_numeric($page) ? $this->repository->getPageById($page) : $this->repository->getPageByName(str_replace("_", " ", $page));
+
+            print_r($result);
+            
+            return $result;
         }
-        else {
-            $pageName = str_replace("_", " ", $page);
-            return $this->repository->getPageByName($pageName);
+        catch (\Throwable $e) {
+            print_r('yooo');
+            return null;
         }
+        
     }
 
     public function create(array $postData): bool 

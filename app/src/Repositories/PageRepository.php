@@ -25,6 +25,7 @@ class PageRepository extends BaseRepository
         foreach ($pages as $page) {
             $returnPages[] = Page::fromArray($page);
         }
+        throw new \Exception;
 
         return $returnPages;
     }
