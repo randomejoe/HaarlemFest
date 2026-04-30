@@ -25,7 +25,6 @@ class PageRepository extends BaseRepository
         foreach ($pages as $page) {
             $returnPages[] = Page::fromArray($page);
         }
-        throw new \Exception;
 
         return $returnPages;
     }
@@ -90,8 +89,7 @@ class PageRepository extends BaseRepository
         $pageContent = $stmt->fetchAll();
 
         // No page found to edit
-        if ($pageContent == null) {
-            header('Location: /cms/pages');
+        if ($pageContent == []) {
             return null;
         }
 

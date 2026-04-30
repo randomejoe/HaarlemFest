@@ -14,24 +14,15 @@ class PageService implements CMSServiceInterface
     }
 
     public function getAll() {
-        try {
-            return $this->repository->getAllPages();
-        }
-        catch (\Throwable $e) {
-            return [];
-        }
-        
+        return $this->repository->getAllPages();
     }
     public function getPage($page) {
         try {
             $result = is_numeric($page) ? $this->repository->getPageById($page) : $this->repository->getPageByName(str_replace("_", " ", $page));
-
-            print_r($result);
             
             return $result;
         }
         catch (\Throwable $e) {
-            print_r('yooo');
             return null;
         }
         
@@ -49,10 +40,15 @@ class PageService implements CMSServiceInterface
 
     public function getForEdit(int $id)
     {
-       return $this->repository->getPageForEdit($id);
+        try {
+            return $this->repository->getPageForEdit($id);
+        }
+        catch (\Throwable $e) {
+            return null;
+        }
     }
 
-    public function update(int $id, array $postData): bool {
+    public function update(int $id, array $postData) {
         if (isset($postData['newContent'])) {
             return $this->repository->addContentItemToPage($id, $postData['newContent']);
         }
@@ -60,7 +56,7 @@ class PageService implements CMSServiceInterface
             return $this->repository->updatePage($id, $postData);
         }
     }
-    public function delete(int $id): bool {
+    public function delete(int $id) {
         return $this->repository->deletePage($id);
     }
 }

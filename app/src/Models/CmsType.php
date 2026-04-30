@@ -14,9 +14,9 @@ enum CmsType: string
     case Order = 'order';
     case None = 'none';
 
-    public static function convertToType(string $type) {
+    public static function convertToType(string $type): CmsType {
         try {
-            $convertedType = CmsType::from($type);
+            return CmsType::from($type);
         }
         catch (ValueError $e) {
             try {
@@ -26,7 +26,5 @@ enum CmsType: string
                 return CmsType::None;
             }
         }
-        return $convertedType;
-
     }
 }

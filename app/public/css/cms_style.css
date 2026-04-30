@@ -184,9 +184,9 @@ a {
     border-color: #93c993;
 }
 
-.failure {
-    background-color: #af6868;
-    border-color: #af6868;
+.error {
+    background-color: #ffa7a785;
+    border-color: #c47070;
 }
 
 .add-item-form {
