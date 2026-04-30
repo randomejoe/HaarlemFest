@@ -8,7 +8,7 @@ interface CMSServiceInterface
 
     public function isNameEditable(): bool;
 
-    public function update(int $id, array $postData): bool;
+    public function update(int $id, array $postData);
 
-    public function delete(int $id): bool;
+    public function delete(int $id);
 }

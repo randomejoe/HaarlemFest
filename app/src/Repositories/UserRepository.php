@@ -8,7 +8,7 @@ use App\Models\UserRole;
 use PDO;
 use PDOException;
 
-class UserRepository extends BaseRepository
+class UserRepository
 {
     public const USERNAME_MAX_LENGTH = 255;
     public const EMAIL_MAX_LENGTH = 255;
@@ -184,8 +184,6 @@ class UserRepository extends BaseRepository
 
     public function deleteUser(int $id): bool
     {
-        $this->requireAdmin();
-
         $stmt = $this->pdo->prepare("UPDATE users SET enabled = 0 WHERE user_id = :user_id");
         $stmt->execute([
             'user_id' => $id

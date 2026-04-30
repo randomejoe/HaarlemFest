@@ -32,7 +32,7 @@ class EventService implements CMSServiceInterface
         return $this->repository->updateEvent($id, $this->normalizeEventData($postData, $fileData));
     }
 
-    public function update(int $id, array $postData): bool
+    public function update(int $id, array $postData)
     {
         return $this->repository->updateEvent($id, $this->normalizeEventData($postData));
     }

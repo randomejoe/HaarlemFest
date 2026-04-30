@@ -69,7 +69,7 @@ class ContentService implements CMSServiceInterface
 
         return $this->repository->updateContentItem($id, $data);
     }
-    public function update(int $id, array $postData): bool
+    public function update(int $id, array $postData)
     {
         $data = $this->resolveExistingImageFields($postData);
         $component = $this->repository->getContentForEdit($id);

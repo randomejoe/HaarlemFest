@@ -6,7 +6,7 @@ use PDO;
 use App\Models\Page;
 use App\Models\PageContent;
 
-class PageRepository extends BaseRepository
+class PageRepository
 {
     private PDO $pdo;
 
@@ -66,7 +66,6 @@ class PageRepository extends BaseRepository
 
     public function createPage(string $title, int $isMainEvent): bool
     {
-        $this->requireAdmin();
         $stmt = $this->pdo->prepare('INSERT INTO pages (title, is_main_event) VALUES (:title, :mainEvent)');
         $stmt->execute([
             'title' => $title,
@@ -77,8 +76,6 @@ class PageRepository extends BaseRepository
 
     public function getPageForEdit(int $id)
     {
-        $this->requireAdmin();
-
         $stmt = $this->pdo->prepare(
             "SELECT p.title, pc.content_id, pc.component_name, pc.data
             FROM pages p
@@ -105,8 +102,6 @@ class PageRepository extends BaseRepository
 
     public function getContentForEdit(int $id)
     {
-        $this->requireAdmin();
-
         $stmt = $this->pdo->prepare(
             "SELECT content_id, page_id, component_name, data
             FROM page_content pc
@@ -119,8 +114,6 @@ class PageRepository extends BaseRepository
 
     public function updatePage(int $id, array $data): bool
     {
-        $this->requireAdmin();
-
         // Update page name
         $stmt = $this->pdo->prepare("UPDATE pages SET title = :title WHERE page_id = :id");
         $stmt->execute([
@@ -131,8 +124,6 @@ class PageRepository extends BaseRepository
     }
     public function addContentItemToPage(int $pageId, string $componentName)
     {
-        $this->requireAdmin();
-
         $stmt = $this->pdo->prepare("INSERT INTO page_content (page_id, component_name) VALUES (:page_id, :component_name)");
         $stmt->execute([
             'page_id' => $pageId,
@@ -142,8 +133,6 @@ class PageRepository extends BaseRepository
     }
     public function updateContentItem(int $id, array $data): bool
     {
-        $this->requireAdmin();
-
         try {
             $this->pdo->beginTransaction();
             unset($data['name']);
@@ -170,8 +159,6 @@ class PageRepository extends BaseRepository
     }
     public function deletePage(int $pageId)
     {
-        $this->requireAdmin();
-
         $stmt = $this->pdo->prepare("DELETE FROM pages WHERE page_id = :page_id");
         $stmt->execute([
             'page_id' => $pageId
@@ -180,8 +167,6 @@ class PageRepository extends BaseRepository
     }
     public function deleteContentItem(int $contentId)
     {
-        $this->requireAdmin();
-
         $stmt = $this->pdo->prepare("DELETE FROM page_content WHERE content_id = :content_id");
         $stmt->execute([
             'content_id' => $contentId

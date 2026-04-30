@@ -34,7 +34,7 @@ class LocationService implements CMSServiceInterface
         return $this->repository->updateLocation($location);
     }
 
-    public function update(int $id, array $postData): bool
+    public function update(int $id, array $postData)
     {
         $postData['location_id'] = $id;
 

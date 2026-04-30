@@ -20,7 +20,7 @@ enum CmsType: string
         }
         catch (ValueError $e) {
             try {
-                $convertedType = CmsType::from(substr($type, 0, -1));
+                return CmsType::from(substr($type, 0, -1));
             }
             catch (ValueError $e){
                 return CmsType::None;

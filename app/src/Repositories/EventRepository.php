@@ -7,7 +7,7 @@ use App\Models\HistoryTourLanguage;
 use PDO;
 use RuntimeException;
 
-class EventRepository extends BaseRepository
+class EventRepository
 {
     private PDO $pdo;
 
@@ -265,8 +265,6 @@ class EventRepository extends BaseRepository
 
     public function createSubEvent(string $category, array $postData)
     {
-        $this->requireAdmin();
-
         $stmt = $this->pdo->prepare('INSERT INTO events (name, location, start_time, end_time, ticket_price, ticket_amount, description, language, category)
         VALUES (:name, :location, :start_time, :end_time, :price, :amount, :description, :language, :category)');
 
@@ -306,8 +304,6 @@ class EventRepository extends BaseRepository
 
     public function updateEvent(int $id, array $postData)
     {
-        $this->requireAdmin();
-
         $stmt = $this->pdo->prepare('UPDATE events SET name = :name, location = :location, start_time = :start_time, end_time = :end_time, ticket_price = :price, ticket_amount = :amount, description = :description, language = :language, category = :category, artist_img = :artist_img WHERE event_id = :id');
 
         $stmt->execute([
@@ -328,8 +324,6 @@ class EventRepository extends BaseRepository
 
     public function deleteEvent(int $id)
     {
-        $this->requireAdmin();
-
         $stmt = $this->pdo->prepare("DELETE FROM events WHERE event_id = :event_id");
         $stmt->execute([
             'event_id' => $id

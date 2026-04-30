@@ -34,11 +34,7 @@ class CmsController
         $this->orderService = $orderService;
         $this->sessionManager = $manager;
 
-        if (!isset($_SESSION['role'])) {
-            header('Location: /');
-        }
-        $role = UserRole::from($_SESSION['role']);
-        if (!isset($role) || !$role->isAdmin()) {
+        if ($this->requireAdmin()) {
             header('Location: /');
         }
     }
@@ -136,6 +132,7 @@ class CmsController
             if ($item == null) {
                 $this->sessionManager->setFlash(FlashType::Error, $type->value . ' that you tried to edit could not be fetched.');
                 header('Location: /cms/' . $type->value . 's');
+                exit;
             }
 
             $editable = $service->isNameEditable();
@@ -147,6 +144,7 @@ class CmsController
         }
         catch (\Throwable $e) {
             $this->sessionManager->setFlash(FlashType::Error, 'An error occurred while trying to fetch the selected ' . $type->value);
+            print_r($e);
             header('Location: /cms/' . $type->value . 's');
         }
     }
@@ -217,5 +215,17 @@ class CmsController
         }
 
         return $hasFiles;
+    }
+
+    private function isAdmin() {
+        return isset($_SESSION['role']) ? UserRole::from($_SESSION['role'])->isAdmin() : false;
+    }
+    private function requireAdmin(): void
+    {
+        if (!$this->isAdmin()) {
+            http_response_code(403);
+            header("Location: /");
+            exit;
+        }
     }
 }

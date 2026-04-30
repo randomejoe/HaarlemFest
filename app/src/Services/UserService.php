@@ -26,9 +26,9 @@ class UserService implements CMSServiceInterface
     }
 
     // Update can't be done in cms, users update their own data.
-    public function update(int $id, array $postData): bool
+    public function update(int $id, array $postData)
     {
-        return false;
+        throw new \BadMethodCallException('Unable to edit users through CMS');
     }
 
     public function delete(int $id): bool
