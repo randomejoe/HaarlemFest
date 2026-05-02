@@ -5,14 +5,20 @@ namespace App\Repositories;
 use PDO;
 use App\Models\Page;
 use App\Models\PageContent;
+use App\Repositories\Interfaces\IPageRepository;
 
-class PageRepository
+class PageRepository implements IPageRepository
 {
     private PDO $pdo;
 
     public function __construct(PDO $pdo)
     {
         $this->pdo = $pdo;
+    }
+
+    public function assertAdmin(): void
+    {
+        // Admin access is enforced at the controller level (CmsController)
     }
 
     public function getAllPages(): array
@@ -131,31 +137,13 @@ class PageRepository
         ]);
         return true;
     }
-    public function updateContentItem(int $id, array $data): bool
+    public function updateContentItem(int $id, string $encodedJson): bool
     {
-        try {
-            $this->pdo->beginTransaction();
-            unset($data['name']);
-            unset($data['csrf_token']);
-
-            foreach ($data as $key => $dataItem) {
-                $data[$key] = preg_replace('/^<[^>]+>|<\/[^>]+>$/', '', $dataItem);
-            }
-
-            // Update content data
-            $stmt = $this->pdo->prepare("UPDATE page_content SET data = :data WHERE content_id = :id");
-            $stmt->execute([
-                'id' => $id,
-                'data' => json_encode($data),
-            ]);
-
-            $this->pdo->commit();
-            return true;
-        } catch (\Exception $e) {
-            echo $e;
-            $this->pdo->rollback();
-            return false;
-        }
+        $stmt = $this->pdo->prepare("UPDATE page_content SET data = :data WHERE content_id = :id");
+        return $stmt->execute([
+            'id' => $id,
+            'data' => $encodedJson,
+        ]);
     }
     public function deletePage(int $pageId)
     {

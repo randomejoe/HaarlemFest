@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services\Interfaces;
 
+use App\Models\FlashType;
 use App\Models\User;
 
 interface ICheckoutService
@@ -16,7 +17,7 @@ interface ICheckoutService
 
 	public function saveCheckoutDetails(int $userId, array $details): void;
 
-	public function setFlash(string $type, string $message): void;
+	public function setFlash(FlashType $type, string $message): void;
 
 	public function confirmCheckout(User $user): array;
 }

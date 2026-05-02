@@ -63,7 +63,7 @@ final class CheckoutService implements ICheckoutService
         $this->users->updateCheckoutDetails($userId, $details);
     }
 
-    public function setFlash(string $type, string $message): void
+    public function setFlash(\App\Models\FlashType $type, string $message): void
     {
         $this->planner->setFlash($type, $message);
     }

@@ -36,6 +36,7 @@ use App\Services\InvoicePdfService;
 use App\Services\LocationService;
 use App\Services\Mailer;
 use App\Services\OrderService;
+use App\Services\PageRenderer;
 use App\Services\PageService;
 use App\Services\PasswordResetService;
 use App\Services\PdoTransactionManager;
@@ -133,6 +134,7 @@ $registerSingleton(AccountService::class, static fn(callable $get): AccountServi
 $registerSingleton(PageService::class, static fn(callable $get): PageService => new PageService(
     $get(PageRepository::class)
 ));
+$registerSingleton(PageRenderer::class, fn(callable $get): PageRenderer => new PageRenderer($resolve));
 
 $registerSingleton(UserService::class, static fn(callable $get): UserService => new UserService(
     $get(UserRepository::class)
@@ -158,10 +160,8 @@ $registerSingleton(OrderService::class, static fn(callable $get): OrderService =
 
 $registerTransient(HomeController::class, static fn(callable $get): HomeController => new HomeController());
 $registerTransient(PageController::class, static fn(callable $get): PageController => new PageController(
+    $get(PageRenderer::class),
     $get(PageService::class),
-    $get(EventService::class),
-    $get(LocationService::class),
-    $get(PlannerService::class),
 ));
 $registerTransient(CheckoutController::class, static fn(callable $get): CheckoutController => new CheckoutController(
     $get(CheckoutService::class),

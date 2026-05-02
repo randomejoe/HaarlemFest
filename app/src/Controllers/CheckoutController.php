@@ -3,6 +3,7 @@
 namespace App\Controllers;
 
 use App\Models\User;
+use App\Models\FlashType;
 use App\Services\Interfaces\ICheckoutService;
 use App\Services\Interfaces\IAuthService;
 use App\View;
@@ -35,13 +36,13 @@ class CheckoutController
 
         foreach (self::REQUIRED_FIELDS as $field) {
             if (empty($details[$field])) {
-                $this->checkout->setFlash('error', 'Please complete all required checkout details.');
+                $this->checkout->setFlash(FlashType::Error, 'Please complete all required checkout details.');
                 $this->redirect(self::CHECKOUT_PATH);
             }
         }
 
         $this->checkout->saveCheckoutDetails($user->getId(), $details);
-        $this->checkout->setFlash('success', 'Your checkout details were saved.');
+        $this->checkout->setFlash(FlashType::Success, 'Your checkout details were saved.');
         $this->redirect(self::CHECKOUT_PATH);
     }
 
@@ -51,11 +52,11 @@ class CheckoutController
         $result = $this->checkout->confirmCheckout($user);
 
         if (!empty($result['success'])) {
-            $this->checkout->setFlash('success', 'Thank you! Your order has been placed.');
+            $this->checkout->setFlash(FlashType::Success, 'Thank you! Your order has been placed.');
             $this->redirect('/orders');
         }
 
-        $this->checkout->setFlash('error', (string) ($result['message'] ?? 'Checkout could not be completed.'));
+        $this->checkout->setFlash(FlashType::Error, (string) ($result['message'] ?? 'Checkout could not be completed.'));
         $this->redirect(self::CHECKOUT_PATH);
     }
 
