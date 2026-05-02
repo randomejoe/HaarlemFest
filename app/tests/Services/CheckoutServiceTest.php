@@ -4,80 +4,40 @@ declare(strict_types=1);
 
 namespace App\Tests\Services;
 
-use App\Models\CheckoutResult;
 use App\Models\User;
-use App\Repositories\CheckoutRepository;
-use App\Repositories\EventRepository;
-use App\Repositories\TicketHoldRepository;
+use App\Repositories\Interfaces\ICheckoutRepository;
 use App\Repositories\Interfaces\IUserRepository;
-use App\Services\CheckoutHoldManager;
 use App\Services\CheckoutService;
-use App\Services\DateTimeFormatter;
-use App\Services\PaymentGatewayStubService;
-use App\Services\PaymentHandoffService;
-use App\Services\PlannerService;
-use App\Services\SessionManager;
-use App\Services\StockReservationService;
+use App\Services\Interfaces\IPlannerService;
 use App\Services\Interfaces\ITicketDeliveryService;
 use PDO;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 
-class CheckoutServiceTest extends TestCase
+final class CheckoutServiceTest extends TestCase
 {
     private PDO&MockObject $pdo;
-    private PlannerService&MockObject $planner;
-    private CheckoutRepository&MockObject $checkoutAttempts;
-    private TicketHoldRepository&MockObject $ticketHolds;
-    private EventRepository&MockObject $events;
-    private PaymentGatewayStubService&MockObject $paymentGateway;
-    private ITicketDeliveryService&MockObject $ticketDelivery;
+    private IPlannerService&MockObject $planner;
+    private ICheckoutRepository&MockObject $checkoutRepo;
     private IUserRepository&MockObject $users;
-
+    private ITicketDeliveryService&MockObject $ticketDelivery;
     private CheckoutService $sut;
     private User $user;
 
     protected function setUp(): void
     {
         $this->pdo = $this->createMock(PDO::class);
-        $this->planner = $this->createMock(PlannerService::class);
-        $this->checkoutAttempts = $this->createMock(CheckoutRepository::class);
-        $this->ticketHolds = $this->createMock(TicketHoldRepository::class);
-        $this->events = $this->createMock(EventRepository::class);
-        $this->paymentGateway = $this->createMock(PaymentGatewayStubService::class);
-        $this->ticketDelivery = $this->createMock(ITicketDeliveryService::class);
+        $this->planner = $this->createMock(IPlannerService::class);
+        $this->checkoutRepo = $this->createMock(ICheckoutRepository::class);
         $this->users = $this->createMock(IUserRepository::class);
-
-        $dateTimeFormatter = new DateTimeFormatter();
-
-        $stockReservation = new StockReservationService(
-            $this->events,
-            $this->ticketHolds,
-            $dateTimeFormatter
-        );
-
-        $holdManager = new CheckoutHoldManager(
-            $this->ticketHolds,
-            $this->checkoutAttempts,
-            $this->events,
-            $dateTimeFormatter,
-            $this->pdo
-        );
-
-        $handoffService = new PaymentHandoffService($this->paymentGateway);
-
+        $this->ticketDelivery = $this->createMock(ITicketDeliveryService::class);
         $this->sut = new CheckoutService(
             $this->pdo,
             $this->planner,
-            $this->checkoutAttempts,
-            $holdManager,
-            $dateTimeFormatter,
-            $stockReservation,
-            $handoffService,
-            $this->ticketDelivery,
-            $this->users
+            $this->checkoutRepo,
+            $this->users,
+            $this->ticketDelivery
         );
-
         $this->user = User::fromArray([
             'user_id' => 1,
             'username' => 'testuser',
@@ -91,174 +51,109 @@ class CheckoutServiceTest extends TestCase
         ]);
     }
 
-    private function validPlannerPayload(float $totalPrice = 30.0): array
+    public function test_confirmCheckout_creates_invoice_tickets_and_clears_planner(): void
     {
-        return [
+        $this->planner->method('getDetailedPlanner')->willReturn([
             'is_empty' => false,
-            'has_invalid_items' => false,
             'items' => [
                 [
-                    'event_id' => 1,
-                    'name' => 'Jazz Night',
+                    'event_id' => 5,
                     'quantity' => 2,
                     'is_valid' => true,
-                    'unit_price_value' => 15.00,
-                    'line_total_value' => 30.00,
+                    'unit_price_value' => 12.5,
                 ],
             ],
-            'total_price_value' => $totalPrice,
-        ];
-    }
-
-    public function test_confirmCheckout_existing_handoff_created_locks_with_attempt_hold_expires_at(): void
-    {
-        $this->planner->method('isLocked')->willReturn(false);
-        $this->planner->method('getIdempotencyKey')->willReturn('test-key');
-
-        $attemptId = 42;
-        $holdExpiresAt = '2099-12-31 23:59:59';
-
-        $this->checkoutAttempts->method('findByIdempotencyKey')->with('test-key')->willReturn([
-            'checkout_attempt_id' => $attemptId,
-            'status' => 'handoff_created',
-            'hold_expires_at' => $holdExpiresAt,
+            'total_price_value' => 25.0,
         ]);
 
-        $this->planner->expects($this->once())
-            ->method('lock')
-            ->with($attemptId, $holdExpiresAt);
+        $this->pdo->expects($this->once())->method('beginTransaction')->willReturn(true);
+        $this->pdo->expects($this->once())->method('commit')->willReturn(true);
 
-        $result = $this->sut->confirmCheckout($this->user, 'test-key')->toArray();
-
-        $this->assertSame('already_pending', $result['status']);
-        $this->assertSame($attemptId, $result['attempt_id']);
-        $this->assertSame('/checkout/pending/' . $attemptId, $result['redirect_url']);
-    }
-
-    public function test_confirmCheckout_successful_handoff_passes_hold_expires_at_into_planner_lock(): void
-    {
-        $this->planner->method('isLocked')->willReturn(false);
-        $this->planner->method('getIdempotencyKey')->willReturn('test-key');
-        $this->checkoutAttempts->method('findByIdempotencyKey')->with('test-key')->willReturn(null);
-        $this->planner->method('getDetailedPlanner')->willReturn($this->validPlannerPayload(30.0));
-        $this->planner->expects($this->once())->method('resetExpiryCleanupRun');
-        $this->planner->method('getPlannerToken')->willReturn('planner-token-abc');
-
-        $this->events->method('decrementTicketAmountIfAvailable')->willReturn(true);
-
-        $attemptId = 42;
-        $capturedHoldExpiresAt = null;
-
-        $this->pdo->expects($this->exactly(2))->method('beginTransaction')->willReturn(true);
-        $this->pdo->method('inTransaction')->willReturn(true);
-        $this->pdo->expects($this->exactly(2))->method('commit')->willReturn(true);
-
-        $this->checkoutAttempts->expects($this->once())
-            ->method('createAttempt')
-            ->with($this->callback(function (array $data) use (&$capturedHoldExpiresAt): bool {
-                $capturedHoldExpiresAt = (string) ($data['hold_expires_at'] ?? '');
-                return $capturedHoldExpiresAt !== '';
-            }))
-            ->willReturn($attemptId);
-
-        $this->checkoutAttempts->expects($this->once())
-            ->method('createAttemptItems')
-            ->with($attemptId, $this->isType('array'));
-
-        $this->ticketHolds->expects($this->once())
-            ->method('createHolds')
-            ->with(
-                $attemptId,
-                $this->user->getId(),
-                'planner-token-abc',
-                $this->isType('array'),
-                $this->callback(function (string $expiresAt) use (&$capturedHoldExpiresAt): bool {
-                    return $capturedHoldExpiresAt !== null && $expiresAt === $capturedHoldExpiresAt;
-                })
-            );
-
-        $this->paymentGateway->expects($this->once())
-            ->method('createTransaction')
-            ->with($this->isType('array'))
+        $this->checkoutRepo->expects($this->once())
+            ->method('findEventForUpdate')
+            ->with(5)
             ->willReturn([
-                'success' => true,
-                'redirect_url' => '/checkout/pending/' . $attemptId,
-                'provider_reference' => 'ref-xyz',
-                'error_code' => null,
-                'error_message' => null,
+                'event_id' => 5,
+                'name' => 'Jazz Night',
+                'available_tickets' => 10,
+                'ticket_price' => 12.5,
             ]);
 
-        $this->checkoutAttempts->expects($this->once())
-            ->method('markHandoffCreated')
-            ->with($attemptId, 'stub_provider', 'ref-xyz');
+        $this->checkoutRepo->expects($this->once())
+            ->method('createInvoice')
+            ->with($this->user->getId(), 25.0)
+            ->willReturn(99);
 
-        $this->planner->expects($this->once())
-            ->method('lock')
+        $this->checkoutRepo->expects($this->exactly(2))
+            ->method('createTicket')
+            ->with(99, $this->user->getId(), 5, 12.5);
+
+        $this->checkoutRepo->expects($this->once())
+            ->method('decrementStock')
+            ->with(5, 2);
+
+        $this->checkoutRepo->expects($this->once())
+            ->method('findInvoiceById')
+            ->with(99)
+            ->willReturn([
+                'invoice_id' => 99,
+                'user_id' => $this->user->getId(),
+                'total_price' => 25.0,
+                'issued_at' => '2026-04-29 10:00:00',
+                'invoice_number' => 'INV-99',
+                'currency' => 'EUR',
+            ]);
+
+        $this->checkoutRepo->expects($this->once())
+            ->method('findTicketsByInvoiceId')
+            ->with(99)
+            ->willReturn([
+                [
+                    'ticket_id' => 1,
+                    'event_id' => 5,
+                    'ticket_price' => 12.5,
+                    'event_name' => 'Jazz Night',
+                    'event_date' => '2026-07-30',
+                    'event_time' => '20:00',
+                    'venue' => 'Main Hall',
+                    'verification_code' => 'ABC123',
+                ],
+                [
+                    'ticket_id' => 2,
+                    'event_id' => 5,
+                    'ticket_price' => 12.5,
+                    'event_name' => 'Jazz Night',
+                    'event_date' => '2026-07-30',
+                    'event_time' => '20:00',
+                    'venue' => 'Main Hall',
+                    'verification_code' => 'DEF456',
+                ],
+            ]);
+
+        $this->ticketDelivery->expects($this->once())
+            ->method('sendOrderConfirmation')
             ->with(
-                $attemptId,
-                $this->callback(function (string $expiresAt) use (&$capturedHoldExpiresAt): bool {
-                    return $capturedHoldExpiresAt !== null && $expiresAt === $capturedHoldExpiresAt;
-                })
+                $this->user,
+                99,
+                $this->callback(fn(array $tickets): bool => count($tickets) === 2),
+                25.0
             );
 
-        $this->planner->expects($this->once())
-            ->method('rotateIdempotencyKey');
+        $this->planner->expects($this->once())->method('clear');
 
-        $this->ticketHolds->expects($this->once())
-            ->method('markTransferredByAttemptId')
-            ->with($attemptId);
+        $result = $this->sut->confirmCheckout($this->user);
 
-        $this->ticketDelivery->expects($this->never())
-            ->method('deliverPurchaseEmails');
-
-        $result = $this->sut->confirmCheckout($this->user, 'test-key')->toArray();
-
-        $this->assertSame('handoff_created', $result['status']);
-        $this->assertSame($attemptId, $result['attempt_id']);
-        $this->assertSame('/checkout/pending/' . $attemptId, $result['redirect_url']);
-    }
-}
-
-class PlannerServiceLockTtlTest extends TestCase
-{
-    private PlannerService $planner;
-
-    protected function setUp(): void
-    {
-        if (session_status() !== PHP_SESSION_ACTIVE) {
-            session_start();
-        }
-
-        $_SESSION = [];
-
-        $events = $this->createMock(EventRepository::class);
-        $session = new SessionManager();
-        $this->planner = new PlannerService($events, $session);
+        $this->assertSame(['success' => true, 'order_id' => 99], $result);
     }
 
-    public function test_lock_auto_unlocks_after_hold_expires_at(): void
+    public function test_confirmCheckout_rejects_empty_planner(): void
     {
-        $attemptId = 123;
-        $holdExpiresAt = date('Y-m-d H:i:s', time() - 1);
+        $this->planner->method('getDetailedPlanner')->willReturn(['is_empty' => true]);
+        $this->pdo->expects($this->never())->method('beginTransaction');
 
-        $this->planner->lock($attemptId, $holdExpiresAt);
+        $result = $this->sut->confirmCheckout($this->user);
 
-        $this->assertFalse($this->planner->isLocked());
-        $this->assertNull($this->planner->getLockedCheckoutAttemptId());
-        $this->assertNull($_SESSION['planner']['locked_checkout_attempt_id'] ?? null);
-    }
-
-    public function test_unlockIfAttemptId_does_not_clobber_other_attempts(): void
-    {
-        $attemptId = 1;
-        $this->planner->lock($attemptId, date('Y-m-d H:i:s', time() + 3600));
-
-        $this->planner->unlockIfAttemptId(2);
-        $this->assertTrue($this->planner->isLocked());
-        $this->assertSame($attemptId, $this->planner->getLockedCheckoutAttemptId());
-
-        $this->planner->unlockIfAttemptId($attemptId);
-        $this->assertFalse($this->planner->isLocked());
-        $this->assertNull($this->planner->getLockedCheckoutAttemptId());
+        $this->assertFalse($result['success']);
+        $this->assertSame('Your planner is empty.', $result['message']);
     }
 }

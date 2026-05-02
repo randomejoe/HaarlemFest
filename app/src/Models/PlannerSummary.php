@@ -16,14 +16,12 @@ final class PlannerSummary
         private array $invalidItemIds,
         private int $totalQuantity,
         private float $totalPriceValue,
-        private array $conflictItems,
-        private ?int $lockedCheckoutAttemptId = null,
-        private ?int $lockedCheckoutExpiresAtUnix = null
+        private array $conflictItems
     ) {
     }
 
     /**
-     * @param array<int, int|array{quantity?:int, familyTicket?:bool}> $rawItems
+     * @param array<int, array{quantity:int, familyTicket:bool}> $rawItems
      * @param array<int, Event> $eventsById
      */
     public static function fromRawItems(array $rawItems, array $eventsById): self
@@ -34,19 +32,14 @@ final class PlannerSummary
         $totalPriceValue = 0.0;
         $conflictItems = [];
 
-        foreach ($rawItems as $eventIdRaw => $quantityRaw) {
+        foreach ($rawItems as $eventIdRaw => $item) {
             $eventId = (int) $eventIdRaw;
             if ($eventId <= 0) {
                 continue;
             }
 
-            $familyTicket = false;
-            if (is_array($quantityRaw)) {
-                $familyTicket = !empty($quantityRaw['familyTicket']);
-                $quantity = max(0, (int) ($quantityRaw['quantity'] ?? 0));
-            } else {
-                $quantity = max(0, (int) $quantityRaw);
-            }
+            $familyTicket = (bool) ($item['familyTicket'] ?? false);
+            $quantity = max(0, (int) ($item['quantity'] ?? 0));
 
             if ($quantity <= 0) {
                 continue;
@@ -110,21 +103,6 @@ final class PlannerSummary
         return $this->conflictItems;
     }
 
-    public function lockedCheckoutAttemptId(): ?int
-    {
-        return $this->lockedCheckoutAttemptId;
-    }
-
-    public function lockedCheckoutExpiresAtUnix(): ?int
-    {
-        return $this->lockedCheckoutExpiresAtUnix;
-    }
-
-    public function isLocked(): bool
-    {
-        return $this->lockedCheckoutAttemptId !== null;
-    }
-
     public function isEmpty(): bool
     {
         return $this->totalQuantity === 0;
@@ -156,9 +134,6 @@ final class PlannerSummary
             'is_empty' => $this->isEmpty(),
             'has_invalid_items' => $this->hasInvalidItems(),
             'invalid_item_ids' => $this->invalidItemIds,
-            'locked_checkout_attempt_id' => $this->lockedCheckoutAttemptId,
-            'locked_checkout_expires_at_unix' => $this->lockedCheckoutExpiresAtUnix,
-            'is_locked' => $this->isLocked(),
             'time_conflicts' => [],
             'time_conflict_pairs' => [],
         ];

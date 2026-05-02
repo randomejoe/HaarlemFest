@@ -1,0 +1,2 @@
+{"t":0,"agent":"a4eef51","agent_type":"qa-tester","event":"agent_start","parent_mode":"none"}
+{"t":0,"agent":"a4eef51","agent_type":"qa-tester","event":"agent_stop","success":true,"duration_ms":361351}

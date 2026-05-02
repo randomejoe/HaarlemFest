@@ -2,21 +2,20 @@
 
 namespace App\Services;
 
-use App\Models\Event;
-use App\Repositories\UserRepository;
+use App\Repositories\Interfaces\IUserRepository;
+use App\Services\Interfaces\ICmsService;
 
-class UserService implements CMSService
+class UserService implements ICmsService
 {
-    private UserRepository $repository;
-    
-    public function __construct(UserRepository $repository)
+    private IUserRepository $repository;
+
+    public function __construct(IUserRepository $repository)
     {
         $this->repository = $repository;
     }
 
     public function getForEdit(int $id)
     {
-        header('Location: /cms/users');
         return null;
     }
 
@@ -41,8 +40,4 @@ class UserService implements CMSService
         return $this->repository->getAllUsers();
     }
 
-    public function findByName(string $userName): array
-    {
-        return $this->repository->findByName($userName);
-    }
 }

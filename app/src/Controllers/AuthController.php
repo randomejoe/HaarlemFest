@@ -2,7 +2,6 @@
 
 namespace App\Controllers;
 
-use App\Exceptions\UserConflictException;
 use App\Models\User;
 use App\Services\CaptchaService;
 use App\Services\Interfaces\IAuthService;
@@ -56,7 +55,7 @@ class AuthController
 
         try {
             $user = $this->auth->registerUser($username, $email, $password);
-        } catch (UserConflictException $e) {
+        } catch (\RuntimeException $e) {
             $this->renderRegisterError($redirect, $e->getMessage(), $old);
             return;
         }
@@ -98,15 +97,9 @@ class AuthController
 
     public function logout(): void
     {
-        try {
-            $this->auth->logout();
-            header('Location: /login');
-            exit;
-        } catch (\Throwable $e) {
-            http_response_code(500);
-            error_log('AuthController::logout error: ' . $e->getMessage());
-            require(__DIR__ . '/../Views/error.php');
-        }
+        $this->auth->logout();
+        header('Location: /login');
+        exit;
     }
 
     public function altchaChallenge(): void
@@ -115,21 +108,15 @@ class AuthController
         header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
         header('Pragma: no-cache');
 
-        try {
-            $challenge = $this->captcha->createChallenge();
-            $payload = [
-                'algorithm' => $challenge->algorithm,
-                'challenge' => $challenge->challenge,
-                'maxnumber' => $challenge->maxNumber,
-                'salt' => $challenge->salt,
-                'signature' => $challenge->signature,
-            ];
-            echo json_encode($payload, JSON_UNESCAPED_SLASHES);
-        } catch (\Throwable $e) {
-            http_response_code(500);
-            error_log('ALTCHA challenge error: ' . $e->getMessage());
-            echo json_encode(['error' => 'ALTCHA challenge failed.']);
-        }
+        $challenge = $this->captcha->createChallenge();
+        $payload = [
+            'algorithm' => $challenge->algorithm,
+            'challenge' => $challenge->challenge,
+            'maxnumber' => $challenge->maxNumber,
+            'salt' => $challenge->salt,
+            'signature' => $challenge->signature,
+        ];
+        echo json_encode($payload, JSON_UNESCAPED_SLASHES);
         exit;
     }
 
@@ -172,23 +159,15 @@ class AuthController
 
     private function validateRegistrationLengths(string $username, string $email): ?string
     {
-        if ($this->textLength($username) > User::USERNAME_MAX_LENGTH) {
+        if (mb_strlen($username, 'UTF-8') > User::USERNAME_MAX_LENGTH) {
             return 'Username must be ' . User::USERNAME_MAX_LENGTH . ' characters or fewer.';
         }
 
-        if ($this->textLength($email) > User::EMAIL_MAX_LENGTH) {
+        if (mb_strlen($email, 'UTF-8') > User::EMAIL_MAX_LENGTH) {
             return 'Email must be ' . User::EMAIL_MAX_LENGTH . ' characters or fewer.';
         }
 
         return null;
     }
 
-    private function textLength(string $value): int
-    {
-        if (function_exists('mb_strlen')) {
-            return mb_strlen($value, 'UTF-8');
-        }
-
-        return strlen($value);
-    }
 }

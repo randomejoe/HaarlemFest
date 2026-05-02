@@ -3,18 +3,20 @@
 namespace App\Services;
 
 use App\Config;
-use App\Exceptions\AuthException;
-use App\Repositories\UserRepository;
+use App\Repositories\Interfaces\IUserRepository;
+use App\Services\Interfaces\IAuthService;
+use App\Services\Interfaces\IPasswordResetService;
 use DateTime;
+use RuntimeException;
 use Throwable;
 
-class PasswordResetService
+class PasswordResetService implements IPasswordResetService
 {
-    private UserRepository $users;
+    private IUserRepository $users;
     private Mailer $mailer;
-    private AuthService $auth;
+    private IAuthService $auth;
 
-    public function __construct(UserRepository $users, Mailer $mailer, AuthService $auth)
+    public function __construct(IUserRepository $users, Mailer $mailer, IAuthService $auth)
     {
         $this->users = $users;
         $this->mailer = $mailer;
@@ -35,7 +37,7 @@ class PasswordResetService
         try {
             $this->users->setPasswordResetToken($user->getId(), $tokenHash, $expiresAt);
         } catch (\Throwable $e) {
-            throw new AuthException('Failed to store reset token.', 0, $e);
+            throw new RuntimeException('Failed to store reset token.', 0, $e);
         }
 
         $baseUrl = rtrim(Config::env('APP_BASE_URL', 'http://localhost'), '/');
@@ -71,7 +73,7 @@ class PasswordResetService
         try {
             $this->users->updatePassword($user->getId(), $passwordHash);
         } catch (\Throwable $e) {
-            throw new AuthException('Failed to update password.', 0, $e);
+            throw new RuntimeException('Failed to update password.', 0, $e);
         }
 
         return true;

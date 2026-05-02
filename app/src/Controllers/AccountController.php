@@ -2,7 +2,6 @@
 
 namespace App\Controllers;
 
-use App\Exceptions\UserConflictException;
 use App\Models\User;
 use App\Services\Interfaces\IAccountService;
 use App\Services\Interfaces\IAuthService;
@@ -89,7 +88,7 @@ class AccountController
                 'country' => $country !== '' ? $country : null,
                 'phone_number' => $phoneNumber !== '' ? $phoneNumber : null,
             ]);
-        } catch (UserConflictException $e) {
+        } catch (\RuntimeException $e) {
             $this->renderAccountError($submittedUser, $e->getMessage());
             return;
         }
@@ -147,16 +146,22 @@ class AccountController
         ];
 
         foreach ($limits as $field => $limit) {
-            $value = trim((string) match ($field) {
-                'username' => $user->username(),
-                'first_name' => $user->firstName(),
-                'last_name' => $user->lastName(),
-                'address' => $user->address(),
-                'city' => $user->city(),
-                'country' => $user->country(),
-                'phone_number' => $user->phoneNumber(),
-            });
-            if ($value !== '' && $this->textLength($value) > $limit) {
+            if ($field === 'username') {
+                $value = trim((string) $user->username());
+            } elseif ($field === 'first_name') {
+                $value = trim((string) $user->firstName());
+            } elseif ($field === 'last_name') {
+                $value = trim((string) $user->lastName());
+            } elseif ($field === 'address') {
+                $value = trim((string) $user->address());
+            } elseif ($field === 'city') {
+                $value = trim((string) $user->city());
+            } elseif ($field === 'country') {
+                $value = trim((string) $user->country());
+            } else {
+                $value = trim((string) $user->phoneNumber());
+            }
+            if ($value !== '' && mb_strlen($value, 'UTF-8') > $limit) {
                 return $labels[$field] . ' must be ' . $limit . ' characters or fewer.';
             }
         }
@@ -164,12 +169,4 @@ class AccountController
         return null;
     }
 
-    private function textLength(string $value): int
-    {
-        if (function_exists('mb_strlen')) {
-            return mb_strlen($value, 'UTF-8');
-        }
-
-        return strlen($value);
-    }
 }

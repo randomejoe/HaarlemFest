@@ -2,7 +2,6 @@
 
 namespace App\Services;
 
-use App\Exceptions\UserConflictException;
 use App\Models\User;
 use App\Repositories\Interfaces\IUserRepository;
 use App\Services\Interfaces\IAccountService;
@@ -28,7 +27,7 @@ class AccountService implements IAccountService
             isset($profileData['username'])
             && $this->isUsernameTakenByOther((string) $profileData['username'], $userId)
         ) {
-            throw new UserConflictException('Username is already in use.');
+            throw new RuntimeException('Username is already in use.');
         }
 
         $this->users->updateProfile($userId, $profileData);

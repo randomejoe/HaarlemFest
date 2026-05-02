@@ -1,0 +1,7 @@
+{
+  "tool_name": "Bash",
+  "tool_input_preview": "{\"command\":\"git merge --no-commit --no-ff origin/dev 2>&1; git merge --abort 2>/dev/null\",\"description\":\"Dry-run merge to identify conflicts\"}",
+  "error": "Exit code 128\nerror: Your local changes to the following files would be overwritten by merge:\n\tapp/src/Controllers/AuthController.php\n\tapp/src/Controllers/CheckoutController.php\n\tapp/src/Controllers/PlannerController.php\n\tapp/src/Repositories/EventRepository.php\n\tapp/src/Repositories/UserRepository.php\n\tapp/src/Services/EventService.php\n\tapp/src/Services/OrderService.php\n\tapp/src/Services/PlannerService.php\n\tapp/src/Services/UserService.php\n\tapp/src/Views/partials/page_components/jazz_program.ph...",
+  "timestamp": "2026-05-02T11:00:22.994Z",
+  "retry_count": 1
+}

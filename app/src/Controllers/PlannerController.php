@@ -9,230 +9,210 @@ use RuntimeException;
 
 class PlannerController
 {
-	private IPlannerService $planner;
+    private IPlannerService $planner;
 
-	public function __construct(IPlannerService $planner)
-	{
-		$this->planner = $planner;
-	}
+    public function __construct(IPlannerService $planner)
+    {
+        $this->planner = $planner;
+    }
 
-	public function show(): void
-	{
-		$planner = $this->normalizeViewData($this->planner->getDetailedPlanner());
-		$flash = $this->planner->consumeFlash();
+    public function show(): void
+    {
+        $planner = $this->planner->getDetailedPlanner();
+        $flash = $this->planner->consumeFlash();
 
-		echo View::render('planner', [
-			'planner' => $planner,
-			'flash' => $flash,
-		]);
-	}
+        echo View::render('planner', [
+            'planner' => $planner,
+            'flash' => $flash,
+        ]);
+    }
 
-	public function addItem(): void
-	{
-		$returnTo = $this->resolveReturnTo((string) ($_POST['return_to'] ?? '/planner'));
-		$eventIds = $this->resolveEventIds($_POST['event_ids'] ?? null, (int) ($_POST['event_id'] ?? 0));
-		$quantity = (int) ($_POST['quantity'] ?? 1);
-		$isAjax = $this->isAjaxRequest();
-		$success = true;
-		$message = '';
+    public function addItem(): void
+    {
+        $returnTo = $this->resolveReturnTo((string) ($_POST['return_to'] ?? '/planner'));
+        $eventIds = $this->resolveEventIds($_POST['event_ids'] ?? null, (int) ($_POST['event_id'] ?? 0));
+        $quantity = (int) ($_POST['quantity'] ?? 1);
+        $isAjax = $this->isAjaxRequest();
+        $success = true;
+        $message = '';
 
-		try {
-			if ($eventIds === []) {
-				throw new InvalidArgumentException('Select a valid event before adding it to your planner.');
-			}
+        try {
+            if ($eventIds === []) {
+                throw new InvalidArgumentException('Select a valid event before adding it to your planner.');
+            }
 
-			if ($quantity <= 0) {
-				throw new InvalidArgumentException('Quantity must be greater than zero.');
-			}
+            if ($quantity <= 0) {
+                throw new InvalidArgumentException('Quantity must be greater than zero.');
+            }
 
-			if (count($eventIds) === 1) {
-				$this->planner->addItem($eventIds[0], $quantity, $_POST['familyTicket'] ?? null);
-				$message = '';
-			} else {
-				$this->planner->addItems($eventIds, $quantity);
-				$message = '';
-			}
-		} catch (RuntimeException | InvalidArgumentException $e) {
-			$success = false;
-			$message = $e->getMessage();
-			$this->planner->setFlash('error', $message);
-		}
+            if (count($eventIds) === 1) {
+                $this->planner->addItem($eventIds[0], $quantity, $_POST['familyTicket'] ?? null);
+                $message = '';
+            } else {
+                $this->planner->addItems($eventIds, $quantity);
+                $message = '';
+            }
+        } catch (RuntimeException | InvalidArgumentException $e) {
+            $success = false;
+            $message = $e->getMessage();
+            $this->planner->setFlash('error', $message);
+        }
 
-		if ($isAjax) {
-			$planner = $this->normalizeViewData($this->planner->getDetailedPlanner());
-			$this->sendPlannerJsonResponse($success, $message, $planner);
-		}
+        if ($isAjax) {
+            $planner = $this->planner->getDetailedPlanner();
+            $this->sendPlannerJsonResponse($success, $message, $planner);
+        }
 
-		header('Location: ' . $returnTo);
-		exit;
-	}
+        header('Location: ' . $returnTo);
+        exit;
+    }
 
-	public function updateItemQuantity(int $eventId): void
-	{
-		$isAjax = $this->isAjaxRequest();
-		$quantity = (int) ($_POST['quantity'] ?? 0);
-		$success = true;
-		$message = 'Planner quantity updated.';
+    public function updateItemQuantity(int $eventId): void
+    {
+        $isAjax = $this->isAjaxRequest();
+        $quantity = (int) ($_POST['quantity'] ?? 0);
+        $success = true;
+        $message = 'Planner quantity updated.';
 
-		try {
-			$this->planner->updateItemQuantity($eventId, $quantity);
-		} catch (RuntimeException | InvalidArgumentException $e) {
-			$success = false;
-			$message = $e->getMessage();
-		}
+        try {
+            $this->planner->updateItemQuantity($eventId, $quantity);
+        } catch (RuntimeException | InvalidArgumentException $e) {
+            $success = false;
+            $message = $e->getMessage();
+        }
 
-		if ($isAjax) {
-			$planner = $this->normalizeViewData($this->planner->getDetailedPlanner());
-			$item = null;
+        if ($isAjax) {
+            $planner = $this->planner->getDetailedPlanner();
+            $item = null;
 
-			foreach ((array) ($planner['items'] ?? []) as $plannerItem) {
-				if ((int) ($plannerItem['event_id'] ?? 0) === $eventId) {
-					$item = $plannerItem;
-					break;
-				}
-			}
+            foreach ((array) ($planner['items'] ?? []) as $plannerItem) {
+                if ((int) ($plannerItem['event_id'] ?? 0) === $eventId) {
+                    $item = $plannerItem;
+                    break;
+                }
+            }
 
-			$this->sendPlannerJsonResponse($success, $message, $planner, [
-				'event_id' => $eventId,
-				'item' => $item,
-				'action' => 'quantity',
-			]);
-		}
+            $this->sendPlannerJsonResponse($success, $message, $planner, [
+                'event_id' => $eventId,
+                'item' => $item,
+                'action' => 'quantity',
+            ]);
+        }
 
-		$this->planner->setFlash($success ? 'success' : 'error', $message);
+        $this->planner->setFlash($success ? 'success' : 'error', $message);
 
-		header('Location: /planner');
-		exit;
-	}
+        header('Location: /planner');
+        exit;
+    }
 
-	public function removeItem(int $eventId): void
-	{
-		$isAjax = $this->isAjaxRequest();
-		$success = true;
-		$message = 'Event removed from your planner.';
+    public function removeItem(int $eventId): void
+    {
+        $isAjax = $this->isAjaxRequest();
+        $success = true;
+        $message = 'Event removed from your planner.';
 
-		try {
-			$this->planner->removeItem($eventId);
-		} catch (RuntimeException | InvalidArgumentException $e) {
-			$success = false;
-			$message = $e->getMessage();
-		}
+        try {
+            $this->planner->removeItem($eventId);
+        } catch (RuntimeException | InvalidArgumentException $e) {
+            $success = false;
+            $message = $e->getMessage();
+        }
 
-		if ($isAjax) {
-			$planner = $this->normalizeViewData($this->planner->getDetailedPlanner());
-			$this->sendPlannerJsonResponse($success, $message, $planner, [
-				'event_id' => $eventId,
-				'action' => 'remove',
-			]);
-		}
+        if ($isAjax) {
+            $planner = $this->planner->getDetailedPlanner();
+            $this->sendPlannerJsonResponse($success, $message, $planner, [
+                'event_id' => $eventId,
+                'action' => 'remove',
+            ]);
+        }
 
-		$this->planner->setFlash($success ? 'success' : 'error', $message);
+        $this->planner->setFlash($success ? 'success' : 'error', $message);
 
-		header('Location: /planner');
-		exit;
-	}
+        header('Location: /planner');
+        exit;
+    }
 
-	public function clear(): void
-	{
-		$isAjax = $this->isAjaxRequest();
-		$success = true;
-		$message = 'Your personal planner was cleared.';
+    public function clear(): void
+    {
+        $isAjax = $this->isAjaxRequest();
+        $success = true;
+        $message = 'Your personal planner was cleared.';
 
-		try {
-			$this->planner->clear();
-		} catch (RuntimeException $e) {
-			$success = false;
-			$message = $e->getMessage();
-		}
+        try {
+            $this->planner->clear();
+        } catch (RuntimeException $e) {
+            $success = false;
+            $message = $e->getMessage();
+        }
 
-		if ($isAjax) {
-			$planner = $this->planner->getDetailedPlanner();
-			$this->sendPlannerJsonResponse($success, $message, $planner, [
-				'action' => 'clear',
-			]);
-		}
+        if ($isAjax) {
+            $planner = $this->planner->getDetailedPlanner();
+            $this->sendPlannerJsonResponse($success, $message, $planner, [
+                'action' => 'clear',
+            ]);
+        }
 
-		$this->planner->setFlash($success ? 'success' : 'error', $message);
+        $this->planner->setFlash($success ? 'success' : 'error', $message);
 
-		header('Location: /planner');
-		exit;
-	}
+        header('Location: /planner');
+        exit;
+    }
 
-	private function isAjaxRequest(): bool
-	{
-		$requestedWith = (string) ($_SERVER['HTTP_X_REQUESTED_WITH'] ?? '');
-		return strcasecmp($requestedWith, 'XMLHttpRequest') === 0;
-	}
+    private function isAjaxRequest(): bool
+    {
+        $requestedWith = (string) ($_SERVER['HTTP_X_REQUESTED_WITH'] ?? '');
+        return strcasecmp($requestedWith, 'XMLHttpRequest') === 0;
+    }
 
-	private function sendPlannerJsonResponse(bool $success, string $message, array $planner, array $payload = []): void
-	{
-		header('Content-Type: application/json; charset=utf-8');
-		http_response_code($success ? 200 : 422);
+    private function sendPlannerJsonResponse(bool $success, string $message, array $planner, array $payload = []): void
+    {
+        header('Content-Type: application/json; charset=utf-8');
+        http_response_code($success ? 200 : 422);
 
-		echo json_encode([
-			'success' => $success,
-			'message' => $message,
-			'planner' => [
-				'total_quantity' => (int) ($planner['total_quantity'] ?? 0),
-				'total_price' => (string) ($planner['total_price'] ?? '0.00'),
-				'is_locked' => (bool) ($planner['is_locked'] ?? false),
-				'is_empty' => (bool) ($planner['is_empty'] ?? false),
-				'time_conflicts' => (array) ($planner['time_conflicts'] ?? []),
-			],
-			'payload' => $payload,
-		]);
-		exit;
-	}
+        echo json_encode([
+            'success' => $success,
+            'message' => $message,
+            'planner' => [
+                'total_quantity' => (int) ($planner['total_quantity'] ?? 0),
+                'total_price' => (string) ($planner['total_price'] ?? '0.00'),
+                'is_empty' => (bool) ($planner['is_empty'] ?? false),
+                'time_conflicts' => (array) ($planner['time_conflicts'] ?? []),
+            ],
+            'payload' => $payload,
+        ]);
+        exit;
+    }
 
-	private function resolveReturnTo(string $returnTo): string
-	{
-		$returnTo = trim($returnTo);
+    private function resolveReturnTo(string $returnTo): string
+    {
+        $returnTo = trim($returnTo);
 
-		if ($returnTo === '' || $returnTo[0] !== '/') {
-			return '/planner';
-		}
+        if ($returnTo === '' || $returnTo[0] !== '/') {
+            return '/planner';
+        }
 
-		if (str_starts_with($returnTo, '//')) {
-			return '/planner';
-		}
+        if (str_starts_with($returnTo, '//')) {
+            return '/planner';
+        }
 
-		if (str_contains($returnTo, "\n") || str_contains($returnTo, "\r")) {
-			return '/planner';
-		}
+        if (str_contains($returnTo, "\n") || str_contains($returnTo, "\r")) {
+            return '/planner';
+        }
 
-		return $returnTo;
-	}
+        return $returnTo;
+    }
 
-	private function resolveEventIds($rawEventIds, int $fallbackEventId): array
-	{
-		if (is_array($rawEventIds)) {
-			$eventIds = array_values(array_unique(array_map('intval', $rawEventIds)));
-			$eventIds = array_values(array_filter($eventIds, static fn(int $eventId): bool => $eventId > 0));
+    private function resolveEventIds($rawEventIds, int $fallbackEventId): array
+    {
+        if (is_array($rawEventIds)) {
+            $eventIds = array_values(array_unique(array_map('intval', $rawEventIds)));
+            $eventIds = array_values(array_filter($eventIds, static fn(int $eventId): bool => $eventId > 0));
 
-			if ($eventIds !== []) {
-				return $eventIds;
-			}
-		}
+            if ($eventIds !== []) {
+                return $eventIds;
+            }
+        }
 
-		return $fallbackEventId > 0 ? [$fallbackEventId] : [];
-	}
-
-	/**
-	 * @param mixed $planner
-	 * @return array<string, mixed>
-	 */
-	private function normalizeViewData(mixed $planner): array
-	{
-		if (is_array($planner)) {
-			return $planner;
-		}
-
-		if (is_object($planner) && method_exists($planner, 'toArray')) {
-			/** @var array<string, mixed> $normalized */
-			$normalized = $planner->toArray();
-			return $normalized;
-		}
-
-		throw new RuntimeException('Planner data must be an array or expose toArray().');
-	}
+        return $fallbackEventId > 0 ? [$fallbackEventId] : [];
+    }
 }

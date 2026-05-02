@@ -2,14 +2,13 @@
 
 namespace App\Repositories;
 
-use App\Exceptions\UserConflictException;
 use App\Models\User;
 use App\Models\UserRole;
 use App\Repositories\Interfaces\IUserRepository;
 use PDO;
 use PDOException;
 
-class UserRepository extends BaseRepository implements IUserRepository
+class UserRepository implements IUserRepository
 {
     private PDO $pdo;
     private const USER_COLUMNS = 'user_id, username, email, role, password_hash, first_name, last_name, address, city, country, phone_number, created_at, password_reset_token, password_reset_expires_at';
@@ -54,7 +53,7 @@ class UserRepository extends BaseRepository implements IUserRepository
             ]);
         } catch (PDOException $e) {
             if ($this->isUniqueConstraintViolation($e)) {
-                throw new UserConflictException('That email or username is already in use.', 0, $e);
+                throw new \RuntimeException('That email or username is already in use.', 0, $e);
             }
 
             throw $e;
@@ -122,7 +121,7 @@ class UserRepository extends BaseRepository implements IUserRepository
             ]);
         } catch (PDOException $e) {
             if ($this->isUniqueConstraintViolation($e)) {
-                throw new UserConflictException('Username is already in use.', 0, $e);
+                throw new \RuntimeException('Username is already in use.', 0, $e);
             }
 
             throw $e;
@@ -176,7 +175,6 @@ class UserRepository extends BaseRepository implements IUserRepository
 
     public function deleteUser(int $id): bool
     {
-        $this->requireAdmin();
 
         $stmt = $this->pdo->prepare("DELETE FROM users WHERE user_id = :user_id");
         $stmt->execute([

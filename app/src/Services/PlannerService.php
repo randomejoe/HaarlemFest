@@ -7,139 +7,54 @@ use App\Models\PlannerItem;
 use App\Models\PlannerSummary;
 use App\Repositories\Interfaces\IEventRepository;
 use App\Services\Interfaces\IPlannerService;
-use App\Services\Interfaces\ISessionManager;
 use DateTimeImmutable;
 use InvalidArgumentException;
 use RuntimeException;
 
 class PlannerService implements IPlannerService
 {
-    private const LOCK_HOLD_DURATION_SECONDS = 600;
-
+    private const SESSION_KEY = 'planner';
+    private const FLASH_KEY = 'planner_flash';
     private IEventRepository $events;
-    private ISessionManager $session;
 
-    public function __construct(IEventRepository $events, ISessionManager $session)
+    public function __construct(IEventRepository $events)
     {
         $this->events = $events;
-        $this->session = $session;
-    }
-
-    public function getPlannerToken(): string
-    {
-        return $this->session->getPlannerToken();
+        $this->ensurePlannerState();
     }
 
     public function getItems(): array
     {
-        $planner = $this->session->getPlannerState();
+        $planner = $this->getPlannerState();
         $items = (array) ($planner['items'] ?? []);
         $filteredItems = $this->filterOutFreeItems($items);
 
         if ($filteredItems !== $items) {
             $planner['items'] = $filteredItems;
-            $this->session->setPlannerState($planner);
+            $this->savePlanner($planner);
         }
 
         return $filteredItems;
-    }
-
-    public function isLocked(): bool
-    {
-        return $this->getLockedCheckoutAttemptId() !== null;
-    }
-
-    public function getLockedCheckoutAttemptId(): ?int
-    {
-        $planner = $this->session->getPlannerState();
-        $attemptId = $planner['locked_checkout_attempt_id'];
-
-        if ($attemptId === null) {
-            return null;
-        }
-
-        $attemptIdInt = (int) $attemptId;
-        if ($attemptIdInt <= 0) {
-            return null;
-        }
-
-        $expiresAtUnix = $this->getLockedCheckoutExpiresAtUnix($planner);
-        if ($expiresAtUnix !== null && $expiresAtUnix <= time()) {
-            $this->unlock();
-            return null;
-        }
-
-        return $attemptIdInt;
-    }
-
-    public function lock(int $checkoutAttemptId, ?string $holdExpiresAt = null): void
-    {
-        $this->assertCheckoutAttemptId($checkoutAttemptId);
-
-        $planner = $this->session->getPlannerState();
-        $planner['locked_checkout_attempt_id'] = $checkoutAttemptId;
-        $planner['locked_checkout_expires_at'] = $this->computeLockExpiresAtUnix($holdExpiresAt);
-        $this->savePlanner($planner);
-    }
-
-    public function unlock(): void
-    {
-        $planner = $this->session->getPlannerState();
-        $planner['locked_checkout_attempt_id'] = null;
-        $planner['locked_checkout_expires_at'] = null;
-        $this->savePlanner($planner);
-    }
-
-    public function unlockIfAttemptId(int $checkoutAttemptId): void
-    {
-        $lockedAttemptId = $this->getLockedCheckoutAttemptId();
-        if ($lockedAttemptId === null) {
-            return;
-        }
-
-        if ($lockedAttemptId !== $checkoutAttemptId) {
-            return;
-        }
-
-        $this->unlock();
-    }
-
-    public function unlockIfExpired(array $expiredAttemptIds): bool
-    {
-        $attemptId = $this->getLockedCheckoutAttemptId();
-        if ($attemptId === null) {
-            return false;
-        }
-
-        $ids = array_values(array_unique(array_map('intval', $expiredAttemptIds)));
-        if (!in_array($attemptId, $ids, true)) {
-            return false;
-        }
-
-        $this->unlock();
-        return true;
     }
 
     public function addItem(int $eventId, int $quantity, ?string $familyTicket): void
     {
         $this->assertEventId($eventId);
         $this->assertQuantity($quantity);
-        $this->assertUnlocked();
 
         $event = $this->assertEventCanBePlanned($eventId);
 
-        $planner = $this->session->getPlannerState();
-        $current = (int) ($planner['items'][$eventId] ?? 0);
+        $planner = $this->getPlannerState();
+        $currentItem = $planner['items'][$eventId] ?? ['quantity' => 0, 'familyTicket' => false];
+        $current = $this->itemQuantity($currentItem);
         $requestedQuantity = $current + $quantity;
         $this->assertQuantityWithinAvailability($event, $requestedQuantity);
 
-        if (isset($familyTicket) && $familyTicket == 'on') {
-            $planner['items'][$eventId] = ["quantity" => $current + $quantity, "familyTicket" => true];
-        }
-        else {
-            $planner['items'][$eventId] = $current + $quantity;
-        }
-        
+        $planner['items'][$eventId] = [
+            'quantity' => $requestedQuantity,
+            'familyTicket' => $familyTicket === 'on' || (bool) ($currentItem['familyTicket'] ?? false),
+        ];
+
         $this->savePlanner($planner);
     }
 
@@ -153,19 +68,22 @@ class PlannerService implements IPlannerService
         }
 
         $this->assertQuantity($quantity);
-        $this->assertUnlocked();
 
-        $planner = $this->session->getPlannerState();
+        $planner = $this->getPlannerState();
 
         foreach ($ids as $eventId) {
             $event = $this->assertEventCanBePlanned($eventId);
-            $current = (int) ($planner['items'][$eventId] ?? 0);
+            $current = $this->itemQuantity($planner['items'][$eventId] ?? ['quantity' => 0, 'familyTicket' => false]);
             $requestedQuantity = $current + $quantity;
             $this->assertQuantityWithinAvailability($event, $requestedQuantity);
         }
 
         foreach ($ids as $eventId) {
-            $planner['items'][$eventId] = (int) ($planner['items'][$eventId] ?? 0) + $quantity;
+            $currentItem = $planner['items'][$eventId] ?? ['quantity' => 0, 'familyTicket' => false];
+            $planner['items'][$eventId] = [
+                'quantity' => $this->itemQuantity($currentItem) + $quantity,
+                'familyTicket' => (bool) ($currentItem['familyTicket'] ?? false),
+            ];
         }
 
         $this->savePlanner($planner);
@@ -177,9 +95,8 @@ class PlannerService implements IPlannerService
     {
         $this->assertEventId($eventId);
         $this->assertQuantity($quantity);
-        $this->assertUnlocked();
 
-        $planner = $this->session->getPlannerState();
+        $planner = $this->getPlannerState();
 
         if (!isset($planner['items'][$eventId])) {
             throw new RuntimeException('This event is not in your planner.');
@@ -188,71 +105,50 @@ class PlannerService implements IPlannerService
         $event = $this->assertEventCanBePlanned($eventId);
         $this->assertQuantityWithinAvailability($event, $quantity);
 
-        if (isset($planner['items'][$eventId]['familyTicket'])) {
-            $planner['items'][$eventId] = ['quantity' => $quantity, 'familyTicket' => $planner['items'][$eventId]['familyTicket']];
-        }
-        else {
-            $planner['items'][$eventId] = $quantity;
-        }
+        $planner['items'][$eventId] = [
+            'quantity' => $quantity,
+            'familyTicket' => (bool) ($planner['items'][$eventId]['familyTicket'] ?? false),
+        ];
         $this->savePlanner($planner);
     }
 
     public function removeItem(int $eventId): void
     {
         $this->assertEventId($eventId);
-        $this->assertUnlocked();
 
-        $planner = $this->session->getPlannerState();
+        $planner = $this->getPlannerState();
         unset($planner['items'][$eventId]);
         $this->savePlanner($planner);
     }
 
     public function clear(): void
     {
-        $this->assertUnlocked();
-
-        $planner = $this->session->getPlannerState();
+        $planner = $this->getPlannerState();
         $planner['items'] = [];
         $this->savePlanner($planner);
     }
 
-    public function getIdempotencyKey(): string
-    {
-        $planner = $this->session->getPlannerState();
-        return (string) $planner['idempotency_key'];
-    }
-
-    public function rotateIdempotencyKey(): string
-    {
-        $planner = $this->session->getPlannerState();
-        $planner['idempotency_key'] = $this->session->generateToken();
-        $this->savePlanner($planner);
-        return $planner['idempotency_key'];
-    }
-
-    public function shouldRunExpiryCleanup(int $cooldownSeconds): bool
-    {
-        return $this->session->shouldRunExpiryCleanup($cooldownSeconds);
-    }
-
-    public function markExpiryCleanupRun(?int $timestamp = null): void
-    {
-        $this->session->markExpiryCleanupRun($timestamp);
-    }
-
-    public function resetExpiryCleanupRun(): void
-    {
-        $this->session->resetExpiryCleanupRun();
-    }
-
     public function setFlash(string $type, string $message): void
     {
-        $this->session->setFlash($type, $message);
+        $_SESSION[self::FLASH_KEY] = [
+            'type' => $type,
+            'message' => $message,
+        ];
     }
 
     public function consumeFlash(): ?array
     {
-        return $this->session->consumeFlash();
+        if (!isset($_SESSION[self::FLASH_KEY]) || !is_array($_SESSION[self::FLASH_KEY])) {
+            return null;
+        }
+
+        $flash = $_SESSION[self::FLASH_KEY];
+        unset($_SESSION[self::FLASH_KEY]);
+
+        return [
+            'type' => (string) ($flash['type'] ?? 'info'),
+            'message' => (string) ($flash['message'] ?? ''),
+        ];
     }
 
     public function getDetailedPlanner(): array
@@ -261,13 +157,6 @@ class PlannerService implements IPlannerService
         $eventIds = array_map('intval', array_keys($items));
         $eventsById = $this->events->findByIds($eventIds);
         $summary = PlannerSummary::fromRawItems($items, $eventsById);
-        $plannerState = $this->session->getPlannerState();
-        $lockedCheckoutAttemptId = $this->getLockedCheckoutAttemptId();
-        $lockExpiresAtUnix = $this->getLockedCheckoutExpiresAtUnix($plannerState);
-        $lockExpiresInSeconds = null;
-        if ($lockExpiresAtUnix !== null) {
-            $lockExpiresInSeconds = max(0, $lockExpiresAtUnix - time());
-        }
 
         // Convert PlannerItem objects to plain arrays so that views and
         // downstream services (CheckoutService) continue to receive the same
@@ -286,11 +175,6 @@ class PlannerService implements IPlannerService
             'is_empty' => $summary->isEmpty(),
             'has_invalid_items' => $summary->hasInvalidItems(),
             'invalid_item_ids' => $summary->invalidItemIds(),
-            'locked_checkout_attempt_id' => $lockedCheckoutAttemptId,
-            'locked_checkout_expires_at_unix' => $lockExpiresAtUnix,
-            'lock_expires_in_seconds' => $lockExpiresInSeconds,
-            'is_locked' => $lockedCheckoutAttemptId !== null,
-            'idempotency_key' => $this->getIdempotencyKey(),
             'time_conflicts' => $this->detectTimeConflicts($summary->conflictItems()),
             'time_conflict_pairs' => $this->detectTimeConflictPairs($summary->conflictItems()),
         ];
@@ -299,62 +183,10 @@ class PlannerService implements IPlannerService
     private function savePlanner(array $planner): void
     {
         $planner['updated_at'] = time();
-        $this->session->setPlannerState($planner);
-    }
-
-    private function computeLockExpiresAtUnix(?string $holdExpiresAt): int
-    {
-        if ($holdExpiresAt !== null) {
-            $holdExpiresAt = trim($holdExpiresAt);
-        }
-
-        if ($holdExpiresAt !== null && $holdExpiresAt !== '') {
-            $expiryTimestamp = strtotime($holdExpiresAt);
-            if ($expiryTimestamp !== false && $expiryTimestamp > 0) {
-                return $expiryTimestamp;
-            }
-        }
-
-        // Fallback: if we don't have the checkout hold expiry, approximate using
-        // the hold duration used elsewhere in the checkout flow.
-        return time() + self::LOCK_HOLD_DURATION_SECONDS;
-    }
-
-    private function getLockedCheckoutExpiresAtUnix(array $planner): ?int
-    {
-        $expiresAt = $planner['locked_checkout_expires_at'] ?? null;
-        if ($expiresAt === null) {
-            return null;
-        }
-
-        if (is_int($expiresAt)) {
-            return $expiresAt > 0 ? $expiresAt : null;
-        }
-
-        if (is_string($expiresAt) && $expiresAt !== '' && ctype_digit($expiresAt)) {
-            $expiresAtInt = (int) $expiresAt;
-            return $expiresAtInt > 0 ? $expiresAtInt : null;
-        }
-
-        // Fallback: if a legacy planner lock doesn't have `locked_checkout_expires_at`,
-        // derive an expiry timestamp based on the last planner touch time.
-        if (!isset($planner['updated_at'])) {
-            return null;
-        }
-
-        $updatedAt = (int) $planner['updated_at'];
-        if ($updatedAt <= 0) {
-            return null;
-        }
-
-        return $updatedAt + self::LOCK_HOLD_DURATION_SECONDS;
-    }
-
-    private function assertCheckoutAttemptId(int $checkoutAttemptId): void
-    {
-        if ($checkoutAttemptId <= 0) {
-            throw new InvalidArgumentException('Invalid checkout attempt id.');
-        }
+        $_SESSION[self::SESSION_KEY] = [
+            'items' => $this->normalizeItems((array) ($planner['items'] ?? [])),
+            'updated_at' => (int) $planner['updated_at'],
+        ];
     }
 
     private function assertEventId(int $eventId): void
@@ -371,29 +203,53 @@ class PlannerService implements IPlannerService
         }
     }
 
-    private function assertUnlocked(): void
+    private function itemQuantity(array $item): int
     {
-        if ($this->isLocked()) {
-            throw new RuntimeException('Your planner is locked while payment is pending.');
-        }
+        return max(0, (int) ($item['quantity'] ?? 0));
     }
 
     private function normalizeItems(array $items): array
     {
         $normalized = [];
 
-        foreach ($items as $eventIdRaw => $quantityRaw) {
+        foreach ($items as $eventIdRaw => $item) {
             $eventId = (int) $eventIdRaw;
-            $quantity = (int) $quantityRaw;
+            $quantity = max(0, (int) ($item['quantity'] ?? 0));
+            $familyTicket = (bool) ($item['familyTicket'] ?? false);
 
             if ($eventId <= 0 || $quantity <= 0) {
                 continue;
             }
 
-            $normalized[$eventId] = $quantity;
+            $normalized[$eventId] = [
+                'quantity' => $quantity,
+                'familyTicket' => $familyTicket,
+            ];
         }
 
         return $normalized;
+    }
+
+    private function getPlannerState(): array
+    {
+        $this->ensurePlannerState();
+
+        return (array) $_SESSION[self::SESSION_KEY];
+    }
+
+    private function ensurePlannerState(): void
+    {
+        if (!isset($_SESSION[self::SESSION_KEY]) || !is_array($_SESSION[self::SESSION_KEY])) {
+            $_SESSION[self::SESSION_KEY] = [
+                'items' => [],
+                'updated_at' => time(),
+            ];
+        }
+
+        $_SESSION[self::SESSION_KEY]['items'] = $this->normalizeItems(
+            (array) ($_SESSION[self::SESSION_KEY]['items'] ?? [])
+        );
+        $_SESSION[self::SESSION_KEY]['updated_at'] = (int) ($_SESSION[self::SESSION_KEY]['updated_at'] ?? time());
     }
 
     private function filterOutFreeItems(array $items): array
@@ -406,7 +262,7 @@ class PlannerService implements IPlannerService
         $eventsById = $this->events->findByIds($eventIds);
         $filtered = [];
 
-        foreach ($items as $eventIdRaw => $quantityRaw) {
+        foreach ($items as $eventIdRaw => $item) {
             $eventId = (int) $eventIdRaw;
             $event = $eventsById[$eventId] ?? null;
 
@@ -414,12 +270,10 @@ class PlannerService implements IPlannerService
                 continue;
             }
 
-            if (isset($quantityRaw['familyTicket']) && $quantityRaw['familyTicket']) {
-                $filtered[$eventId] = ['quantity' => (int) $quantityRaw['quantity'], 'familyTicket' => $quantityRaw['familyTicket']];
-            }
-            else {
-                $filtered[$eventId] = (int) $quantityRaw;
-            }
+            $filtered[$eventId] = [
+                'quantity' => (int) $item['quantity'],
+                'familyTicket' => (bool) $item['familyTicket'],
+            ];
         }
         return $filtered;
     }

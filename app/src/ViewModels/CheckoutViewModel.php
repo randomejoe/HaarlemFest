@@ -16,7 +16,6 @@ final class CheckoutViewModel
         private PlannerSummary $planner,
         private User $user,
         private bool $requiresDetails,
-        private string $idempotencyKey,
         private array $missingDetails = [],
         private ?array $flash = null,
         private ?string $csrfToken = null
@@ -38,26 +37,18 @@ final class CheckoutViewModel
         return $this->requiresDetails;
     }
 
-    public function idempotencyKey(): string
-    {
-        return $this->idempotencyKey;
-    }
-
     /**
      * @return array<string, mixed>
      */
     public function toArray(): array
     {
         return [
-            'planner' => array_merge($this->planner->toArray(), [
-                'idempotency_key' => $this->idempotencyKey,
-            ]),
+            'planner' => $this->planner->toArray(),
             'user' => $this->user,
             'requires_details' => $this->requiresDetails,
             'missing_details' => $this->missingDetails,
             'flash' => $this->flash,
             'csrf_token' => $this->csrfToken,
-            'idempotency_key' => $this->idempotencyKey,
         ];
     }
 }

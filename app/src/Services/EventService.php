@@ -5,8 +5,9 @@ namespace App\Services;
 use App\Models\Event;
 use App\Repositories\Interfaces\IEventRepository;
 use App\Repositories\Interfaces\IPageRepository;
+use App\Services\Interfaces\ICmsService;
 
-class EventService implements CMSService
+class EventService implements ICmsService
 {
     private IEventRepository $repository;
     private IPageRepository $pageRepository;

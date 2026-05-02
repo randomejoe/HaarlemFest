@@ -12,13 +12,11 @@ if (isset($eventService)) {
 // Planner state for the sticky bar at the bottom of the overlay
 $jazzPlannerCount  = 0;
 $jazzPlannerTotal  = '0.00';
-$jazzPlannerLocked = false;
 $jazzPlannerFlash  = null;
 if (isset($plannerService)) {
 	$jazzPlannerDetails = $plannerService->getDetailedPlanner();
 	$jazzPlannerCount   = (int) $jazzPlannerDetails['total_quantity'];
 	$jazzPlannerTotal   = (string) $jazzPlannerDetails['total_price'];
-	$jazzPlannerLocked  = (bool) $jazzPlannerDetails['is_locked'];
 	$jazzPlannerFlash   = $plannerService->consumeFlash();
 }
 
@@ -134,7 +132,7 @@ $jazzReturnTo = (parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?: '/')
 																class="jazz-add-btn hf-planner-submit-btn"
 																data-adding-label="Adding..."
 																data-submit-delay-ms="650"
-																<?php echo !empty($jazzPlannerLocked) ? 'disabled' : ''; ?>>
+																>
 																Add to Planner
 															</button>
 														</form>
@@ -157,9 +155,6 @@ $jazzReturnTo = (parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?: '/')
 			<div class="jazz-planner-copy">
 				<h2>Your Personal Planner</h2>
 				<p><span data-planner-count><?php echo (int) $jazzPlannerCount; ?></span> <span data-planner-item-label><?php echo (int) $jazzPlannerCount === 1 ? 'item' : 'items'; ?></span> &bull; Total: &euro;<span data-planner-total><?php echo hf_e($jazzPlannerTotal); ?></span></p>
-				<?php if (!empty($jazzPlannerLocked)): ?>
-					<p class="jazz-lock-note">Planner is locked while payment is pending.</p>
-				<?php endif; ?>
 			</div>
 			<div class="jazz-planner-actions">
 				<a href="/planner" class="jazz-outline-btn">View Planner</a>

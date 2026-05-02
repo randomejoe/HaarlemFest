@@ -24,16 +24,13 @@ use App\Repositories\EventRepository;
 use App\Repositories\LocationRepository;
 use App\Repositories\OrderRepository;
 use App\Repositories\PageRepository;
-use App\Repositories\TicketHoldRepository;
 use App\Repositories\UserRepository;
 use App\Services\AccountService;
 use App\Services\AuthService;
 use App\Services\CaptchaService;
-use App\Services\CheckoutHoldManager;
 use App\Services\CheckoutService;
 use App\Services\ContentService;
 use App\Services\CsrfService;
-use App\Services\DateTimeFormatter;
 use App\Services\EventService;
 use App\Services\InvoicePdfService;
 use App\Services\LocationService;
@@ -41,12 +38,8 @@ use App\Services\Mailer;
 use App\Services\OrderService;
 use App\Services\PageService;
 use App\Services\PasswordResetService;
-use App\Services\PaymentGatewayStubService;
-use App\Services\PaymentHandoffService;
-use App\Services\PlannerService;
 use App\Services\PdoTransactionManager;
-use App\Services\SessionManager;
-use App\Services\StockReservationService;
+use App\Services\PlannerService;
 use App\Services\TicketDeliveryService;
 use App\Services\TicketPdfService;
 use App\Services\UserService;
@@ -55,6 +48,14 @@ use App\View;
 use function FastRoute\simpleDispatcher;
 
 session_start();
+
+set_exception_handler(static function (\Throwable $e): void {
+    error_log((string) $e);
+    if (!headers_sent()) {
+        http_response_code(500);
+    }
+    require __DIR__ . '/../src/Views/error.php';
+});
 
 $factories = [];
 $singletons = [];
@@ -91,7 +92,6 @@ $registerSingleton(EventRepository::class, static fn(callable $get): EventReposi
 $registerSingleton(UserRepository::class, static fn(callable $get): UserRepository => new UserRepository($get(PDO::class)));
 $registerSingleton(CheckoutRepository::class, static fn(callable $get): CheckoutRepository => new CheckoutRepository($get(PDO::class)));
 $registerSingleton(OrderRepository::class, static fn(callable $get): OrderRepository => new OrderRepository($get(PDO::class)));
-$registerSingleton(TicketHoldRepository::class, static fn(callable $get): TicketHoldRepository => new TicketHoldRepository($get(PDO::class)));
 $registerSingleton(PageRepository::class, static fn(callable $get): PageRepository => new PageRepository($get(PDO::class)));
 $registerSingleton(LocationRepository::class, static fn(callable $get): LocationRepository => new LocationRepository($get(PDO::class)));
 
@@ -101,51 +101,23 @@ $registerSingleton(CsrfService::class, static fn(callable $get): CsrfService => 
 $registerSingleton(Mailer::class, static fn(callable $get): Mailer => new Mailer());
 $registerSingleton(TicketPdfService::class, static fn(callable $get): TicketPdfService => new TicketPdfService());
 $registerSingleton(InvoicePdfService::class, static fn(callable $get): InvoicePdfService => new InvoicePdfService());
-$registerSingleton(PaymentGatewayStubService::class, static fn(callable $get): PaymentGatewayStubService => new PaymentGatewayStubService());
-$registerSingleton(DateTimeFormatter::class, static fn(callable $get): DateTimeFormatter => new DateTimeFormatter());
-$registerSingleton(SessionManager::class, static fn(callable $get): SessionManager => new SessionManager());
-$registerSingleton(PdoTransactionManager::class, static fn(callable $get): PdoTransactionManager => new PdoTransactionManager($get(PDO::class)));
 
 $registerSingleton(PlannerService::class, static fn(callable $get): PlannerService => new PlannerService(
-    $get(EventRepository::class),
-    $get(SessionManager::class)
-));
-
-$registerSingleton(StockReservationService::class, static fn(callable $get): StockReservationService => new StockReservationService(
-    $get(EventRepository::class),
-    $get(TicketHoldRepository::class),
-    $get(DateTimeFormatter::class)
-));
-
-$registerSingleton(CheckoutHoldManager::class, static fn(callable $get): CheckoutHoldManager => new CheckoutHoldManager(
-    $get(TicketHoldRepository::class),
-    $get(CheckoutRepository::class),
-    $get(EventRepository::class),
-    $get(DateTimeFormatter::class),
-    $get(PDO::class)
-));
-
-$registerSingleton(PaymentHandoffService::class, static fn(callable $get): PaymentHandoffService => new PaymentHandoffService(
-    $get(PaymentGatewayStubService::class)
+    $get(EventRepository::class)
 ));
 
 $registerSingleton(TicketDeliveryService::class, static fn(callable $get): TicketDeliveryService => new TicketDeliveryService(
     $get(Mailer::class),
     $get(TicketPdfService::class),
-    $get(InvoicePdfService::class),
-    $get(DateTimeFormatter::class)
+    $get(InvoicePdfService::class)
 ));
 
 $registerSingleton(CheckoutService::class, static fn(callable $get): CheckoutService => new CheckoutService(
     $get(PDO::class),
     $get(PlannerService::class),
     $get(CheckoutRepository::class),
-    $get(CheckoutHoldManager::class),
-    $get(DateTimeFormatter::class),
-    $get(StockReservationService::class),
-    $get(PaymentHandoffService::class),
-    $get(TicketDeliveryService::class),
-    $get(UserRepository::class)
+    $get(UserRepository::class),
+    $get(TicketDeliveryService::class)
 ));
 
 $registerSingleton(PasswordResetService::class, static fn(callable $get): PasswordResetService => new PasswordResetService(
@@ -173,7 +145,7 @@ $registerSingleton(EventService::class, static fn(callable $get): EventService =
 
 $registerSingleton(ContentService::class, static fn(callable $get): ContentService => new ContentService(
     $get(PageRepository::class),
-    $get(PdoTransactionManager::class)
+    new PdoTransactionManager($get(PDO::class))
 ));
 
 $registerSingleton(LocationService::class, static fn(callable $get): LocationService => new LocationService(
@@ -241,8 +213,6 @@ $dispatcher = simpleDispatcher(function (RouteCollector $r) {
     $r->addRoute('GET', '/checkout', ['App\Controllers\CheckoutController', 'show']);
     $r->addRoute('POST', '/checkout/details', ['App\Controllers\CheckoutController', 'saveDetails']);
     $r->addRoute('POST', '/checkout/confirm', ['App\Controllers\CheckoutController', 'confirm']);
-    $r->addRoute('GET', '/checkout/pending/{checkoutId}', ['App\Controllers\CheckoutController', 'pending']);
-    $r->addRoute('POST', '/checkout/pending/{checkoutId}/confirm', ['App\Controllers\CheckoutController', 'confirmPendingPayment']);
     $r->addRoute('GET', '/register', ['App\Controllers\AuthController', 'showRegister']);
     $r->addRoute('POST', '/register', ['App\Controllers\AuthController', 'register']);
     $r->addRoute('GET', '/login', ['App\Controllers\AuthController', 'showLogin']);

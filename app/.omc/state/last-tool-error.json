@@ -1,0 +1,7 @@
+{
+  "tool_name": "Bash",
+  "tool_input_preview": "{\"command\":\"docker exec haarlemfest-mysql-1 mariadb -u developer -psecret123 developmentdb -e \\\"SELECT user_id, username, email, role FROM users LIMIT 10;\\\" 2>&1\",\"description\":\"List users from DB\"}",
+  "error": "Exit code 1\n--------------\nSELECT user_id, username, email, role FROM users LIMIT 10\n--------------\n\nERROR 1146 (42S02) at line 1: Table 'developmentdb.users' doesn't exist",
+  "timestamp": "2026-04-22T21:06:05.996Z",
+  "retry_count": 6
+}

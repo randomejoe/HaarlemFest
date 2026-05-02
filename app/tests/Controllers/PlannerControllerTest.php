@@ -26,7 +26,6 @@ final class PlannerControllerTest extends TestCase
             ->willReturn([
                 'total_quantity' => 2,
                 'total_price' => '24.50',
-                'is_locked' => false,
                 'is_empty' => false,
                 'time_conflicts' => [],
                 'items' => [],

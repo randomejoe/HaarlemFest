@@ -3,12 +3,13 @@
 namespace App\Services;
 
 use App\Repositories\Interfaces\IOrderRepository;
+use App\Services\Interfaces\ICmsService;
 use App\Services\Interfaces\IOrderService;
 
-class OrderService implements CMSService, IOrderService
+class OrderService implements ICmsService, IOrderService
 {
     private IOrderRepository $repository;
-    
+
     public function __construct(IOrderRepository $repository)
     {
         $this->repository = $repository;
@@ -31,15 +32,15 @@ class OrderService implements CMSService, IOrderService
     }
 
     // You can't edit orders
-    public function update(int $id, array $postData): bool
+    public function update(int $id, array $postData)
     {
-        return false;
+        throw new \BadMethodCallException('Unable to edit orders through CMS');
     }
 
     // Can't delete orders either
-    public function delete(int $id): bool
+    public function delete(int $id)
     {
-        return false;
+        throw new \BadMethodCallException('Unable to delete orders through CMS');
     }
 
     public function getAll()
