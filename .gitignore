@@ -44,3 +44,6 @@ docker-compose.override.yml
 # Claude Code local config (untracked)
 .claude/
 
+# Local agent state
+.omc/
+.omx/
