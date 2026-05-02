@@ -4,7 +4,7 @@ namespace App\Services;
 
 use App\Repositories\Interfaces\IPageRepository;
 
-class PageService implements CMSService
+class PageService implements CMSServiceInterface
 {
     private IPageRepository $repository;
 
@@ -17,13 +17,15 @@ class PageService implements CMSService
         return $this->repository->getAllPages();
     }
     public function getPage($page) {
-        if (is_numeric($page)) {
-            return $this->repository->getPageById($page);
+        try {
+            $result = is_numeric($page) ? $this->repository->getPageById($page) : $this->repository->getPageByName(str_replace("_", " ", $page));
+            
+            return $result;
         }
-        else {
-            $pageName = str_replace("_", " ", $page);
-            return $this->repository->getPageByName($pageName);
+        catch (\Throwable $e) {
+            return null;
         }
+        
     }
 
     public function create(array $postData): bool 
@@ -38,10 +40,15 @@ class PageService implements CMSService
 
     public function getForEdit(int $id)
     {
-       return $this->repository->getPageForEdit($id);
+        try {
+            return $this->repository->getPageForEdit($id);
+        }
+        catch (\Throwable $e) {
+            return null;
+        }
     }
 
-    public function update(int $id, array $postData): bool {
+    public function update(int $id, array $postData) {
         if (isset($postData['newContent'])) {
             return $this->repository->addContentItemToPage($id, $postData['newContent']);
         }
@@ -49,7 +56,7 @@ class PageService implements CMSService
             return $this->repository->updatePage($id, $postData);
         }
     }
-    public function delete(int $id): bool {
+    public function delete(int $id) {
         return $this->repository->deletePage($id);
     }
 }

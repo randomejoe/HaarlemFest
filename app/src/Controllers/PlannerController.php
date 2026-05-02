@@ -4,6 +4,7 @@ namespace App\Controllers;
 
 use App\Services\Interfaces\IPlannerService;
 use App\View;
+use App\Models\FlashType;
 use InvalidArgumentException;
 use RuntimeException;
 
@@ -55,7 +56,7 @@ class PlannerController
         } catch (RuntimeException | InvalidArgumentException $e) {
             $success = false;
             $message = $e->getMessage();
-            $this->planner->setFlash('error', $message);
+            $this->planner->setFlash(FlashType::Error, $message);
         }
 
         if ($isAjax) {
@@ -99,7 +100,7 @@ class PlannerController
             ]);
         }
 
-        $this->planner->setFlash($success ? 'success' : 'error', $message);
+        $this->planner->setFlash($success ? FlashType::Success : FlashType::Error, $message);
 
         header('Location: /planner');
         exit;
@@ -126,7 +127,7 @@ class PlannerController
             ]);
         }
 
-        $this->planner->setFlash($success ? 'success' : 'error', $message);
+        $this->planner->setFlash($success ? FlashType::Success : FlashType::Error, $message);
 
         header('Location: /planner');
         exit;
@@ -152,7 +153,7 @@ class PlannerController
             ]);
         }
 
-        $this->planner->setFlash($success ? 'success' : 'error', $message);
+        $this->planner->setFlash($success ? FlashType::Success : FlashType::Error, $message);
 
         header('Location: /planner');
         exit;

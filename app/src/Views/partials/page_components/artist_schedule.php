@@ -4,7 +4,8 @@ require_once __DIR__ . '/../../helpers.php';
 hf_register_component('artist_schedule');
 
 $componentData = is_array($data ?? null) ? $data : [];
-$artistName = trim((string) ($pageContentItem['title'] ?? ''));
+
+$artistName = trim((string) ($pageContentItem->getName() ?? ''));
 
 if ($artistName === '') {
 	return;
@@ -13,14 +14,9 @@ if ($artistName === '') {
 $sectionId = hf_normalize_section_id($componentData['section_id'] ?? 'schedule', 'schedule');
 $titleId = $sectionId . '-title';
 $ticketsCtaUrl = hf_data($componentData, 'tickets_cta_url', '/jazz');
-$scheduleEvents = [];
-
-if (isset($eventService) && method_exists($eventService, 'getArtistScheduleData')) {
-	$scheduleEvents = $eventService->getArtistScheduleData($artistName);
-}
 
 $plannableEventIds = [];
-foreach ($scheduleEvents as $scheduleEvent) {
+foreach ($data['scheduleEvents'] as $scheduleEvent) {
 	if (!empty($scheduleEvent['can_add_to_planner'])) {
 		$plannableEventIds[] = (int) $scheduleEvent['id'];
 	}
@@ -42,7 +38,7 @@ $selectionFormId = 'ars-add-form-' . preg_replace('/[^a-z0-9_-]+/i', '-', strtol
 			<span class="ars-section-heading-line" aria-hidden="true"></span>
 		</div>
 
-		<?php if ($scheduleEvents !== []): ?>
+		<?php if ($data['scheduleEvents'] !== []): ?>
 			<div class="ars-table-wrap">
 				<div class="ars-table" role="table" aria-label="Artist schedule">
 					<div class="ars-table-header" role="row">
@@ -54,7 +50,7 @@ $selectionFormId = 'ars-add-form-' . preg_replace('/[^a-z0-9_-]+/i', '-', strtol
 					</div>
 
 					<?php $hasDefaultSelectedEvent = false; ?>
-					<?php foreach ($scheduleEvents as $scheduleEvent): ?>
+					<?php foreach ($data['scheduleEvents'] as $scheduleEvent): ?>
 						<?php
 						$canSelect = !empty($scheduleEvent['can_add_to_planner']);
 						$isSelected = $canSelect && !$hasDefaultSelectedEvent;

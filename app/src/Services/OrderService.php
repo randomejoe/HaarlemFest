@@ -3,10 +3,9 @@
 namespace App\Services;
 
 use App\Repositories\Interfaces\IOrderRepository;
-use App\Services\Interfaces\ICmsService;
 use App\Services\Interfaces\IOrderService;
 
-class OrderService implements ICmsService, IOrderService
+class OrderService implements CMSServiceInterface, IOrderService
 {
     private IOrderRepository $repository;
 

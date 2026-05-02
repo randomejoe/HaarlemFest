@@ -6,7 +6,7 @@ use App\Repositories\LocationRepository;
 use App\Models\Location;
 use App\Services\ImageUploader;
 
-class LocationService implements CMSService
+class LocationService implements CMSServiceInterface
 {
     private LocationRepository $repository;
 
@@ -14,6 +14,7 @@ class LocationService implements CMSService
     {
         $this->repository = $repository;
     }
+
     public function getForEdit(int $id)
     {
         return $this->repository->getLocationForEdit($id);
@@ -33,7 +34,7 @@ class LocationService implements CMSService
         return $this->repository->updateLocation($location);
     }
 
-    public function update(int $id, array $postData): bool
+    public function update(int $id, array $postData)
     {
         $postData['location_id'] = $id;
 

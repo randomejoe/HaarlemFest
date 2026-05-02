@@ -18,7 +18,7 @@ interface IPlannerService
 
 	public function clear(): void;
 
-	public function setFlash(string $type, string $message): void;
+	public function setFlash(\App\Models\FlashType $type, string $message): void;
 
 	public function consumeFlash(): ?array;
 }

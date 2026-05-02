@@ -1,21 +1,17 @@
-<?php use App\Models\CmsType; ?>
+<?php 
+    use App\Models\CmsType;
+    use App\Models\FlashType;
+?>
 <div>
     <?php include __DIR__ . '/../partials/cms/cms_nav.php';?>
     <div class='horizontal-center vertical-center'>
         <div class='cms-container'>
             <?php 
-                if (isset($_SESSION['create_success']) && isset($_SESSION['create_title'])) {
-                    if ($_SESSION['create_success']) {
-                        $message = 'Successfully added ' . $type->value . ' ' . $_SESSION['create_title'];
-                        $notification_type = 'success';
-                    }
-                    else {
-                        $message = 'Failed to add page ' . $_SESSION['create_title'];
-                        $notification_type = 'failure';
-                    }
+                if (isset($flash)) {
+                    $message = $flash['message'];
+                    $notification_type = $flash['type'];
+
                     require __DIR__ . '/../partials/cms/notification.php';
-                    unset($_SESSION['create_success']);
-                    unset($_SESSION['create_title']);
                 }
             ?>
             <div class='between row'>

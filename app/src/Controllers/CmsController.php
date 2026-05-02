@@ -8,10 +8,11 @@ use App\Services\EventService;
 use App\Services\LocationService;
 use App\Services\UserService;
 use App\Services\OrderService;
+use App\Services\SessionManager;
 use App\View;
 use App\Models\UserRole;
 use App\Models\CmsType;
-
+use App\Models\FlashType;
 class CmsController
 {
     private PageService $pageService;
@@ -21,7 +22,9 @@ class CmsController
     private UserService $userService;
     private OrderService $orderService;
 
-    public function __construct(PageService $pageService, ContentService $contentService, EventService $eventService, LocationService $locationService, UserService $userService, OrderService $orderService)
+    private SessionManager $sessionManager;
+
+    public function __construct(PageService $pageService, ContentService $contentService, EventService $eventService, LocationService $locationService, UserService $userService, OrderService $orderService, SessionManager $manager)
     {
         $this->pageService = $pageService;
         $this->contentService = $contentService;
@@ -29,12 +32,9 @@ class CmsController
         $this->locationService = $locationService;
         $this->userService = $userService;
         $this->orderService = $orderService;
+        $this->sessionManager = $manager;
 
-        if (!isset($_SESSION['role'])) {
-            header('Location: /');
-        }
-        $role = UserRole::from($_SESSION['role']);
-        if (!isset($role) || !$role->isAdmin()) {
+        if ($this->requireAdmin()) {
             header('Location: /');
         }
     }
@@ -48,23 +48,45 @@ class CmsController
     {
         $type = CmsType::convertToType($type);
         $service = $this->resolveService($type);
-        $items = $service->getAll();
-        if ($type == CmsType::Event) {
-            $categories = $service->getCategories();
+        try {
+            $items = $service->getAll();
+
+            if ($type == CmsType::Event) {
+                $categories = $service->getCategories();
+            }
+            
+            if ($items == []) {
+                $this->sessionManager->setFlash(FlashType::Error, 'No items could be fetched.');
+            }
+        }
+        catch (\Throwable $e) {
+            $this->sessionManager->setFlash(FlashType::Error, 'An error occurred while trying to fetch items.');
+            $items = [];
         }
 
-        echo View::render('/../Views/cms/item_list', ['items' => $items, 'type' => $type, 'categories' => $categories ?? null]);
+        $flash = $this->sessionManager->consumeFlash();
+        echo View::render('/../Views/cms/item_list', ['items' => $items, 'type' => $type, 'categories' => $categories ?? null, 'flash' => $flash]);
     }
     public function showItemsByCategory(string $type, string $category): void
     {
         $type = CmsType::convertToType($type);
-        $service = $this->resolveService($type);
         $category = urldecode($category);
-        $items = $service->getAllInCategory($category);
-        if ($type == CmsType::Event) {
-            $categories = $service->getCategories();
-        }
+        $service = $this->resolveService($type);
+        try {
+            $items = $service->getAllInCategory($category);
+            if ($type == CmsType::Event) {
+                $categories = $service->getCategories();
+            }
 
+            if ($items == []) {
+                $this->sessionManager->setFlash(FlashType::Error, 'No items could be fetched.');
+            }
+        }
+        catch (\Throwable $e) {
+            $this->sessionManager->setFlash(FlashType::Error, 'An error occurred while trying to fetch items.');
+            $items = [];
+        }
+        
         echo View::render('/../Views/cms/item_list', ['items' => $items, 'type' => $type, 'categories' => $categories, 'currentCategory' => $category]);
     }
 
@@ -73,13 +95,13 @@ class CmsController
         $type = CmsType::convertToType($type);
         $service = $this->resolveService($type);
 
-        $success = $service->create($_POST);
-
-        if ($success) {
-            $_SESSION['create_success'] = true;
-            $_SESSION['create_title'] = $_POST['item_name'];
+        try {
+            $service->create($_POST);
+            $this->sessionManager->setFlash(FlashType::Success, 'Successfully added ' . $type->value . ' ' . $_POST['item_name']);
             header('Location: /cms/' . $type->value . 's');
-        } else {
+        }
+        catch (\Throwable $e) {
+            $this->sessionManager->setFlash(FlashType::Error, 'An error occurred while trying to add ' . $type->value . ' ' . $_POST['item_name']);
             $this->showCmsItems($type->value);
         }
     }
@@ -89,13 +111,13 @@ class CmsController
         $service = $this->resolveService($type);
         $category = urldecode($category);
 
-        $success = $service->createForCategory($category, $_POST);
-
-        if ($success) {
-            $_SESSION['create_success'] = true;
-            $_SESSION['create_title'] = $_POST['item_name'];
+        try {
+            $service->createForCategory($category, $_POST);
+            $this->sessionManager->setFlash(FlashType::Success, 'Successfully added ' . $type->value . ' ' . $_POST['item_name']);
             header('Location: /cms/' . $type->value . 's/' . $category);
-        } else {
+        }
+        catch (\Throwable $e) {
+            $this->sessionManager->setFlash(FlashType::Error, 'An error occurred while trying to add ' . $type->value . ' ' . $_POST['item_name']);
             $this->showItemsByCategory($type->value, $category);
         }
     }
@@ -104,26 +126,40 @@ class CmsController
     {
         $type = CmsType::convertToType($type);
         $service = $this->resolveService($type);
-        $item = $service->getForEdit($item_id);
-        $editable = $service->isNameEditable();
+        try {
+            $item = $service->getForEdit($item_id);
 
-        if ($type == CmsType::Event) {
-            $categories = $service->getCategories();
+            if ($item == null) {
+                $this->sessionManager->setFlash(FlashType::Error, $type->value . ' that you tried to edit could not be fetched.');
+                header('Location: /cms/' . $type->value . 's');
+                exit;
+            }
+
+            $editable = $service->isNameEditable();
+
+            if ($type == CmsType::Event) {
+                $categories = $service->getCategories();
+            }
+            echo View::render('/../Views/cms/edit', ['type' => $type, 'item' => $item, 'editable' => $editable, 'categories' => $categories ?? null]);
         }
-
-        echo View::render('/../Views/cms/edit', ['type' => $type, 'item' => $item, 'editable' => $editable, 'categories' => $categories ?? null]);
+        catch (\Throwable $e) {
+            $this->sessionManager->setFlash(FlashType::Error, 'An error occurred while trying to fetch the selected ' . $type->value);
+            print_r($e);
+            header('Location: /cms/' . $type->value . 's');
+        }
     }
+
     public function editItem(string $type, int $item_id)
     {
         $type = CmsType::convertToType($type);
         $service = $this->resolveService($type);
-        if ($this->hasUploadedFiles($_FILES)) {
-            $success = $service->updateWithImage($item_id, $_POST, $_FILES);
-        } else {
-            $success = $service->update($item_id, $_POST);
-        }
+        try {
+            $this->hasUploadedFiles($_FILES) ?
+                $service->updateWithImage($item_id, $_POST, $_FILES) :
+                $service->update($item_id, $_POST);
 
-        if ($success) {
+                $this->sessionManager->setFlash(FlashType::Success, 'Successfully edited ' . $type->value . ' ' . $_POST['item_name']);
+
             if ($type == CmsType::Content || isset($_POST['newContent'])) {
                 if ($type == CmsType::Content) {
                     $pageId = $service->getPageId($item_id);
@@ -134,15 +170,24 @@ class CmsController
             } else {
                 header('Location: /cms/' . $type->value);
             }
-        } else {
+        }
+        catch (\Throwable $e) {
+            $this->sessionManager->setFlash(FlashType::Error, 'Failed to edit ' . $type->value . ' ' . $_POST['item_name']);
             $this->showEdit($type->value, $item_id);
         }
     }
+
     public function deleteItem(string $type, int $item_id)
     {
         $type = CmsType::convertToType($type);
         $service = $this->resolveService($type);
-        $service->delete($item_id);
+        try {
+            $service->delete($item_id);
+            $this->sessionManager->setFlash(FlashType::Success, 'Successfully deleted selected ' . $type->value);
+        }
+        catch (\Throwable $e) {
+            $this->sessionManager->setFlash(FlashType::Error, 'Failed to delete selected ' . $type->value);
+        }
 
         header('Location: ' . $_POST['return_url']);
     }
@@ -170,5 +215,17 @@ class CmsController
         }
 
         return $hasFiles;
+    }
+
+    private function isAdmin() {
+        return isset($_SESSION['role']) ? UserRole::from($_SESSION['role'])->isAdmin() : false;
+    }
+    private function requireAdmin(): void
+    {
+        if (!$this->isAdmin()) {
+            http_response_code(403);
+            header("Location: /");
+            exit;
+        }
     }
 }

@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\Event;
 use App\Models\PlannerItem;
 use App\Models\PlannerSummary;
+use App\Models\FlashType;
 use App\Repositories\Interfaces\IEventRepository;
 use App\Services\Interfaces\IPlannerService;
 use DateTimeImmutable;
@@ -128,10 +129,10 @@ class PlannerService implements IPlannerService
         $this->savePlanner($planner);
     }
 
-    public function setFlash(string $type, string $message): void
+    public function setFlash(FlashType $type, string $message): void
     {
         $_SESSION[self::FLASH_KEY] = [
-            'type' => $type,
+            'type' => $type->value,
             'message' => $message,
         ];
     }

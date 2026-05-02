@@ -7,7 +7,7 @@ use App\Services\Interfaces\ITransactionManager;
 use RuntimeException;
 use Throwable;
 
-class ContentService implements CMSService
+class ContentService implements CMSServiceInterface
 {
     private IPageRepository $repository;
     private ITransactionManager $transactions;
@@ -73,7 +73,7 @@ class ContentService implements CMSService
 
         return $this->persistSanitized($id, $data);
     }
-    public function update(int $id, array $postData): bool
+    public function update(int $id, array $postData)
     {
         $data = $this->resolveExistingImageFields($postData);
         $component = $this->repository->getContentForEdit($id);

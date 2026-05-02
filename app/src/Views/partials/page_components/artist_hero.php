@@ -14,10 +14,7 @@ $ticketsCtaUrl = hf_data($data ?? [], 'tickets_cta_url', '/jazz');
 $artistImage = hf_data($data ?? [], 'artist_image');
 $artistImageAlt = hf_data($data ?? [], 'artist_image_alt', 'Artist image');
 
-$featuredEvent = null;
-if (isset($eventService) && $featuredEventId > 0 && method_exists($eventService, 'findById')) {
-	$featuredEvent = $eventService->findById($featuredEventId);
-}
+$featuredEvent = $data['featuredEvent'] ?? null;
 
 if ($featuredEvent !== null && $artistName === '') {
 	$artistName = $featuredEvent->getName();

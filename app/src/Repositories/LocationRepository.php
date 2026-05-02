@@ -5,7 +5,7 @@ namespace App\Repositories;
 use PDO;
 use App\Models\Location;
 
-class LocationRepository extends BaseRepository
+class LocationRepository
 {
     private PDO $pdo;
 
@@ -15,8 +15,6 @@ class LocationRepository extends BaseRepository
     }
 
     public function updateLocation(Location $location) {
-        $this->requireAdmin();
-
         $stmt = $this->pdo->prepare("UPDATE locations SET name = :name, description = :description, image = :image WHERE location_id = :id");
         $stmt->execute([
             'id' => $location->getId(),
@@ -39,16 +37,12 @@ class LocationRepository extends BaseRepository
     }
     public function createLocation(array $postData): bool 
     {
-        $this->requireAdmin();
-
         $stmt = $this->pdo->prepare('INSERT INTO locations (name) VALUES (:name)');
         $stmt->execute(['name' => $postData['item_name']]);
         return true;
     }
     public function getLocationForEdit(int $id)
     {
-        $this->requireAdmin();
-
         $stmt = $this->pdo->prepare(
             "SELECT name, location_id, description, image
             FROM locations
@@ -66,8 +60,6 @@ class LocationRepository extends BaseRepository
         return Location::fromArray($location);
     }
     public function deleteLocation(int $locationId) {
-        $this->requireAdmin();
-
         $stmt = $this->pdo->prepare("DELETE FROM locations WHERE location_id = :location_id");
         $stmt->execute([
             'location_id' => $locationId

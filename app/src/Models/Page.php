@@ -35,4 +35,7 @@ class Page extends CmsItem
     public function getContent(): array {
         return $this->content;
     }
+    public function setContent(array $content) {
+        $this->content = $content;
+    }
 }

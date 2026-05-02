@@ -5,9 +5,7 @@ namespace App\Services;
 use App\Models\Event;
 use App\Repositories\Interfaces\IEventRepository;
 use App\Repositories\Interfaces\IPageRepository;
-use App\Services\Interfaces\ICmsService;
-
-class EventService implements ICmsService
+class EventService implements CMSServiceInterface
 {
     private IEventRepository $repository;
     private IPageRepository $pageRepository;
@@ -33,7 +31,7 @@ class EventService implements ICmsService
         return $this->repository->updateEvent($id, $this->normalizeEventData($postData, $fileData));
     }
 
-    public function update(int $id, array $postData): bool
+    public function update(int $id, array $postData)
     {
         return $this->repository->updateEvent($id, $this->normalizeEventData($postData));
     }
@@ -50,6 +48,21 @@ class EventService implements ICmsService
     public function getAllInCategory(string $category)
     {
         return $this->repository->getAllEventsInCategory($category);
+    }
+
+    public function getSchedule(string $event): array {
+        // $event is the main event which is the category
+        $events =  $this->repository->getAllEventsInCategory($event);
+
+        $schedule = [];
+        foreach ($events as $event) {
+            $date = date('Y-m-d', strtotime($event->startTime()));
+            $time = date('H:i', strtotime($event->startTime()));
+            $language = $event->getLanguage();
+            $schedule[$date][$time][$language->value][] = $event;
+        }
+
+        return $schedule;
     }
 
     public function findById(int $eventId)

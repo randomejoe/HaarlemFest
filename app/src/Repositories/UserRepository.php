@@ -11,7 +11,7 @@ use PDOException;
 class UserRepository implements IUserRepository
 {
     private PDO $pdo;
-    private const USER_COLUMNS = 'user_id, username, email, role, password_hash, first_name, last_name, address, city, country, phone_number, created_at, password_reset_token, password_reset_expires_at';
+    private const USER_COLUMNS = 'user_id, username, email, role, password_hash, first_name, last_name, address, city, country, phone_number, created_at, password_reset_token, password_reset_expires_at, enabled';
 
     public function __construct(PDO $pdo)
     {
@@ -162,7 +162,7 @@ class UserRepository implements IUserRepository
 
     public function getAllUsers(): array
     {
-        $stmt = $this->pdo->prepare('SELECT ' . self::USER_COLUMNS . ' FROM users');
+        $stmt = $this->pdo->prepare('SELECT ' . self::USER_COLUMNS . ' FROM users WHERE active = 1');
         $stmt->execute();
         $results = $stmt->fetchAll();
         $users = [];
@@ -175,8 +175,7 @@ class UserRepository implements IUserRepository
 
     public function deleteUser(int $id): bool
     {
-
-        $stmt = $this->pdo->prepare("DELETE FROM users WHERE user_id = :user_id");
+        $stmt = $this->pdo->prepare("UPDATE users SET enabled = 0 WHERE user_id = :user_id");
         $stmt->execute([
             'user_id' => $id
         ]);

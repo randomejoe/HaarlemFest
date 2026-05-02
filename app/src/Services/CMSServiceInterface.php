@@ -2,13 +2,13 @@
 
 namespace App\Services;
 
-interface CMSService
+interface CMSServiceInterface
 {
     public function getForEdit(int $id);
 
     public function isNameEditable(): bool;
 
-    public function update(int $id, array $postData): bool;
+    public function update(int $id, array $postData);
 
-    public function delete(int $id): bool;
+    public function delete(int $id);
 }

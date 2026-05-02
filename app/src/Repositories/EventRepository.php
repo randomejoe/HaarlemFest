@@ -4,11 +4,10 @@ namespace App\Repositories;
 
 use App\Models\Event;
 use App\Models\HistoryTourLanguage;
-use App\Repositories\Interfaces\IEventRepository;
 use PDO;
 use RuntimeException;
 
-class EventRepository implements IEventRepository
+class EventRepository
 {
     private PDO $pdo;
 
@@ -266,7 +265,6 @@ class EventRepository implements IEventRepository
 
     public function createSubEvent(string $category, array $postData)
     {
-
         $stmt = $this->pdo->prepare('INSERT INTO events (name, location, start_time, end_time, ticket_price, ticket_amount, description, language, category)
         VALUES (:name, :location, :start_time, :end_time, :price, :amount, :description, :language, :category)');
 
@@ -306,7 +304,6 @@ class EventRepository implements IEventRepository
 
     public function updateEvent(int $id, array $postData)
     {
-
         $stmt = $this->pdo->prepare('UPDATE events SET name = :name, location = :location, start_time = :start_time, end_time = :end_time, ticket_price = :price, ticket_amount = :amount, description = :description, language = :language, category = :category, artist_img = :artist_img WHERE event_id = :id');
 
         $stmt->execute([
@@ -327,7 +324,6 @@ class EventRepository implements IEventRepository
 
     public function deleteEvent(int $id)
     {
-
         $stmt = $this->pdo->prepare("DELETE FROM events WHERE event_id = :event_id");
         $stmt->execute([
             'event_id' => $id

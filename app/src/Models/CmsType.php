@@ -14,19 +14,17 @@ enum CmsType: string
     case Order = 'order';
     case None = 'none';
 
-    public static function convertToType(string $type) {
+    public static function convertToType(string $type): CmsType {
         try {
-            $convertedType = CmsType::from($type);
+            return CmsType::from($type);
         }
         catch (ValueError $e) {
             try {
-                $convertedType = CmsType::from(substr($type, 0, -1));
+                return CmsType::from(substr($type, 0, -1));
             }
             catch (ValueError $e){
                 return CmsType::None;
             }
         }
-        return $convertedType;
-
     }
 }
