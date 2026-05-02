@@ -2,23 +2,18 @@
 
 namespace App\Controllers;
 
-use App\Exceptions\UserConflictException;
-use App\Models\UserRole;
 use App\Models\User;
-use App\Repositories\UserRepository;
-use App\Services\AuthService;
 use App\Services\CaptchaService;
+use App\Services\Interfaces\IAuthService;
 use App\View;
 
 class AuthController
 {
-    private UserRepository $users;
-    private AuthService $auth;
+    private IAuthService $auth;
     private CaptchaService $captcha;
 
-    public function __construct(UserRepository $users, AuthService $auth, CaptchaService $captcha)
+    public function __construct(IAuthService $auth, CaptchaService $captcha)
     {
-        $this->users = $users;
         $this->auth = $auth;
         $this->captcha = $captcha;
     }
@@ -58,25 +53,14 @@ class AuthController
             return;
         }
 
-        if ($this->users->findByEmail($email) || $this->users->findByUsername($username)) {
-            $this->renderRegisterError($redirect, 'That email or username is already in use.', $old);
-            return;
-        }
-
-        $passwordHash = $this->auth->hashPassword($password);
         try {
-            $userId = $this->users->create($username, $email, $passwordHash);
-        } catch (UserConflictException $e) {
+            $user = $this->auth->registerUser($username, $email, $password);
+        } catch (\RuntimeException $e) {
             $this->renderRegisterError($redirect, $e->getMessage(), $old);
             return;
         }
 
-        $this->auth->login(new User(
-            id: $userId,
-            username: $username,
-            email: $email,
-            role: UserRole::User
-        ));
+        $this->auth->login($user);
         header('Location: ' . $redirect);
         exit;
     }
@@ -99,12 +83,7 @@ class AuthController
             return;
         }
 
-        $user = null;
-        if (str_contains($identifier, '@')) {
-            $user = $this->users->findByEmail($identifier);
-        } else {
-            $user = $this->users->findByUsername($identifier);
-        }
+        $user = $this->auth->findByIdentifier($identifier);
 
         if (!$user || !$this->auth->verifyPassword($password, $user->passwordHash() ?? '')) {
             $this->renderLoginError($redirect, 'Invalid credentials.', $old);
@@ -123,15 +102,9 @@ class AuthController
 
     public function logout(): void
     {
-        try {
-            $this->auth->logout();
-            header('Location: /login');
-            exit;
-        } catch (\Throwable $e) {
-            http_response_code(500);
-            error_log('AuthController::logout error: ' . $e->getMessage());
-            require(__DIR__ . '/../Views/error.php');
-        }
+        $this->auth->logout();
+        header('Location: /login');
+        exit;
     }
 
     public function altchaChallenge(): void
@@ -140,21 +113,15 @@ class AuthController
         header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
         header('Pragma: no-cache');
 
-        try {
-            $challenge = $this->captcha->createChallenge();
-            $payload = [
-                'algorithm' => $challenge->algorithm,
-                'challenge' => $challenge->challenge,
-                'maxnumber' => $challenge->maxNumber,
-                'salt' => $challenge->salt,
-                'signature' => $challenge->signature,
-            ];
-            echo json_encode($payload, JSON_UNESCAPED_SLASHES);
-        } catch (\Throwable $e) {
-            http_response_code(500);
-            error_log('ALTCHA challenge error: ' . $e->getMessage());
-            echo json_encode(['error' => 'ALTCHA challenge failed.']);
-        }
+        $challenge = $this->captcha->createChallenge();
+        $payload = [
+            'algorithm' => $challenge->algorithm,
+            'challenge' => $challenge->challenge,
+            'maxnumber' => $challenge->maxNumber,
+            'salt' => $challenge->salt,
+            'signature' => $challenge->signature,
+        ];
+        echo json_encode($payload, JSON_UNESCAPED_SLASHES);
         exit;
     }
 
@@ -197,23 +164,15 @@ class AuthController
 
     private function validateRegistrationLengths(string $username, string $email): ?string
     {
-        if ($this->textLength($username) > UserRepository::USERNAME_MAX_LENGTH) {
-            return 'Username must be ' . UserRepository::USERNAME_MAX_LENGTH . ' characters or fewer.';
+        if (mb_strlen($username, 'UTF-8') > User::USERNAME_MAX_LENGTH) {
+            return 'Username must be ' . User::USERNAME_MAX_LENGTH . ' characters or fewer.';
         }
 
-        if ($this->textLength($email) > UserRepository::EMAIL_MAX_LENGTH) {
-            return 'Email must be ' . UserRepository::EMAIL_MAX_LENGTH . ' characters or fewer.';
+        if (mb_strlen($email, 'UTF-8') > User::EMAIL_MAX_LENGTH) {
+            return 'Email must be ' . User::EMAIL_MAX_LENGTH . ' characters or fewer.';
         }
 
         return null;
     }
 
-    private function textLength(string $value): int
-    {
-        if (function_exists('mb_strlen')) {
-            return mb_strlen($value, 'UTF-8');
-        }
-
-        return strlen($value);
-    }
 }

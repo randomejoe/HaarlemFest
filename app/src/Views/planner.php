@@ -122,7 +122,7 @@ require __DIR__ . '/partials/header.php';
                             </div>
 
                             <div class="planner-event-actions">
-                                <?php if (!empty($item['is_valid']) && empty($planner['is_locked'])): ?>
+                                <?php if (!empty($item['is_valid'])): ?>
                                     <form method="post" action="/planner/items/<?php echo (int) $item['event_id']; ?>/quantity" class="planner-qty-form" data-planner-async="quantity" data-planner-event-id="<?php echo (int) $item['event_id']; ?>">
                                         <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($csrfToken, ENT_QUOTES, 'UTF-8'); ?>">
                                         <label class="visually-hidden" for="planner-qty-<?php echo (int) $item['event_id']; ?>">Quantity for <?php echo htmlspecialchars((string) $item['name'], ENT_QUOTES, 'UTF-8'); ?></label>
@@ -211,15 +211,11 @@ require __DIR__ . '/partials/header.php';
                             </dl>
 
                             <div class="planner-summary-actions">
-                                <?php if (!empty($planner['is_locked'])): ?>
-                                    <a href="/checkout/pending/<?php echo (int) $planner['locked_checkout_attempt_id']; ?>" class="btn cta-btn">View payment status</a>
-                                <?php else: ?>
-                                    <a href="/checkout" class="btn cta-btn">Proceed to checkout</a>
-                                    <form method="post" action="/planner/clear" class="m-0" data-planner-async="clear">
-                                        <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars((string) ($csrf_token ?? ''), ENT_QUOTES, 'UTF-8'); ?>">
-                                        <button type="submit" class="btn btn-outline-secondary w-100">Clear tickets</button>
-                                    </form>
-                                <?php endif; ?>
+                                <a href="/checkout" class="btn cta-btn">Proceed to checkout</a>
+                                <form method="post" action="/planner/clear" class="m-0" data-planner-async="clear">
+                                    <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars((string) ($csrf_token ?? ''), ENT_QUOTES, 'UTF-8'); ?>">
+                                    <button type="submit" class="btn btn-outline-secondary w-100">Clear tickets</button>
+                                </form>
                             </div>
                         </div>
                     </aside>

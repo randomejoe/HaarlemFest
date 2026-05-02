@@ -2,23 +2,14 @@
 
 namespace App\Repositories;
 
-use App\Exceptions\UserConflictException;
 use App\Models\User;
 use App\Models\UserRole;
+use App\Repositories\Interfaces\IUserRepository;
 use PDO;
 use PDOException;
 
-class UserRepository
+class UserRepository implements IUserRepository
 {
-    public const USERNAME_MAX_LENGTH = 255;
-    public const EMAIL_MAX_LENGTH = 255;
-    public const FIRST_NAME_MAX_LENGTH = 100;
-    public const LAST_NAME_MAX_LENGTH = 100;
-    public const ADDRESS_MAX_LENGTH = 255;
-    public const CITY_MAX_LENGTH = 120;
-    public const COUNTRY_MAX_LENGTH = 120;
-    public const PHONE_NUMBER_MAX_LENGTH = 40;
-
     private PDO $pdo;
     private const USER_COLUMNS = 'user_id, username, email, role, password_hash, first_name, last_name, address, city, country, phone_number, created_at, password_reset_token, password_reset_expires_at, enabled';
 
@@ -62,7 +53,7 @@ class UserRepository
             ]);
         } catch (PDOException $e) {
             if ($this->isUniqueConstraintViolation($e)) {
-                throw new UserConflictException('That email or username is already in use.', 0, $e);
+                throw new \RuntimeException('That email or username is already in use.', 0, $e);
             }
 
             throw $e;
@@ -130,7 +121,7 @@ class UserRepository
             ]);
         } catch (PDOException $e) {
             if ($this->isUniqueConstraintViolation($e)) {
-                throw new UserConflictException('Username is already in use.', 0, $e);
+                throw new \RuntimeException('Username is already in use.', 0, $e);
             }
 
             throw $e;

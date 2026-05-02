@@ -2,16 +2,21 @@
 
 namespace App\Services;
 
-use App\Models\Event;
-use App\Repositories\OrderRepository;
+use App\Repositories\Interfaces\IOrderRepository;
+use App\Services\Interfaces\IOrderService;
 
-class OrderService implements CMSServiceInterface
+class OrderService implements CMSServiceInterface, IOrderService
 {
-    private OrderRepository $repository;
-    
-    public function __construct(OrderRepository $repository)
+    private IOrderRepository $repository;
+
+    public function __construct(IOrderRepository $repository)
     {
         $this->repository = $repository;
+    }
+
+    public function getOrdersForUser(int $userId): array
+    {
+        return $this->repository->findByUserId($userId);
     }
 
     public function getForEdit(int $id)
@@ -32,7 +37,7 @@ class OrderService implements CMSServiceInterface
     }
 
     // Can't delete orders either
-    public function delete(int $id): bool
+    public function delete(int $id)
     {
         throw new \BadMethodCallException('Unable to delete orders through CMS');
     }

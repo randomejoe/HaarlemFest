@@ -2,12 +2,21 @@
 
 namespace App\Services;
 
-use App\Exceptions\AuthException;
 use App\Models\User;
 use App\Models\UserRole;
+use App\Repositories\Interfaces\IUserRepository;
+use App\Services\Interfaces\IAuthService;
+use RuntimeException;
 
-class AuthService
+class AuthService implements IAuthService
 {
+    private IUserRepository $users;
+
+    public function __construct(IUserRepository $users)
+    {
+        $this->users = $users;
+    }
+
     public function login(User $user): void
     {
         if (session_status() === PHP_SESSION_ACTIVE) {
@@ -56,7 +65,7 @@ class AuthService
     {
         $hash = password_hash($plaintext, PASSWORD_DEFAULT);
         if ($hash === false) {
-            throw new AuthException('Failed to hash password.');
+            throw new RuntimeException('Failed to hash password.');
         }
 
         return $hash;
@@ -65,6 +74,41 @@ class AuthService
     public function verifyPassword(string $plaintext, string $hash): bool
     {
         return password_verify($plaintext, $hash);
+    }
+
+    public function findByEmail(string $email): ?User
+    {
+        return $this->users->findByEmail($email);
+    }
+
+    public function findByUsername(string $username): ?User
+    {
+        return $this->users->findByUsername($username);
+    }
+
+    public function findByIdentifier(string $identifier): ?User
+    {
+        if (str_contains($identifier, '@')) {
+            return $this->findByEmail($identifier);
+        }
+
+        return $this->findByUsername($identifier);
+    }
+
+    public function registerUser(string $username, string $email, string $plaintextPassword): User
+    {
+        if ($this->findByEmail($email) !== null || $this->findByUsername($username) !== null) {
+            throw new RuntimeException('That email or username is already in use.');
+        }
+
+        $newId = $this->users->create($username, $email, $this->hashPassword($plaintextPassword));
+
+        return new User(
+            id: $newId,
+            username: $username,
+            email: $email,
+            role: UserRole::User
+        );
     }
 
     private function storeSessionUser(User $user): void

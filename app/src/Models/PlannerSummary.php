@@ -1,113 +1,141 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Models;
 
-/**
- * An immutable summary of everything in the personal planner.
- *
- * Build it with the static factory:
- *   PlannerSummary::fromRawItems($items, $eventsById)
- *
- * The factory does the same work that PlannerService::summarizePlannerItems()
- * used to do, so all the looping / totalling logic lives here instead of
- * being spread across PlannerService.
- */
-class PlannerSummary
+final class PlannerSummary
 {
     /**
-     * @param PlannerItem[]        $plannerItems
-     * @param int[]                $invalidItemIds
-     * @param array<int,array>     $conflictItems  Internal shape used by detectTimeConflicts()
+     * @param PlannerItem[] $plannerItems
+     * @param int[] $invalidItemIds
+     * @param array<int, array<string, mixed>> $conflictItems
      */
     private function __construct(
         private array $plannerItems,
         private array $invalidItemIds,
-        private int   $totalQuantity,
+        private int $totalQuantity,
         private float $totalPriceValue,
-        private array $conflictItems,
+        private array $conflictItems
     ) {
     }
 
-    // -------------------------------------------------------------------------
-    // Factory
-    // -------------------------------------------------------------------------
-
     /**
-     * @param array<int,int>   $rawItems    eventId => quantity (from session)
-     * @param array<int,Event> $eventsById
+     * @param array<int, array{quantity:int, familyTicket:bool}> $rawItems
+     * @param array<int, Event> $eventsById
      */
     public static function fromRawItems(array $rawItems, array $eventsById): self
     {
-        $plannerItems    = [];
-        $invalidItemIds  = [];
-        $totalQuantity   = 0;
+        $plannerItems = [];
+        $invalidItemIds = [];
+        $totalQuantity = 0;
         $totalPriceValue = 0.0;
-        $conflictItems   = [];
+        $conflictItems = [];
 
-        foreach ($rawItems as $eventIdRaw => $quantityRaw) {
-            $familyTicket = false;
-            $eventId  = (int) $eventIdRaw;
-            if (isset($quantityRaw['familyTicket']) && $quantityRaw['familyTicket']) {
-                $quantity = max(0, (int) $quantityRaw['quantity']);
-                $familyTicket = true;
+        foreach ($rawItems as $eventIdRaw => $item) {
+            $eventId = (int) $eventIdRaw;
+            if ($eventId <= 0) {
+                continue;
             }
-            else {
-                $quantity = max(0, (int) $quantityRaw);
-            }
-            
 
-            if ($eventId <= 0 || $quantity <= 0) {
+            $familyTicket = (bool) ($item['familyTicket'] ?? false);
+            $quantity = max(0, (int) ($item['quantity'] ?? 0));
+
+            if ($quantity <= 0) {
                 continue;
             }
 
             $totalQuantity += $quantity;
 
             $event = $eventsById[$eventId] ?? null;
-            if ($event === null) {
+            if (!$event instanceof Event) {
                 $invalidItemIds[] = $eventId;
-                $plannerItems[]   = PlannerItem::unavailable($eventId, $quantity);
+                $plannerItems[] = PlannerItem::unavailable($eventId, $quantity);
                 continue;
             }
 
-            $plannerItem    = PlannerItem::fromEvent($eventId, $quantity, $event, $familyTicket);
+            $plannerItem = PlannerItem::fromEvent($eventId, $quantity, $event, $familyTicket);
             $plannerItems[] = $plannerItem;
             $totalPriceValue += $plannerItem->lineTotalValue();
 
             $conflictItems[] = [
-                'event_id'   => $eventId,
-                'name'       => $event->getName(),
+                'event_id' => $eventId,
+                'name' => $event->getName(),
                 'start_time' => $event->startTime(),
-                'end_time'   => $event->endTime(),
+                'end_time' => $event->endTime(),
             ];
         }
 
         return new self($plannerItems, $invalidItemIds, $totalQuantity, $totalPriceValue, $conflictItems);
     }
 
-    // -------------------------------------------------------------------------
-    // Accessors
-    // -------------------------------------------------------------------------
+    /**
+     * @return PlannerItem[]
+     */
+    public function plannerItems(): array
+    {
+        return $this->plannerItems;
+    }
 
-    /** @return PlannerItem[] */
-    public function plannerItems(): array   { return $this->plannerItems; }
+    /**
+     * @return int[]
+     */
+    public function invalidItemIds(): array
+    {
+        return $this->invalidItemIds;
+    }
 
-    /** @return int[] */
-    public function invalidItemIds(): array { return $this->invalidItemIds; }
+    public function totalQuantity(): int
+    {
+        return $this->totalQuantity;
+    }
 
-    public function totalQuantity(): int    { return $this->totalQuantity; }
+    public function totalPriceValue(): float
+    {
+        return $this->totalPriceValue;
+    }
 
-    public function totalPriceValue(): float { return $this->totalPriceValue; }
+    /**
+     * @return array<int, array<string, mixed>>
+     */
+    public function conflictItems(): array
+    {
+        return $this->conflictItems;
+    }
 
-    /** Raw conflict-item arrays consumed by PlannerService::detectTimeConflicts(). */
-    public function conflictItems(): array  { return $this->conflictItems; }
+    public function isEmpty(): bool
+    {
+        return $this->totalQuantity === 0;
+    }
 
-    // -------------------------------------------------------------------------
-    // Helpers
-    // -------------------------------------------------------------------------
+    public function hasInvalidItems(): bool
+    {
+        return $this->invalidItemIds !== [];
+    }
 
-    public function isEmpty(): bool         { return $this->totalQuantity === 0; }
+    public function formattedTotalPrice(): string
+    {
+        return number_format($this->totalPriceValue, 2);
+    }
 
-    public function hasInvalidItems(): bool { return $this->invalidItemIds !== []; }
-
-    public function formattedTotalPrice(): string { return number_format($this->totalPriceValue, 2); }
+    /**
+     * @return array<string, mixed>
+     */
+    public function toArray(): array
+    {
+        return [
+            'items' => array_map(
+                static fn(PlannerItem $item): array => $item->toArray(),
+                $this->plannerItems
+            ),
+            'total_quantity' => $this->totalQuantity,
+            'total_price_value' => $this->totalPriceValue,
+            'total_price' => $this->formattedTotalPrice(),
+            'is_empty' => $this->isEmpty(),
+            'has_invalid_items' => $this->hasInvalidItems(),
+            'invalid_item_ids' => $this->invalidItemIds,
+            'time_conflicts' => [],
+            'time_conflict_pairs' => [],
+        ];
+    }
 }

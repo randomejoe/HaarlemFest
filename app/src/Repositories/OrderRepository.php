@@ -4,10 +4,11 @@ namespace App\Repositories;
 
 use App\Models\OrderSummary;
 use App\Models\PurchasedTicket;
+use App\Repositories\Interfaces\IOrderRepository;
 use DateTimeImmutable;
 use PDO;
 
-class OrderRepository
+class OrderRepository implements IOrderRepository
 {
     private PDO $pdo;
 
@@ -154,7 +155,8 @@ class OrderRepository
             return 'Schedule unavailable';
         }
     }
-    public function getAllOrders() {
+    public function getAllOrders(): array
+    {
 
         $stmt = $this->pdo->prepare(
             'SELECT

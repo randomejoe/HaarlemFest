@@ -2,16 +2,15 @@
 
 namespace App\Services;
 
-use App\Container;
 use App\Models\Page;
 
 class PageRenderer
 {
-    private Container $container;
+    private \Closure $resolve;
 
-    public function __construct(Container $container)
+    public function __construct(\Closure $resolve)
     {
-        $this->container = $container;
+        $this->resolve = $resolve;
     }
 
     public function renderPage(Page $page) {
@@ -24,7 +23,7 @@ class PageRenderer
                     ['service' => $requestedService, 'method' => $methodName, 'name' => $arrayKeyName] = $method;
                     $params = $method['parameters'] ?? [];
 
-                    $service = $this->container->get($requestedService);
+                    $service = ($this->resolve)($requestedService);
 
                     $params = $this->resolveParams($params, $page, $contentItem->getData());
 

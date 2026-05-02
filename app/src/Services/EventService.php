@@ -3,15 +3,14 @@
 namespace App\Services;
 
 use App\Models\Event;
-use App\Repositories\EventRepository;
-use App\Repositories\PageRepository;
-
+use App\Repositories\Interfaces\IEventRepository;
+use App\Repositories\Interfaces\IPageRepository;
 class EventService implements CMSServiceInterface
 {
-    private EventRepository $repository;
-    private PageRepository $pageRepository;
+    private IEventRepository $repository;
+    private IPageRepository $pageRepository;
 
-    public function __construct(EventRepository $repository, PageRepository $pageRepository)
+    public function __construct(IEventRepository $repository, IPageRepository $pageRepository)
     {
         $this->repository = $repository;
         $this->pageRepository = $pageRepository;

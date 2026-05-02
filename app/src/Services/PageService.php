@@ -2,13 +2,13 @@
 
 namespace App\Services;
 
-use App\Repositories\PageRepository;
+use App\Repositories\Interfaces\IPageRepository;
 
 class PageService implements CMSServiceInterface
 {
-    private PageRepository $repository;
+    private IPageRepository $repository;
 
-    public function __construct(PageRepository $repository)
+    public function __construct(IPageRepository $repository)
     {
         $this->repository = $repository;
     }
