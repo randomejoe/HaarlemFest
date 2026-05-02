@@ -47,3 +47,4 @@ docker-compose.override.yml
 # Local agent state
 .omc/
 .omx/
+app/.omc/
