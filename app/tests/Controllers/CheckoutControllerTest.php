@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Tests\Controllers;
 
 use App\Controllers\CheckoutController;
+use App\Models\Event;
+use App\Models\PlannerSummary;
 use App\Models\User;
 use App\Services\AuthService;
 use App\Services\Interfaces\ICheckoutService;
@@ -38,32 +40,19 @@ final class CheckoutControllerTest extends TestCase
         $_POST = [];
     }
 
+    private function makeNonEmptySummary(): PlannerSummary
+    {
+        $event = new Event(3, 'Jazz Night', null, '2026-07-01 20:00:00', '2026-07-01 22:00:00', 18.0, 100, null, 'jazz', 'Venue', null, null);
+        return PlannerSummary::fromRawItems([3 => ['quantity' => 1, 'familyTicket' => false]], [3 => $event]);
+    }
+
     public function test_show_renders_checkout_contact_form_when_details_are_missing(): void
     {
         $this->auth->expects($this->once())->method('currentUser')->willReturn($this->user);
-        $this->checkout->expects($this->once())
-            ->method('loadCheckoutUser')
-            ->with($this->user->getId())
-            ->willReturn($this->user);
-        $this->checkout->expects($this->once())
-            ->method('buildCheckoutView')
-            ->with($this->user)
-            ->willReturn([
-                'planner' => [
-                    'total_quantity' => 1,
-                    'total_price' => '18.00',
-                    'is_empty' => false,
-                    'has_invalid_items' => false,
-                    'invalid_item_ids' => [],
-                    'time_conflicts' => [],
-                    'time_conflict_pairs' => [],
-                    'items' => [],
-                ],
-                'user' => $this->user,
-                'flash' => null,
-                'missing_fields' => ['address'],
-                'requires_details' => true,
-            ]);
+        $this->checkout->expects($this->once())->method('loadCheckoutUser')->with($this->user->getId())->willReturn($this->user);
+        $this->checkout->expects($this->once())->method('getPlannerSummary')->willReturn($this->makeNonEmptySummary());
+        $this->checkout->expects($this->once())->method('missingCheckoutDetails')->with($this->user)->willReturn(['address']);
+        $this->checkout->expects($this->once())->method('consumeFlash')->willReturn(null);
 
         ob_start();
         (new CheckoutController($this->checkout, $this->auth))->show();
@@ -76,37 +65,10 @@ final class CheckoutControllerTest extends TestCase
     public function test_show_renders_optional_mock_payment_fields_when_details_are_complete(): void
     {
         $this->auth->expects($this->once())->method('currentUser')->willReturn($this->user);
-        $this->checkout->expects($this->once())
-            ->method('loadCheckoutUser')
-            ->with($this->user->getId())
-            ->willReturn($this->user);
-        $this->checkout->expects($this->once())
-            ->method('buildCheckoutView')
-            ->with($this->user)
-            ->willReturn([
-                'planner' => [
-                    'total_quantity' => 1,
-                    'total_price' => '18.00',
-                    'is_empty' => false,
-                    'has_invalid_items' => false,
-                    'invalid_item_ids' => [],
-                    'time_conflicts' => [],
-                    'time_conflict_pairs' => [],
-                    'items' => [
-                        [
-                            'event_id' => 3,
-                            'name' => 'Jazz Night',
-                            'time' => '20:00',
-                            'quantity' => 1,
-                            'is_valid' => true,
-                        ],
-                    ],
-                ],
-                'user' => $this->user,
-                'flash' => null,
-                'missing_fields' => [],
-                'requires_details' => false,
-            ]);
+        $this->checkout->expects($this->once())->method('loadCheckoutUser')->with($this->user->getId())->willReturn($this->user);
+        $this->checkout->expects($this->once())->method('getPlannerSummary')->willReturn($this->makeNonEmptySummary());
+        $this->checkout->expects($this->once())->method('missingCheckoutDetails')->with($this->user)->willReturn([]);
+        $this->checkout->expects($this->once())->method('consumeFlash')->willReturn(null);
 
         ob_start();
         (new CheckoutController($this->checkout, $this->auth))->show();
@@ -132,7 +94,7 @@ final class CheckoutControllerTest extends TestCase
             ->willReturn(['success' => true, 'order_id' => 88]);
         $this->checkout->expects($this->once())
             ->method('setFlash')
-            ->with('success', 'Thank you! Your order has been placed.');
+            ->with(\App\Models\FlashType::Success, 'Thank you! Your order has been placed.');
 
         $controller = new class($this->checkout, $this->auth) extends CheckoutController {
             protected function redirect(string $location): void

@@ -8,7 +8,6 @@ use App\Models\PlannerSummary;
 use App\Models\FlashType;
 use App\Repositories\Interfaces\IEventRepository;
 use App\Services\Interfaces\IPlannerService;
-use DateTimeImmutable;
 use InvalidArgumentException;
 use RuntimeException;
 
@@ -26,16 +25,7 @@ class PlannerService implements IPlannerService
 
     public function getItems(): array
     {
-        $planner = $this->getPlannerState();
-        $items = (array) ($planner['items'] ?? []);
-        $filteredItems = $this->filterOutFreeItems($items);
-
-        if ($filteredItems !== $items) {
-            $planner['items'] = $filteredItems;
-            $this->savePlanner($planner);
-        }
-
-        return $filteredItems;
+        return (array) ($this->getPlannerState()['items'] ?? []);
     }
 
     public function addItem(int $eventId, int $quantity, ?string $familyTicket): void
@@ -152,33 +142,29 @@ class PlannerService implements IPlannerService
         ];
     }
 
-    public function getDetailedPlanner(): array
+    public function getPlannerSummary(): PlannerSummary
     {
         $items = $this->getItems();
         $eventIds = array_map('intval', array_keys($items));
         $eventsById = $this->events->findByIds($eventIds);
-        $summary = PlannerSummary::fromRawItems($items, $eventsById);
 
-        // Convert PlannerItem objects to plain arrays so that views and
-        // downstream services (CheckoutService) continue to receive the same
-        // flat array shape they already rely on.
-        $itemArrays = array_map(
-            static fn(PlannerItem $p): array => $p->toArray(),
-            $summary->plannerItems()
-        );
+        $filteredItems = $this->filterOutFreeItems($items, $eventsById);
+        if ($filteredItems !== $items) {
+            $planner = $this->getPlannerState();
+            $planner['items'] = $filteredItems;
+            $this->savePlanner($planner);
+        }
 
-        return [
-            'items' => $itemArrays,
-            'items_map' => $items,
-            'total_quantity' => $summary->totalQuantity(),
-            'total_price_value' => $summary->totalPriceValue(),
-            'total_price' => $summary->formattedTotalPrice(),
-            'is_empty' => $summary->isEmpty(),
-            'has_invalid_items' => $summary->hasInvalidItems(),
-            'invalid_item_ids' => $summary->invalidItemIds(),
-            'time_conflicts' => $this->detectTimeConflicts($summary->conflictItems()),
-            'time_conflict_pairs' => $this->detectTimeConflictPairs($summary->conflictItems()),
-        ];
+        return PlannerSummary::fromRawItems($filteredItems, $eventsById);
+    }
+
+    public function getDetailedPlanner(): array
+    {
+        $summary = $this->getPlannerSummary();
+
+        return array_merge($summary->toArray(), [
+            'items_map' => $this->getItems(),
+        ]);
     }
 
     private function savePlanner(array $planner): void
@@ -253,14 +239,8 @@ class PlannerService implements IPlannerService
         $_SESSION[self::SESSION_KEY]['updated_at'] = (int) ($_SESSION[self::SESSION_KEY]['updated_at'] ?? time());
     }
 
-    private function filterOutFreeItems(array $items): array
+    private function filterOutFreeItems(array $items, array $eventsById): array
     {
-        if ($items === []) {
-            return [];
-        }
-
-        $eventIds = array_map('intval', array_keys($items));
-        $eventsById = $this->events->findByIds($eventIds);
         $filtered = [];
 
         foreach ($items as $eventIdRaw => $item) {
@@ -276,6 +256,7 @@ class PlannerService implements IPlannerService
                 'familyTicket' => (bool) $item['familyTicket'],
             ];
         }
+
         return $filtered;
     }
 
@@ -315,55 +296,4 @@ class PlannerService implements IPlannerService
         ));
     }
 
-    private function detectTimeConflicts(array $items): array
-    {
-        return array_map(
-            static fn(array $pair): string => $pair['message'],
-            $this->findOverlappingPlannerItemPairs($items)
-        );
-    }
-
-    private function detectTimeConflictPairs(array $items): array
-    {
-        return $this->findOverlappingPlannerItemPairs($items);
-    }
-
-    /**
-     * Build the overlapping item pairs once, then reuse the result for both
-     * the user-facing conflict messages and the structured conflict payload.
-     *
-     * @param array<int,array<string,mixed>> $items
-     * @return array<int,array{left_event_id:int,left_name:string,right_event_id:int,right_name:string,message:string}>
-     */
-    private function findOverlappingPlannerItemPairs(array $items): array
-    {
-        $pairs = [];
-        $count = count($items);
-
-        for ($i = 0; $i < $count; $i++) {
-            $leftStart = new DateTimeImmutable((string) $items[$i]['start_time']);
-            $leftEnd = new DateTimeImmutable((string) $items[$i]['end_time']);
-
-            for ($j = $i + 1; $j < $count; $j++) {
-                $rightStart = new DateTimeImmutable((string) $items[$j]['start_time']);
-                $rightEnd = new DateTimeImmutable((string) $items[$j]['end_time']);
-
-                if ($leftStart < $rightEnd && $rightStart < $leftEnd) {
-                    $pairs[] = [
-                        'left_event_id' => (int) $items[$i]['event_id'],
-                        'left_name' => (string) $items[$i]['name'],
-                        'right_event_id' => (int) $items[$j]['event_id'],
-                        'right_name' => (string) $items[$j]['name'],
-                        'message' => sprintf(
-                            '%s overlaps with %s.',
-                            (string) $items[$i]['name'],
-                            (string) $items[$j]['name']
-                        ),
-                    ];
-                }
-            }
-        }
-
-        return $pairs;
-    }
 }

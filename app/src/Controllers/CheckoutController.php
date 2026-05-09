@@ -7,6 +7,7 @@ use App\Models\FlashType;
 use App\Services\Interfaces\ICheckoutService;
 use App\Services\Interfaces\IAuthService;
 use App\View;
+use App\ViewModels\CheckoutViewModel;
 
 class CheckoutController
 {
@@ -22,7 +23,19 @@ class CheckoutController
     public function show(): void
     {
         $user = $this->requireCheckoutUser();
-        echo View::render('checkout', $this->checkout->buildCheckoutView($user));
+        $summary = $this->checkout->getPlannerSummary();
+        $missing = $this->checkout->missingCheckoutDetails($user);
+        $flash = $this->checkout->consumeFlash();
+
+        $vm = new CheckoutViewModel(
+            $summary,
+            $user,
+            $missing !== [],
+            $missing,
+            $flash
+        );
+
+        echo View::render('checkout', $vm->toArray());
     }
 
     public function saveDetails(): void
