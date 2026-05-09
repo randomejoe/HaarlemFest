@@ -114,7 +114,7 @@ $registerSingleton(TicketDeliveryService::class, static fn(callable $get): Ticke
 ));
 
 $registerSingleton(CheckoutService::class, static fn(callable $get): CheckoutService => new CheckoutService(
-    $get(PDO::class),
+    new PdoTransactionManager($get(PDO::class)),
     $get(PlannerService::class),
     $get(CheckoutRepository::class),
     $get(UserRepository::class),
