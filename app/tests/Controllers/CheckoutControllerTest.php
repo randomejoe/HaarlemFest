@@ -132,7 +132,7 @@ final class CheckoutControllerTest extends TestCase
             ->willReturn(['success' => true, 'order_id' => 88]);
         $this->checkout->expects($this->once())
             ->method('setFlash')
-            ->with('success', 'Thank you! Your order has been placed.');
+            ->with(\App\Models\FlashType::Success, 'Thank you! Your order has been placed.');
 
         $controller = new class($this->checkout, $this->auth) extends CheckoutController {
             protected function redirect(string $location): void
