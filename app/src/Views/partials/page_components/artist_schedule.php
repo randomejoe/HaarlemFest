@@ -224,4 +224,4 @@ $selectionFormId = 'ars-add-form-' . preg_replace('/[^a-z0-9_-]+/i', '-', strtol
 		});
 	})();
 </script>
-<script src="/js/planner_async.js?v=<?php echo rawurlencode((string) @filemtime(__DIR__ . '/../../../../public/js/planner_async.js')); ?>" defer></script>
+<script src="/js/planner_async.js?v=<?php echo hf_asset_version(__DIR__ . '/../../../../public/js/planner_async.js'); ?>" defer></script>

@@ -1,6 +1,7 @@
 <?php
+require_once __DIR__ . '/helpers.php';
 $extraStylesheets = [
-    '/css/planner.css?v=' . rawurlencode((string) @filemtime(__DIR__ . '/../../public/css/planner.css')),
+    '/css/planner.css?v=' . hf_asset_version(__DIR__ . '/../../public/css/planner.css'),
 ];
 require __DIR__ . '/partials/header.php';
 ?>
@@ -225,6 +226,6 @@ require __DIR__ . '/partials/header.php';
     </section>
 </main>
 
-<script src="/js/planner_page_async.js?v=<?php echo rawurlencode((string) @filemtime(__DIR__ . '/../../public/js/planner_page_async.js')); ?>" defer></script>
+<script src="/js/planner_page_async.js?v=<?php echo hf_asset_version(__DIR__ . '/../../public/js/planner_page_async.js'); ?>" defer></script>
 
 <?php require __DIR__ . '/partials/footer.php'; ?>
