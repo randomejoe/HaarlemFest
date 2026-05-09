@@ -37,14 +37,14 @@ class AuthController
         ];
 
         $errors = User::validateRegistration($username, $email, $password);
-        if ($errors !== []) {
-            $this->renderRegisterError($redirect, $errors[0], $old);
-            return;
-        }
 
         $lengthError = $this->validateRegistrationLengths($username, $email);
         if ($lengthError !== null) {
-            $this->renderRegisterError($redirect, $lengthError, $old);
+            $errors[] = $lengthError;
+        }
+
+        if ($errors !== []) {
+            $this->renderRegisterErrors($redirect, $errors, $old);
             return;
         }
 
@@ -146,8 +146,13 @@ class AuthController
 
     private function renderRegisterError(string $redirect, string $message, array $old = []): void
     {
+        $this->renderRegisterErrors($redirect, [$message], $old);
+    }
+
+    private function renderRegisterErrors(string $redirect, array $errors, array $old = []): void
+    {
         echo View::render('register', [
-            'error' => $message,
+            'errors' => $errors,
             'old' => $old,
             'redirect' => $redirect,
         ]);

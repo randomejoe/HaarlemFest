@@ -41,7 +41,7 @@ class Event extends CmsItem implements JsonSerializable
             location: isset($data['location']) ? $data['location'] : null,
             startTime: (string) ($data['start_time']),
             endTime: (string) ($data['end_time']),
-            ticketPrice: (int) ($data['ticket_price']),
+            ticketPrice: (float) ($data['ticket_price']),
             ticketAmount: isset($data['ticket_amount']) ? $data['ticket_amount'] : null,
             soldTickets: isset($data['sold_tickets']) ? (int) $data['sold_tickets'] : null,
             language: isset($data['language']) ? HistoryTourLanguage::convertToLanguage($data['language']) : null,

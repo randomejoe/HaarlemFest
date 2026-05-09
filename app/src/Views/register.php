@@ -12,8 +12,12 @@
                         <h1>Create Account</h1>
                         <p class="account-intro">Join Haarlem Festival to manage your bookings and profile.</p>
 
-                        <?php if (!empty($error)): ?>
-                            <p class="account-message error"><?php echo htmlspecialchars($error, ENT_QUOTES, 'UTF-8'); ?></p>
+                        <?php if (!empty($errors)): ?>
+                            <ul class="account-message error" style="margin:0;padding-left:1.25rem;">
+                                <?php foreach ((array) $errors as $err): ?>
+                                    <li><?php echo htmlspecialchars((string) $err, ENT_QUOTES, 'UTF-8'); ?></li>
+                                <?php endforeach; ?>
+                            </ul>
                         <?php endif; ?>
 
                         <form method="post" action="/register" class="account-form auth-form">

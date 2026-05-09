@@ -21,7 +21,6 @@ class PlannerService implements IPlannerService
     public function __construct(IEventRepository $events)
     {
         $this->events = $events;
-        $this->ensurePlannerState();
     }
 
     public function getItems(): array

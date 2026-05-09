@@ -68,6 +68,7 @@ class User
             'username' => $this->username,
             'email' => $this->email,
             'role' => $this->role->value,
+            'enabled' => $this->enabled,
         ];
     }
 
