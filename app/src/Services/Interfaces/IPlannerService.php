@@ -6,6 +6,8 @@ namespace App\Services\Interfaces;
 
 interface IPlannerService
 {
+	public function getItems(): array;
+
 	public function getDetailedPlanner(): array;
 
 	public function addItem(int $eventId, int $quantity, ?string $familyTicket): void;
