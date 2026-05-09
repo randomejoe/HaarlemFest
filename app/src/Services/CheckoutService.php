@@ -11,7 +11,7 @@ use App\Repositories\Interfaces\IUserRepository;
 use App\Services\Interfaces\ICheckoutService;
 use App\Services\Interfaces\IPlannerService;
 use App\Services\Interfaces\ITicketDeliveryService;
-use PDO;
+use App\Services\Interfaces\ITransactionManager;
 use Throwable;
 
 final class CheckoutService implements ICheckoutService
@@ -19,7 +19,7 @@ final class CheckoutService implements ICheckoutService
     private const REQUIRED_FIELDS = ['first_name', 'last_name', 'address', 'city', 'country', 'phone_number'];
 
     public function __construct(
-        private PDO $pdo,
+        private ITransactionManager $txManager,
         private IPlannerService $planner,
         private ICheckoutRepository $checkoutRepo,
         private IUserRepository $users,
@@ -91,42 +91,38 @@ final class CheckoutService implements ICheckoutService
         }
 
         try {
-            $this->pdo->beginTransaction();
-
-            foreach ($items as $item) {
-                $event = $this->checkoutRepo->findEventForUpdate((int) $item['event_id']);
-                if ($event === null || (int) $event['available_tickets'] < (int) $item['quantity']) {
-                    $this->pdo->rollBack();
-                    return [
-                        'success' => false,
-                        'message' => 'Sorry, "' . (string) ($event['name'] ?? 'Event') . '" is out of stock.',
-                    ];
-                }
-            }
-
-            $invoiceId = $this->checkoutRepo->createInvoice(
-                $user->getId(),
-                (float) ($planner['total_price_value'] ?? 0)
-            );
-
-            foreach ($items as $item) {
-                $eventId = (int) $item['event_id'];
-                $quantity = (int) $item['quantity'];
-                $price = (float) ($item['unit_price_value'] ?? $item['unit_price'] ?? 0);
-
-                for ($i = 0; $i < $quantity; $i++) {
-                    $this->checkoutRepo->createTicket($invoiceId, $user->getId(), $eventId, $price);
+            $invoiceId = $this->txManager->run(function () use ($items, $user, $planner): int {
+                foreach ($items as $item) {
+                    $event = $this->checkoutRepo->findEventForUpdate((int) $item['event_id']);
+                    if ($event === null || (int) $event['available_tickets'] < (int) $item['quantity']) {
+                        throw new \RuntimeException(
+                            'Sorry, "' . (string) ($event['name'] ?? 'Event') . '" is out of stock.'
+                        );
+                    }
                 }
 
-                $this->checkoutRepo->decrementStock($eventId, $quantity);
-            }
+                $invoiceId = $this->checkoutRepo->createInvoice(
+                    $user->getId(),
+                    (float) ($planner['total_price_value'] ?? 0)
+                );
 
-            $this->pdo->commit();
+                foreach ($items as $item) {
+                    $eventId = (int) $item['event_id'];
+                    $quantity = (int) $item['quantity'];
+                    $price = (float) ($item['unit_price_value'] ?? $item['unit_price'] ?? 0);
+
+                    for ($i = 0; $i < $quantity; $i++) {
+                        $this->checkoutRepo->createTicket($invoiceId, $user->getId(), $eventId, $price);
+                    }
+
+                    $this->checkoutRepo->decrementStock($eventId, $quantity);
+                }
+
+                return $invoiceId;
+            });
+        } catch (\RuntimeException $e) {
+            return ['success' => false, 'message' => $e->getMessage()];
         } catch (Throwable $e) {
-            if ($this->pdo->inTransaction()) {
-                $this->pdo->rollBack();
-            }
-
             error_log('CheckoutService::confirmCheckout failed: ' . $e->getMessage());
 
             return ['success' => false, 'message' => 'Could not complete checkout.'];
