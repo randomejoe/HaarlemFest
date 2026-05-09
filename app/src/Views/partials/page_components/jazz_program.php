@@ -5,25 +5,13 @@ hf_register_component('jazz_program');
 
 $componentData = is_array($data ?? null) ? $data : [];
 
-// Fetch program data — all days with full event details for client-side tab switching
-$jazzDays = $componentData['jazzDays'] ?? [];
-if (empty($jazzDays) && isset($eventService)) {
-	$jazzDays = $eventService->getProgramDataForCategory('jazz');
-}
-
-// Planner state for the sticky bar at the bottom of the overlay
+// All data is provided by PageRenderer via component_registry.php.
+$jazzDays         = $componentData['jazzDays'] ?? [];
 $jazzPlannerDetails = $componentData['jazzPlannerDetails'] ?? null;
-if ($jazzPlannerDetails === null && isset($plannerService)) {
-	$jazzPlannerDetails = $plannerService->getDetailedPlanner();
-}
+$jazzPlannerFlash   = $componentData['jazzPlannerFlash'] ?? null;
 
-$jazzPlannerCount  = (int) ($jazzPlannerDetails['total_quantity'] ?? 0);
-$jazzPlannerTotal  = (string) ($jazzPlannerDetails['total_price'] ?? '0.00');
-$hasPlannerFlash = array_key_exists('jazzPlannerFlash', $componentData);
-$jazzPlannerFlash = $hasPlannerFlash ? $componentData['jazzPlannerFlash'] : null;
-if (!$hasPlannerFlash && isset($plannerService)) {
-	$jazzPlannerFlash = $plannerService->consumeFlash();
-}
+$jazzPlannerCount = (int) ($jazzPlannerDetails['total_quantity'] ?? 0);
+$jazzPlannerTotal = (string) ($jazzPlannerDetails['total_price'] ?? '0.00');
 
 // After a planner POST, the PlannerController redirects here.
 // Appending #jazz-open tells jazz_program.js to auto-open the overlay on load.
