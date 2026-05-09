@@ -6,6 +6,7 @@ namespace App\Services;
 
 use App\Models\Ticket;
 use App\Models\User;
+use App\Models\PlannerSummary;
 use App\Repositories\Interfaces\ICheckoutRepository;
 use App\Repositories\Interfaces\IUserRepository;
 use App\Services\Interfaces\ICheckoutService;
@@ -27,17 +28,14 @@ final class CheckoutService implements ICheckoutService
     ) {
     }
 
-    public function buildCheckoutView(User $user): array
+    public function getPlannerSummary(): PlannerSummary
     {
-        $missing = $this->missingCheckoutDetails($user);
+        return $this->planner->getPlannerSummary();
+    }
 
-        return [
-            'planner' => $this->planner->getDetailedPlanner(),
-            'user' => $user,
-            'flash' => $this->planner->consumeFlash(),
-            'missing_fields' => $missing,
-            'requires_details' => $missing !== [],
-        ];
+    public function consumeFlash(): ?array
+    {
+        return $this->planner->consumeFlash();
     }
 
     public function loadCheckoutUser(int $userId): ?User

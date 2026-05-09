@@ -5,6 +5,7 @@ namespace App\Controllers;
 use App\Services\Interfaces\IPlannerService;
 use App\View;
 use App\Models\FlashType;
+use App\ViewModels\PlannerViewModel;
 use InvalidArgumentException;
 use RuntimeException;
 
@@ -19,11 +20,18 @@ class PlannerController
 
     public function show(): void
     {
-        $planner = $this->planner->getDetailedPlanner();
+        $summary = $this->planner->getPlannerSummary();
         $flash = $this->planner->consumeFlash();
 
+        $vm = new PlannerViewModel(
+            $summary,
+            $summary->timeConflicts(),
+            $summary->timeConflictPairs(),
+            $flash
+        );
+
         echo View::render('planner', [
-            'planner' => $planner,
+            'planner' => $vm->toArray(),
             'flash' => $flash,
         ]);
     }

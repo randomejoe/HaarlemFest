@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Tests\Controllers;
 
 use App\Controllers\PlannerController;
+use App\Models\Event;
+use App\Models\PlannerSummary;
 use App\Services\Interfaces\IPlannerService;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
@@ -21,15 +23,15 @@ final class PlannerControllerTest extends TestCase
 
     public function test_show_renders_planner_summary_and_flash_message(): void
     {
+        $event = new Event(1, 'Jazz Night', null, '2026-07-01 20:00:00', '2026-07-01 22:00:00', 12.25, 100, null, 'jazz', 'Venue', null, null);
+        $summary = PlannerSummary::fromRawItems(
+            [1 => ['quantity' => 2, 'familyTicket' => false]],
+            [1 => $event]
+        );
+
         $this->planner->expects($this->once())
-            ->method('getDetailedPlanner')
-            ->willReturn([
-                'total_quantity' => 2,
-                'total_price' => '24.50',
-                'is_empty' => false,
-                'time_conflicts' => [],
-                'items' => [],
-            ]);
+            ->method('getPlannerSummary')
+            ->willReturn($summary);
 
         $this->planner->expects($this->once())
             ->method('consumeFlash')
