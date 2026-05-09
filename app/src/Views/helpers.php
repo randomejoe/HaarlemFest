@@ -124,6 +124,13 @@ if (!function_exists('hf_get_font_definitions')) {
 	}
 }
 
+if (!function_exists('hf_asset_version')) {
+	function hf_asset_version(string $absolutePath): string
+	{
+		return is_file($absolutePath) ? rawurlencode((string) filemtime($absolutePath)) : '0';
+	}
+}
+
 /**
  * Register a component to have its assets loaded
  */

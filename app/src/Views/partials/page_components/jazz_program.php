@@ -157,5 +157,5 @@ $jazzReturnTo = (parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?: '/')
 	</section>
 </div>
 
-<script src="/js/planner_async.js?v=<?php echo rawurlencode((string) @filemtime(__DIR__ . '/../../../../public/js/planner_async.js')); ?>" defer></script>
-<script src="/js/jazz_program.js?v=<?php echo rawurlencode((string) @filemtime(__DIR__ . '/../../../../public/js/jazz_program.js')); ?>" defer></script>
+<script src="/js/planner_async.js?v=<?php echo hf_asset_version(__DIR__ . '/../../../../public/js/planner_async.js'); ?>" defer></script>
+<script src="/js/jazz_program.js?v=<?php echo hf_asset_version(__DIR__ . '/../../../../public/js/jazz_program.js'); ?>" defer></script>

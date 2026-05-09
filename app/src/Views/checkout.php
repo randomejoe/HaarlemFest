@@ -1,6 +1,7 @@
 <?php
+require_once __DIR__ . '/helpers.php';
 $extraStylesheets = [
-    '/css/planner.css?v=' . rawurlencode((string) @filemtime(__DIR__ . '/../../public/css/planner.css')),
+    '/css/planner.css?v=' . hf_asset_version(__DIR__ . '/../../public/css/planner.css'),
 ];
 require __DIR__ . '/partials/header.php';
 ?>

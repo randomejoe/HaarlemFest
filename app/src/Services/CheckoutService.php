@@ -164,18 +164,17 @@ final class CheckoutService implements ICheckoutService
         }
     }
 
+    private const FIELD_GETTERS = [
+        'first_name'   => 'firstName',
+        'last_name'    => 'lastName',
+        'phone_number' => 'phoneNumber',
+        'address'      => 'address',
+        'city'         => 'city',
+        'country'      => 'country',
+    ];
+
     private function fieldToGetter(string $field): string
     {
-        if ($field === 'first_name') {
-            return 'firstName';
-        }
-        if ($field === 'last_name') {
-            return 'lastName';
-        }
-        if ($field === 'phone_number') {
-            return 'phoneNumber';
-        }
-
-        return $field;
+        return self::FIELD_GETTERS[$field] ?? $field;
     }
 }

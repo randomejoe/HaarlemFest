@@ -56,4 +56,4 @@
     const familyTicketPrice = <?php echo $data['family_ticket_price']; ?>;
 </script>
 <script src="/js/history_ticketing.js"></script>
-<script src="/js/planner_async.js?v=<?php echo rawurlencode((string) @filemtime(__DIR__ . '/../../../../public/js/planner_async.js')); ?>" defer></script>
+<script src="/js/planner_async.js?v=<?php echo hf_asset_version(__DIR__ . '/../../../../public/js/planner_async.js'); ?>" defer></script>
