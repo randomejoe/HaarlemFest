@@ -26,16 +26,7 @@ class PlannerService implements IPlannerService
 
     public function getItems(): array
     {
-        $planner = $this->getPlannerState();
-        $items = (array) ($planner['items'] ?? []);
-        $filteredItems = $this->filterOutFreeItems($items);
-
-        if ($filteredItems !== $items) {
-            $planner['items'] = $filteredItems;
-            $this->savePlanner($planner);
-        }
-
-        return $filteredItems;
+        return (array) ($this->getPlannerState()['items'] ?? []);
     }
 
     public function addItem(int $eventId, int $quantity, ?string $familyTicket): void
@@ -157,6 +148,17 @@ class PlannerService implements IPlannerService
         $items = $this->getItems();
         $eventIds = array_map('intval', array_keys($items));
         $eventsById = $this->events->findByIds($eventIds);
+
+        // Filter free events using the already-fetched event map so we do not
+        // fire a second findByIds query (previously done inside getItems).
+        $filteredItems = $this->filterOutFreeItems($items, $eventsById);
+        if ($filteredItems !== $items) {
+            $planner = $this->getPlannerState();
+            $planner['items'] = $filteredItems;
+            $this->savePlanner($planner);
+            $items = $filteredItems;
+        }
+
         $summary = PlannerSummary::fromRawItems($items, $eventsById);
 
         // Convert PlannerItem objects to plain arrays so that views and
@@ -253,14 +255,8 @@ class PlannerService implements IPlannerService
         $_SESSION[self::SESSION_KEY]['updated_at'] = (int) ($_SESSION[self::SESSION_KEY]['updated_at'] ?? time());
     }
 
-    private function filterOutFreeItems(array $items): array
+    private function filterOutFreeItems(array $items, array $eventsById): array
     {
-        if ($items === []) {
-            return [];
-        }
-
-        $eventIds = array_map('intval', array_keys($items));
-        $eventsById = $this->events->findByIds($eventIds);
         $filtered = [];
 
         foreach ($items as $eventIdRaw => $item) {
@@ -276,6 +272,7 @@ class PlannerService implements IPlannerService
                 'familyTicket' => (bool) $item['familyTicket'],
             ];
         }
+
         return $filtered;
     }
 
