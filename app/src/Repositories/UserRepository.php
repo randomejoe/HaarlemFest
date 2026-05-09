@@ -162,7 +162,7 @@ class UserRepository implements IUserRepository
 
     public function getAllUsers(): array
     {
-        $stmt = $this->pdo->prepare('SELECT ' . self::USER_COLUMNS . ' FROM users WHERE active = 1');
+        $stmt = $this->pdo->prepare('SELECT ' . self::USER_COLUMNS . ' FROM users WHERE enabled = 1');
         $stmt->execute();
         $results = $stmt->fetchAll();
         $users = [];
