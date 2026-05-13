@@ -20,6 +20,7 @@ class PlannerController
 
     public function show(): void
     {
+        $this->planner->pruneUnavailableItems();
         $summary = $this->planner->getPlannerSummary();
         $flash = $this->planner->consumeFlash();
 
@@ -58,7 +59,7 @@ class PlannerController
                 $this->planner->addItem($eventIds[0], $quantity, $_POST['familyTicket'] ?? null);
                 $message = '';
             } else {
-                $this->planner->addItems($eventIds, $quantity);
+                $this->planner->addItems($this->buildPlannerRows($eventIds, $_POST['familyTicket'] ?? null), $quantity);
                 $message = '';
             }
         } catch (RuntimeException | InvalidArgumentException $e) {
@@ -223,5 +224,20 @@ class PlannerController
         }
 
         return $fallbackEventId > 0 ? [$fallbackEventId] : [];
+    }
+
+    private function buildPlannerRows(array $eventIds, ?string $familyTicket): array
+    {
+        $isFamilyTicket = in_array(strtolower((string) $familyTicket), ['1', 'true', 'yes', 'on'], true);
+        $rows = [];
+
+        foreach ($eventIds as $eventId) {
+            $rows[] = [
+                'event_id' => (int) $eventId,
+                'familyTicket' => $isFamilyTicket,
+            ];
+        }
+
+        return $rows;
     }
 }

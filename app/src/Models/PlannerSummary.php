@@ -56,7 +56,8 @@ final class PlannerSummary
                 continue;
             }
 
-            $plannerItem = PlannerItem::fromEvent($eventId, $quantity, $event, $familyTicket);
+            $lineTotalValue = (float) ($item['line_total_value'] ?? ($event->ticketPrice() * $quantity));
+            $plannerItem = PlannerItem::fromEvent($eventId, $quantity, $event, $familyTicket, $lineTotalValue);
             $plannerItems[] = $plannerItem;
             $totalPriceValue += $plannerItem->lineTotalValue();
 

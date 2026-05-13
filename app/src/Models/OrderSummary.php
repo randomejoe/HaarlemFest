@@ -19,7 +19,6 @@ class OrderSummary
     private function __construct(
         private int    $invoiceId,
         private string $createdAt,
-        private string $createdAtFormatted,
         private float  $totalPriceValue,
         private int    $ticketCount,
         private array  $items,
@@ -39,7 +38,6 @@ class OrderSummary
         return new self(
             invoiceId:          (int)    ($data['invoice_id']         ?? 0),
             createdAt:          (string) ($data['created_at']         ?? ''),
-            createdAtFormatted: (string) ($data['created_at_formatted'] ?? ''),
             totalPriceValue:    (float)  ($data['total_price_value']  ?? 0.0),
             ticketCount:        (int)    ($data['ticket_count']       ?? 0),
             items:              $items,
@@ -52,9 +50,7 @@ class OrderSummary
 
     public function invoiceId(): int    { return $this->invoiceId; }
     public function createdAt(): string { return $this->createdAt; }
-    public function createdAtFormatted(): string { return $this->createdAtFormatted; }
     public function totalPriceValue(): float { return $this->totalPriceValue; }
-    public function formattedTotalPrice(): string { return number_format($this->totalPriceValue, 2); }
     public function ticketCount(): int { return $this->ticketCount; }
 
     /** @return PurchasedTicket[] */
@@ -72,9 +68,7 @@ class OrderSummary
         return [
             'invoice_id'           => $this->invoiceId,
             'created_at'           => $this->createdAt,
-            'created_at_formatted' => $this->createdAtFormatted,
             'total_price_value'    => $this->totalPriceValue,
-            'total_price'          => $this->formattedTotalPrice(),
             'ticket_count'         => $this->ticketCount,
             'items'                => array_map(
                 static fn(PurchasedTicket $t): array => $t->toArray(),
@@ -93,7 +87,7 @@ class OrderSummary
         return $this->ticketCount;
     }
     public function getTotalPrice() {
-        return $this->formattedTotalPrice();
+        return $this->totalPriceValue;
     }
     public function getEventNames() {
         $events = $this->items;

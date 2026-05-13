@@ -17,8 +17,7 @@ final class CheckoutViewModel
         private User $user,
         private bool $requiresDetails,
         private array $missingDetails = [],
-        private ?array $flash = null,
-        private ?string $csrfToken = null
+        private ?array $flash = null
     ) {
     }
 
@@ -48,7 +47,6 @@ final class CheckoutViewModel
             'requires_details' => $this->requiresDetails,
             'missing_details' => $this->missingDetails,
             'flash' => $this->flash,
-            'csrf_token' => $this->csrfToken,
         ];
     }
 }

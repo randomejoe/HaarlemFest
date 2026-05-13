@@ -14,7 +14,17 @@ interface IUserRepository
 
     public function create(string $username, string $email, string $passwordHash): int;
 
+    public function setPasswordResetToken(int $userId, string $tokenHash, string $expiresAt): void;
+
+    public function findByResetTokenHash(string $tokenHash): ?User;
+
+    public function updatePassword(int $userId, string $passwordHash): void;
+
     public function updateProfile(int $userId, array $profileData): void;
 
     public function updateCheckoutDetails(int $userId, array $details): void;
+
+    public function getAllUsers(): array;
+
+    public function deleteUser(int $id): bool;
 }

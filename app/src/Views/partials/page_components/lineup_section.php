@@ -4,7 +4,7 @@ require_once __DIR__ . '/../../helpers.php';
 hf_register_component('lineup_section');
 
 $category = trim((string) ($page->getName()['title'] ?? ''));
-$days = [];
+$days = is_array($data['days'] ?? null) ? $data['days'] : [];
 $artistDetailsLinks = [
     'Ntjam Rosie' => '/Ntjam%20Rosie',
     'Jonna Frazer' => '/Jonna%20Frazer',
@@ -15,13 +15,13 @@ $artistDetailsLinks = [
         <h2 class="lineup-title">Line-up</h2>
 
 
-        <?php if ($data['days'] == []): ?>
+        <?php if ($days == []): ?>
             <div class="lineup-empty-state">
                 No line-up items are available for this festival page yet.
             </div>
         <?php else: ?>
             <div class="lineup-tabs" role="tablist" aria-label="Festival days">
-                <?php foreach ($data['days'] as $index => $day): ?>
+                <?php foreach ($days as $index => $day): ?>
                     <button
                         type="button"
                         class="date-tab<?php echo $index === 0 ? ' is-active' : ''; ?>"
@@ -34,7 +34,7 @@ $artistDetailsLinks = [
                 <?php endforeach; ?>
             </div>
 
-            <?php foreach ($data['days'] as $index => $day): ?>
+            <?php foreach ($days as $index => $day): ?>
                 <div
                     class="lineup-day-panel<?php echo $index === 0 ? ' is-active' : ''; ?>"
                     data-lineup-panel="<?php echo hf_e($day['key']); ?>"

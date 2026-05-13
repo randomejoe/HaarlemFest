@@ -32,7 +32,7 @@ class InvoicePdfService
         $terms = (string) ($payload['terms'] ?? 'Payment confirms your order. Keep this invoice for your records.');
 
         $pages = [];
-        $content = $this->drawPageBase(false);
+        $content = $this->drawPageBase();
         $y = 734.0;
 
         $content .= $this->drawSummaryCard([
@@ -57,7 +57,7 @@ class InvoicePdfService
                 $content .= $this->drawFooter($terms);
                 $pages[] = $content;
 
-                $content = $this->drawPageBase(true);
+                $content = $this->drawPageBase();
                 $y = 734.0;
                 $content .= $this->drawSectionHeader(36, $y, $currency);
                 $y -= 30;
@@ -79,7 +79,7 @@ class InvoicePdfService
         return $this->buildPdf($pages);
     }
 
-    private function drawPageBase(bool $continued): string
+    private function drawPageBase(): string
     {
         $content = '';
         $content .= $this->drawFillRect(0, 0, self::PAGE_WIDTH, self::PAGE_HEIGHT, self::COLOR_BG);
@@ -90,9 +90,8 @@ class InvoicePdfService
         $content .= $this->drawFillRect(36, 775, 24, 24, self::COLOR_BRAND);
         $content .= $this->drawText(43, 781, 'F2', 12, 'H', self::COLOR_PAPER);
 
-        $title = $continued ? 'Invoice PDF - Continued' : 'Invoice PDF';
         $content .= $this->drawText(70, 792, 'F2', 19, 'Haarlem Festival', self::COLOR_INK);
-        $content .= $this->drawText(70, 774, 'F1', 10, $title, self::COLOR_MUTED);
+        $content .= $this->drawText(70, 774, 'F1', 10, 'Invoice PDF', self::COLOR_MUTED);
 
         $content .= $this->drawFillRect(24, 754, 547, 4, self::COLOR_ACCENT);
 

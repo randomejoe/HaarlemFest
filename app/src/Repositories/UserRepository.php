@@ -179,6 +179,6 @@ class UserRepository implements IUserRepository
         $stmt->execute([
             'user_id' => $id
         ]);
-        return true;
+        return $stmt->rowCount() > 0;
     }
 }

@@ -4,10 +4,11 @@ namespace App\Controllers;
 
 use App\Services\ContentService;
 use App\Services\PageService;
-use App\Services\EventService;
 use App\Services\LocationService;
 use App\Services\UserService;
 use App\Services\OrderService;
+use App\Services\Interfaces\IEventService
+    as EventSvc;
 use App\Services\SessionManager;
 use App\View;
 use App\Models\UserRole;
@@ -17,14 +18,14 @@ class CmsController
 {
     private PageService $pageService;
     private ContentService $contentService;
-    private EventService $eventService;
+    private EventSvc $eventService;
     private LocationService $locationService;
     private UserService $userService;
     private OrderService $orderService;
 
     private SessionManager $sessionManager;
 
-    public function __construct(PageService $pageService, ContentService $contentService, EventService $eventService, LocationService $locationService, UserService $userService, OrderService $orderService, SessionManager $manager)
+    public function __construct(PageService $pageService, ContentService $contentService, EventSvc $eventService, LocationService $locationService, UserService $userService, OrderService $orderService, SessionManager $manager)
     {
         $this->pageService = $pageService;
         $this->contentService = $contentService;
@@ -192,7 +193,7 @@ class CmsController
         header('Location: ' . $_POST['return_url']);
     }
 
-    private function resolveService(CmsType $type): PageService|ContentService|EventService|LocationService|UserService|OrderService
+    private function resolveService(CmsType $type): PageService|ContentService|EventSvc|LocationService|UserService|OrderService
     {
         return match ($type) {
             CmsType::Page => $this->pageService,

@@ -13,18 +13,18 @@ use RuntimeException;
 
 class PlannerService implements IPlannerService
 {
-    private const SESSION_KEY = 'planner';
-    private const FLASH_KEY = 'planner_flash';
     private IEventRepository $events;
+    private SessionManager $session;
 
-    public function __construct(IEventRepository $events)
+    public function __construct(IEventRepository $events, SessionManager $session)
     {
         $this->events = $events;
+        $this->session = $session;
     }
 
     public function getItems(): array
     {
-        return (array) ($this->getPlannerState()['items'] ?? []);
+        return $this->session->getPlannerItems();
     }
 
     public function addItem(int $eventId, int $quantity, ?string $familyTicket): void
@@ -34,24 +34,25 @@ class PlannerService implements IPlannerService
 
         $event = $this->assertEventCanBePlanned($eventId);
 
-        $planner = $this->getPlannerState();
-        $currentItem = $planner['items'][$eventId] ?? ['quantity' => 0, 'familyTicket' => false];
+        $items = $this->getItems();
+        $currentItem = $items[$eventId] ?? ['quantity' => 0, 'familyTicket' => false];
         $current = $this->itemQuantity($currentItem);
         $requestedQuantity = $current + $quantity;
         $this->assertQuantityWithinAvailability($event, $requestedQuantity);
 
-        $planner['items'][$eventId] = [
+        $items[$eventId] = [
             'quantity' => $requestedQuantity,
-            'familyTicket' => $familyTicket === 'on' || (bool) ($currentItem['familyTicket'] ?? false),
+            'familyTicket' => $this->isFamilyTicketSelected($familyTicket)
+                || (bool) ($currentItem['familyTicket'] ?? false),
         ];
 
-        $this->savePlanner($planner);
+        $this->session->setPlannerItems($items);
     }
 
     public function addItems(array $eventIds, int $quantity): int
     {
-        $ids = array_values(array_unique(array_map('intval', $eventIds)));
-        $ids = array_values(array_filter($ids, static fn(int $id): bool => $id > 0));
+        $rows = $this->normalizeBulkRows($eventIds);
+        $ids = array_keys($rows);
 
         if ($ids === []) {
             throw new InvalidArgumentException('Select at least one valid event before adding it to your planner.');
@@ -59,24 +60,25 @@ class PlannerService implements IPlannerService
 
         $this->assertQuantity($quantity);
 
-        $planner = $this->getPlannerState();
+        $items = $this->getItems();
 
         foreach ($ids as $eventId) {
             $event = $this->assertEventCanBePlanned($eventId);
-            $current = $this->itemQuantity($planner['items'][$eventId] ?? ['quantity' => 0, 'familyTicket' => false]);
+            $current = $this->itemQuantity($items[$eventId] ?? ['quantity' => 0, 'familyTicket' => false]);
             $requestedQuantity = $current + $quantity;
             $this->assertQuantityWithinAvailability($event, $requestedQuantity);
         }
 
         foreach ($ids as $eventId) {
-            $currentItem = $planner['items'][$eventId] ?? ['quantity' => 0, 'familyTicket' => false];
-            $planner['items'][$eventId] = [
+            $currentItem = $items[$eventId] ?? ['quantity' => 0, 'familyTicket' => false];
+            $items[$eventId] = [
                 'quantity' => $this->itemQuantity($currentItem) + $quantity,
-                'familyTicket' => (bool) ($currentItem['familyTicket'] ?? false),
+                'familyTicket' => (bool) $rows[$eventId]['familyTicket']
+                    || (bool) ($currentItem['familyTicket'] ?? false),
             ];
         }
 
-        $this->savePlanner($planner);
+        $this->session->setPlannerItems($items);
 
         return count($ids);
     }
@@ -86,75 +88,69 @@ class PlannerService implements IPlannerService
         $this->assertEventId($eventId);
         $this->assertQuantity($quantity);
 
-        $planner = $this->getPlannerState();
+        $items = $this->getItems();
 
-        if (!isset($planner['items'][$eventId])) {
+        if (!isset($items[$eventId])) {
             throw new RuntimeException('This event is not in your planner.');
         }
 
         $event = $this->assertEventCanBePlanned($eventId);
         $this->assertQuantityWithinAvailability($event, $quantity);
 
-        $planner['items'][$eventId] = [
+        $items[$eventId] = [
             'quantity' => $quantity,
-            'familyTicket' => (bool) ($planner['items'][$eventId]['familyTicket'] ?? false),
+            'familyTicket' => (bool) ($items[$eventId]['familyTicket'] ?? false),
         ];
-        $this->savePlanner($planner);
+        $this->session->setPlannerItems($items);
     }
 
     public function removeItem(int $eventId): void
     {
         $this->assertEventId($eventId);
 
-        $planner = $this->getPlannerState();
-        unset($planner['items'][$eventId]);
-        $this->savePlanner($planner);
+        $this->session->removePlannerItem((string) $eventId);
     }
 
     public function clear(): void
     {
-        $planner = $this->getPlannerState();
-        $planner['items'] = [];
-        $this->savePlanner($planner);
+        $this->session->clearPlanner();
     }
 
     public function setFlash(FlashType $type, string $message): void
     {
-        $_SESSION[self::FLASH_KEY] = [
-            'type' => $type->value,
-            'message' => $message,
-        ];
+        $this->session->setFlash($type, $message);
     }
 
     public function consumeFlash(): ?array
     {
-        if (!isset($_SESSION[self::FLASH_KEY]) || !is_array($_SESSION[self::FLASH_KEY])) {
-            return null;
-        }
-
-        $flash = $_SESSION[self::FLASH_KEY];
-        unset($_SESSION[self::FLASH_KEY]);
-
-        return [
-            'type' => (string) ($flash['type'] ?? 'info'),
-            'message' => (string) ($flash['message'] ?? ''),
-        ];
+        return $this->session->consumeFlash();
     }
 
     public function getPlannerSummary(): PlannerSummary
     {
         $items = $this->getItems();
-        $eventIds = array_map('intval', array_keys($items));
-        $eventsById = $this->events->findByIds($eventIds);
+        $eventsById = $this->events->findByIds(array_map('intval', array_keys($items)));
+        $filteredItems = $this->filterOutUnavailableItems($items, $eventsById);
 
-        $filteredItems = $this->filterOutFreeItems($items, $eventsById);
         if ($filteredItems !== $items) {
-            $planner = $this->getPlannerState();
-            $planner['items'] = $filteredItems;
-            $this->savePlanner($planner);
+            $this->session->setPlannerItems($filteredItems);
+            $items = $filteredItems;
         }
 
-        return PlannerSummary::fromRawItems($filteredItems, $eventsById);
+        $items = $this->withLineTotals($items, $eventsById);
+
+        return PlannerSummary::fromRawItems($items, $eventsById);
+    }
+
+    public function pruneUnavailableItems(): void
+    {
+        $items = $this->getItems();
+        $eventsById = $this->events->findByIds(array_map('intval', array_keys($items)));
+        $filteredItems = $this->filterOutUnavailableItems($items, $eventsById);
+
+        if ($filteredItems !== $items) {
+            $this->session->setPlannerItems($filteredItems);
+        }
     }
 
     public function getDetailedPlanner(): array
@@ -164,15 +160,6 @@ class PlannerService implements IPlannerService
         return array_merge($summary->toArray(), [
             'items_map' => $this->getItems(),
         ]);
-    }
-
-    private function savePlanner(array $planner): void
-    {
-        $planner['updated_at'] = time();
-        $_SESSION[self::SESSION_KEY] = [
-            'items' => $this->normalizeItems((array) ($planner['items'] ?? [])),
-            'updated_at' => (int) $planner['updated_at'],
-        ];
     }
 
     private function assertEventId(int $eventId): void
@@ -194,51 +181,7 @@ class PlannerService implements IPlannerService
         return max(0, (int) ($item['quantity'] ?? 0));
     }
 
-    private function normalizeItems(array $items): array
-    {
-        $normalized = [];
-
-        foreach ($items as $eventIdRaw => $item) {
-            $eventId = (int) $eventIdRaw;
-            $quantity = max(0, (int) ($item['quantity'] ?? 0));
-            $familyTicket = (bool) ($item['familyTicket'] ?? false);
-
-            if ($eventId <= 0 || $quantity <= 0) {
-                continue;
-            }
-
-            $normalized[$eventId] = [
-                'quantity' => $quantity,
-                'familyTicket' => $familyTicket,
-            ];
-        }
-
-        return $normalized;
-    }
-
-    private function getPlannerState(): array
-    {
-        $this->ensurePlannerState();
-
-        return (array) $_SESSION[self::SESSION_KEY];
-    }
-
-    private function ensurePlannerState(): void
-    {
-        if (!isset($_SESSION[self::SESSION_KEY]) || !is_array($_SESSION[self::SESSION_KEY])) {
-            $_SESSION[self::SESSION_KEY] = [
-                'items' => [],
-                'updated_at' => time(),
-            ];
-        }
-
-        $_SESSION[self::SESSION_KEY]['items'] = $this->normalizeItems(
-            (array) ($_SESSION[self::SESSION_KEY]['items'] ?? [])
-        );
-        $_SESSION[self::SESSION_KEY]['updated_at'] = (int) ($_SESSION[self::SESSION_KEY]['updated_at'] ?? time());
-    }
-
-    private function filterOutFreeItems(array $items, array $eventsById): array
+    private function filterOutUnavailableItems(array $items, array $eventsById): array
     {
         $filtered = [];
 
@@ -246,7 +189,7 @@ class PlannerService implements IPlannerService
             $eventId = (int) $eventIdRaw;
             $event = $eventsById[$eventId] ?? null;
 
-            if ($event !== null && $event->isFree()) {
+            if ($event !== null && ($event->isFree() || $event->isSoldOut())) {
                 continue;
             }
 
@@ -257,6 +200,63 @@ class PlannerService implements IPlannerService
         }
 
         return $filtered;
+    }
+
+    private function normalizeBulkRows(array $rows): array
+    {
+        $normalized = [];
+
+        foreach ($rows as $key => $row) {
+            if (is_array($row)) {
+                $eventId = (int) ($row['event_id'] ?? $row['id'] ?? $key);
+                $familyTicket = (bool) ($row['familyTicket'] ?? false);
+            } else {
+                $eventId = (int) $row;
+                $familyTicket = false;
+            }
+
+            if ($eventId > 0) {
+                $normalized[$eventId] = ['familyTicket' => $familyTicket];
+            }
+        }
+
+        return $normalized;
+    }
+
+    private function isFamilyTicketSelected(?string $familyTicket): bool
+    {
+        if ($familyTicket === null) {
+            return false;
+        }
+
+        return in_array(strtolower($familyTicket), ['1', 'true', 'yes', 'on'], true);
+    }
+
+    private function withLineTotals(array $items, array $eventsById): array
+    {
+        foreach ($items as $eventId => $item) {
+            $event = $eventsById[(int) $eventId] ?? null;
+            if (!$event instanceof Event) {
+                continue;
+            }
+
+            $items[$eventId]['line_total_value'] = $this->calculateLineTotal(
+                (int) ($item['quantity'] ?? 0),
+                $event,
+                (bool) ($item['familyTicket'] ?? false)
+            );
+        }
+
+        return $items;
+    }
+
+    private function calculateLineTotal(int $quantity, Event $event, bool $familyTicket): float
+    {
+        if ($familyTicket) {
+            return (float) (60 * ceil($quantity / 4));
+        }
+
+        return $event->ticketPrice() * $quantity;
     }
 
     private function assertEventCanBePlanned(int $eventId): Event

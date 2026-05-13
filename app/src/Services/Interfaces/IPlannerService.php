@@ -12,11 +12,13 @@ interface IPlannerService
 
 	public function getPlannerSummary(): PlannerSummary;
 
+	public function pruneUnavailableItems(): void;
+
 	public function getDetailedPlanner(): array;
 
 	public function addItem(int $eventId, int $quantity, ?string $familyTicket): void;
 
-	public function addItems(array $eventIds, int $quantity): int;
+	public function addItems(array $items, int $quantity): int;
 
 	public function updateItemQuantity(int $eventId, int $quantity): void;
 

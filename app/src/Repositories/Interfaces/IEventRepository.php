@@ -36,7 +36,7 @@ interface IEventRepository
 
     public function createSubEvent(string $category, array $postData);
 
-    public function getEventForEdit(int $id): Event;
+    public function getEventForEdit(int $id): ?Event;
 
     public function updateEvent(int $id, array $postData);
 
