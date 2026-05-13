@@ -284,7 +284,7 @@ class EventRepository implements IEventRepository
         return true;
     }
 
-    public function getEventForEdit(int $id): Event
+    public function getEventForEdit(int $id): ?Event
     {
         $stmt = $this->pdo->prepare(
             'SELECT name, event_id, location, ticket_amount, ticket_price, category, start_time, end_time, description, language, artist_img
@@ -294,13 +294,7 @@ class EventRepository implements IEventRepository
         $stmt->execute(['id' => $id]);
         $event = $stmt->fetch();
 
-        // No event found to edit
-        if ($event == null) {
-            header('Location: /cms/events');
-            return null;
-        }
-
-        return Event::fromArray($event);
+        return $event ? Event::fromArray($event) : null;
     }
 
     public function updateEvent(int $id, array $postData)

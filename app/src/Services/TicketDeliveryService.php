@@ -7,6 +7,7 @@ namespace App\Services;
 use App\Models\Ticket;
 use App\Models\User;
 use App\Services\Interfaces\ITicketDeliveryService;
+use App\View;
 
 final class TicketDeliveryService implements ITicketDeliveryService
 {
@@ -97,29 +98,12 @@ final class TicketDeliveryService implements ITicketDeliveryService
 
     private function emailBody(string $customerName, int $orderId, array $tickets, float $total): string
     {
-        $safeName = htmlspecialchars($customerName, ENT_QUOTES, 'UTF-8');
-        $items = '';
-
-        foreach ($tickets as $ticket) {
-            $eventName = htmlspecialchars((string) ($ticket['event_name'] ?? 'Event'), ENT_QUOTES, 'UTF-8');
-            $eventDate = htmlspecialchars((string) ($ticket['event_date'] ?? ''), ENT_QUOTES, 'UTF-8');
-            $eventTime = htmlspecialchars((string) ($ticket['event_time'] ?? ''), ENT_QUOTES, 'UTF-8');
-            $venue = htmlspecialchars((string) ($ticket['venue'] ?? ''), ENT_QUOTES, 'UTF-8');
-            $items .= '<li><strong>' . $eventName . '</strong><br>'
-                . 'Date: ' . $eventDate . '<br>'
-                . 'Time: ' . $eventTime . '<br>'
-                . 'Venue: ' . $venue . '</li>';
-        }
-
-        return '<div style="font-family:Arial,sans-serif;color:#1b1b1b;line-height:1.5;">'
-            . '<h2 style="color:#002c53;margin:0 0 12px;">Your Haarlem Festival Order</h2>'
-            . '<p>Hello ' . $safeName . ',</p>'
-            . '<p>Your order <strong>#' . $orderId . '</strong> has been confirmed.</p>'
-            . '<p>Your ticket PDF and invoice PDF are attached to this email.</p>'
-            . '<ul style="padding-left:18px;margin:0;">' . $items . '</ul>'
-            . '<p><strong>Total:</strong> EUR ' . number_format($total, 2) . '</p>'
-            . '<p style="color:#555;">Haarlem Festival Team</p>'
-            . '</div>';
+        return View::render('emails/order_confirmation', [
+            'customerName' => $customerName,
+            'orderId' => $orderId,
+            'tickets' => $tickets,
+            'total' => $total,
+        ]);
     }
 
     private function invoiceItems(array $tickets): array

@@ -67,8 +67,52 @@ final class SessionManager
 			'locked_checkout_attempt_id' => $planner['locked_checkout_attempt_id'] ?? null,
 			'locked_checkout_expires_at' => $planner['locked_checkout_expires_at'] ?? null,
 			'idempotency_key' => (string) ($planner['idempotency_key'] ?? $this->generateToken()),
-			'updated_at' => (int) ($planner['updated_at'] ?? time()),
+			'updated_at' => time(),
 		];
+	}
+
+	/**
+	 * @return array<int, array{quantity:int, familyTicket:bool}>
+	 */
+	public function getPlannerItems(): array
+	{
+		$planner = $this->getPlannerState();
+		return $this->normalizeItems((array) ($planner['items'] ?? []));
+	}
+
+	public function setPlannerItems(array $items): void
+	{
+		$planner = $this->getPlannerState();
+		$planner['items'] = $items;
+		$this->setPlannerState($planner);
+	}
+
+	public function addPlannerItem(array $item): void
+	{
+		$eventId = (int) ($item['event_id'] ?? $item['id'] ?? 0);
+		if ($eventId <= 0) {
+			return;
+		}
+
+		$items = $this->getPlannerItems();
+		$items[$eventId] = [
+			'quantity' => (int) ($item['quantity'] ?? 0),
+			'familyTicket' => (bool) ($item['familyTicket'] ?? false),
+		];
+		$this->setPlannerItems($items);
+	}
+
+	public function removePlannerItem(string $key): void
+	{
+		$items = $this->getPlannerItems();
+		unset($items[(int) $key]);
+		$this->setPlannerItems($items);
+	}
+
+	public function clearPlanner(): void
+	{
+		$this->setPlannerItems([]);
+		$this->resetExpiryCleanupRun();
 	}
 
 	/**
@@ -160,30 +204,32 @@ final class SessionManager
 	}
 
 	/**
-	 * Normalize item quantities: remove zeros, free items, and invalid entries.
+	 * Normalize planner items to the canonical session shape.
 	 *
-	 * @param  array<int|string, int> $items  Map of event_id => quantity
-	 * @return array<int, int>                 Normalized map with int keys
+	 * @return array<int, array{quantity:int, familyTicket:bool}>
 	 */
 	private function normalizeItems(array $items): array
 	{
 		$normalized = [];
-		foreach ($items as $eventId => $quantity) {
-			$eventId = (int) $eventId;
+		foreach ($items as $eventIdRaw => $item) {
+			$eventId = (int) $eventIdRaw;
 
-			// Has family ticket tag
-			if (isset($quantity['familyTicket'])) {
-				$quantity = ['quantity' => $quantity['quantity'], 'familyTicket' => $quantity['familyTicket']];
-			}
-			else {
-				$quantity = (int) $quantity;
+			if (is_array($item)) {
+				$quantity = max(0, (int) ($item['quantity'] ?? 0));
+				$familyTicket = (bool) ($item['familyTicket'] ?? false);
+			} else {
+				$quantity = max(0, (int) $item);
+				$familyTicket = false;
 			}
 			
 			if ($eventId <= 0 || $quantity <= 0) {
 				continue;
 			}
 
-			$normalized[$eventId] = $quantity;
+			$normalized[$eventId] = [
+				'quantity' => $quantity,
+				'familyTicket' => $familyTicket,
+			];
 		}
 
 		return $normalized;

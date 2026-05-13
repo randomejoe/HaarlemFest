@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use DateTimeImmutable;
+
 final class PlannerSummary
 {
     /**
@@ -54,7 +56,8 @@ final class PlannerSummary
                 continue;
             }
 
-            $plannerItem = PlannerItem::fromEvent($eventId, $quantity, $event, $familyTicket);
+            $lineTotalValue = (float) ($item['line_total_value'] ?? ($event->ticketPrice() * $quantity));
+            $plannerItem = PlannerItem::fromEvent($eventId, $quantity, $event, $familyTicket, $lineTotalValue);
             $plannerItems[] = $plannerItem;
             $totalPriceValue += $plannerItem->lineTotalValue();
 
@@ -119,6 +122,59 @@ final class PlannerSummary
     }
 
     /**
+     * @return array<int,array{left_event_id:int,left_name:string,right_event_id:int,right_name:string,message:string}>
+     */
+    public function timeConflictPairs(): array
+    {
+        $pairs = [];
+        $items = $this->conflictItems;
+        $count = count($items);
+
+        for ($i = 0; $i < $count; $i++) {
+            if (empty($items[$i]['start_time']) || empty($items[$i]['end_time'])) {
+                continue;
+            }
+            $leftStart = new DateTimeImmutable((string) $items[$i]['start_time']);
+            $leftEnd   = new DateTimeImmutable((string) $items[$i]['end_time']);
+
+            for ($j = $i + 1; $j < $count; $j++) {
+                if (empty($items[$j]['start_time']) || empty($items[$j]['end_time'])) {
+                    continue;
+                }
+                $rightStart = new DateTimeImmutable((string) $items[$j]['start_time']);
+                $rightEnd   = new DateTimeImmutable((string) $items[$j]['end_time']);
+
+                if ($leftStart < $rightEnd && $rightStart < $leftEnd) {
+                    $pairs[] = [
+                        'left_event_id'  => (int) $items[$i]['event_id'],
+                        'left_name'      => (string) $items[$i]['name'],
+                        'right_event_id' => (int) $items[$j]['event_id'],
+                        'right_name'     => (string) $items[$j]['name'],
+                        'message'        => sprintf(
+                            '%s overlaps with %s.',
+                            (string) $items[$i]['name'],
+                            (string) $items[$j]['name']
+                        ),
+                    ];
+                }
+            }
+        }
+
+        return $pairs;
+    }
+
+    /**
+     * @return string[]
+     */
+    public function timeConflicts(): array
+    {
+        return array_map(
+            static fn(array $pair): string => $pair['message'],
+            $this->timeConflictPairs()
+        );
+    }
+
+    /**
      * @return array<string, mixed>
      */
     public function toArray(): array
@@ -134,8 +190,8 @@ final class PlannerSummary
             'is_empty' => $this->isEmpty(),
             'has_invalid_items' => $this->hasInvalidItems(),
             'invalid_item_ids' => $this->invalidItemIds,
-            'time_conflicts' => [],
-            'time_conflict_pairs' => [],
+            'time_conflicts' => $this->timeConflicts(),
+            'time_conflict_pairs' => $this->timeConflictPairs(),
         ];
     }
 }

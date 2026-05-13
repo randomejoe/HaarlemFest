@@ -131,4 +131,4 @@ if ($returnTo === '' || $returnTo[0] !== '/') {
 		</figure>
 	</div>
 </section>
-<script src="/js/planner_async.js?v=<?php echo rawurlencode((string) @filemtime(__DIR__ . '/../../../../public/js/planner_async.js')); ?>" defer></script>
+<script src="/js/planner_async.js?v=<?php echo hf_asset_version(__DIR__ . '/../../../../public/js/planner_async.js'); ?>" defer></script>

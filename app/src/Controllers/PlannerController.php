@@ -5,6 +5,7 @@ namespace App\Controllers;
 use App\Services\Interfaces\IPlannerService;
 use App\View;
 use App\Models\FlashType;
+use App\ViewModels\PlannerViewModel;
 use InvalidArgumentException;
 use RuntimeException;
 
@@ -19,11 +20,19 @@ class PlannerController
 
     public function show(): void
     {
-        $planner = $this->planner->getDetailedPlanner();
+        $this->planner->pruneUnavailableItems();
+        $summary = $this->planner->getPlannerSummary();
         $flash = $this->planner->consumeFlash();
 
+        $vm = new PlannerViewModel(
+            $summary,
+            $summary->timeConflicts(),
+            $summary->timeConflictPairs(),
+            $flash
+        );
+
         echo View::render('planner', [
-            'planner' => $planner,
+            'planner' => $vm->toArray(),
             'flash' => $flash,
         ]);
     }
@@ -50,7 +59,7 @@ class PlannerController
                 $this->planner->addItem($eventIds[0], $quantity, $_POST['familyTicket'] ?? null);
                 $message = '';
             } else {
-                $this->planner->addItems($eventIds, $quantity);
+                $this->planner->addItems($this->buildPlannerRows($eventIds, $_POST['familyTicket'] ?? null), $quantity);
                 $message = '';
             }
         } catch (RuntimeException | InvalidArgumentException $e) {
@@ -215,5 +224,20 @@ class PlannerController
         }
 
         return $fallbackEventId > 0 ? [$fallbackEventId] : [];
+    }
+
+    private function buildPlannerRows(array $eventIds, ?string $familyTicket): array
+    {
+        $isFamilyTicket = in_array(strtolower((string) $familyTicket), ['1', 'true', 'yes', 'on'], true);
+        $rows = [];
+
+        foreach ($eventIds as $eventId) {
+            $rows[] = [
+                'event_id' => (int) $eventId,
+                'familyTicket' => $isFamilyTicket,
+            ];
+        }
+
+        return $rows;
     }
 }

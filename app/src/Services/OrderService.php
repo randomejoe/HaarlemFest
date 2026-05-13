@@ -21,7 +21,6 @@ class OrderService implements CMSServiceInterface, IOrderService
 
     public function getForEdit(int $id)
     {
-        header('Location: /cms/orders');
         return null;
     }
 

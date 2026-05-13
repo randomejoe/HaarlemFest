@@ -14,9 +14,10 @@ if ($artistName === '') {
 $sectionId = hf_normalize_section_id($componentData['section_id'] ?? 'schedule', 'schedule');
 $titleId = $sectionId . '-title';
 $ticketsCtaUrl = hf_data($componentData, 'tickets_cta_url', '/jazz');
+$scheduleEvents = is_array($componentData['scheduleEvents'] ?? null) ? $componentData['scheduleEvents'] : [];
 
 $plannableEventIds = [];
-foreach ($data['scheduleEvents'] as $scheduleEvent) {
+foreach ($scheduleEvents as $scheduleEvent) {
 	if (!empty($scheduleEvent['can_add_to_planner'])) {
 		$plannableEventIds[] = (int) $scheduleEvent['id'];
 	}
@@ -38,7 +39,7 @@ $selectionFormId = 'ars-add-form-' . preg_replace('/[^a-z0-9_-]+/i', '-', strtol
 			<span class="ars-section-heading-line" aria-hidden="true"></span>
 		</div>
 
-		<?php if ($data['scheduleEvents'] !== []): ?>
+		<?php if ($scheduleEvents !== []): ?>
 			<div class="ars-table-wrap">
 				<div class="ars-table" role="table" aria-label="Artist schedule">
 					<div class="ars-table-header" role="row">
@@ -50,7 +51,7 @@ $selectionFormId = 'ars-add-form-' . preg_replace('/[^a-z0-9_-]+/i', '-', strtol
 					</div>
 
 					<?php $hasDefaultSelectedEvent = false; ?>
-					<?php foreach ($data['scheduleEvents'] as $scheduleEvent): ?>
+					<?php foreach ($scheduleEvents as $scheduleEvent): ?>
 						<?php
 						$canSelect = !empty($scheduleEvent['can_add_to_planner']);
 						$isSelected = $canSelect && !$hasDefaultSelectedEvent;
@@ -224,4 +225,4 @@ $selectionFormId = 'ars-add-form-' . preg_replace('/[^a-z0-9_-]+/i', '-', strtol
 		});
 	})();
 </script>
-<script src="/js/planner_async.js?v=<?php echo rawurlencode((string) @filemtime(__DIR__ . '/../../../../public/js/planner_async.js')); ?>" defer></script>
+<script src="/js/planner_async.js?v=<?php echo hf_asset_version(__DIR__ . '/../../../../public/js/planner_async.js'); ?>" defer></script>

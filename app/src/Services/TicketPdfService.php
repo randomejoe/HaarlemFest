@@ -27,7 +27,7 @@ class TicketPdfService
         $terms = (string) ($payload['terms'] ?? 'Tickets are non-refundable. Bring a valid ID and this ticket PDF for entry.');
 
         $pages = [];
-        $content = $this->drawPageBase(false);
+        $content = $this->drawPageBase();
         $y = 734.0;
 
         $content .= $this->drawSummaryCard($customerName, $purchaseReference, $issuedAt, count($tickets), 36, $y);
@@ -42,9 +42,9 @@ class TicketPdfService
                 $content .= $this->drawFooter($terms);
                 $pages[] = $content;
 
-                $content = $this->drawPageBase(true);
+                $content = $this->drawPageBase();
                 $y = 734.0;
-                $content .= $this->drawSectionTitle(36, $y, 'Purchased Tickets (continued)');
+                $content .= $this->drawSectionTitle(36, $y, 'Purchased Tickets');
                 $y -= 28;
             }
 
@@ -59,7 +59,7 @@ class TicketPdfService
         return $this->buildPdf($pages);
     }
 
-    private function drawPageBase(bool $continued): string
+    private function drawPageBase(): string
     {
         $content = '';
         $content .= $this->drawFillRect(0, 0, self::PAGE_WIDTH, self::PAGE_HEIGHT, self::COLOR_BG);
@@ -73,8 +73,7 @@ class TicketPdfService
         $content .= $this->drawText(43, 781, 'F2', 12, 'H', self::COLOR_PAPER);
 
         $content .= $this->drawText(70, 792, 'F2', 19, 'Haarlem Festival', self::COLOR_INK);
-        $subtitle = $continued ? 'Event Ticket PDF - Continued' : 'Event Ticket PDF';
-        $content .= $this->drawText(70, 774, 'F1', 10, $subtitle, self::COLOR_MUTED);
+        $content .= $this->drawText(70, 774, 'F1', 10, 'Event Ticket PDF', self::COLOR_MUTED);
 
         // Accent divider similar to primary accent usage.
         $content .= $this->drawFillRect(24, 754, 547, 4, self::COLOR_ACCENT);

@@ -4,13 +4,21 @@ declare(strict_types=1);
 
 namespace App\Services\Interfaces;
 
+use App\Models\PlannerSummary;
+
 interface IPlannerService
 {
+	public function getItems(): array;
+
+	public function getPlannerSummary(): PlannerSummary;
+
+	public function pruneUnavailableItems(): void;
+
 	public function getDetailedPlanner(): array;
 
 	public function addItem(int $eventId, int $quantity, ?string $familyTicket): void;
 
-	public function addItems(array $eventIds, int $quantity): int;
+	public function addItems(array $items, int $quantity): int;
 
 	public function updateItemQuantity(int $eventId, int $quantity): void;
 

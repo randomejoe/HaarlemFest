@@ -16,8 +16,7 @@ final class PlannerViewModel
         private PlannerSummary $summary,
         private array $timeConflicts = [],
         private array $timeConflictPairs = [],
-        private ?array $flash = null,
-        private ?string $csrfToken = null
+        private ?array $flash = null
     ) {
     }
 
@@ -29,11 +28,6 @@ final class PlannerViewModel
     public function flash(): ?array
     {
         return $this->flash;
-    }
-
-    public function csrfToken(): ?string
-    {
-        return $this->csrfToken;
     }
 
     public function toArray(): array

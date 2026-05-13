@@ -23,14 +23,9 @@ final class PlannerItem
     ) {
     }
 
-    public static function fromEvent(int $eventId, int $quantity, Event $event, bool $familyTicket = false): self
+    public static function fromEvent(int $eventId, int $quantity, Event $event, bool $familyTicket, float $lineTotalValue): self
     {
         $unitPrice = $event->ticketPrice();
-        $lineTotal = $unitPrice * $quantity;
-
-        if ($familyTicket) {
-            $lineTotal = 60 * ceil($quantity / 4);
-        }
 
         return new self(
             eventId: $eventId,
@@ -43,7 +38,7 @@ final class PlannerItem
             startTime: $event->startTime(),
             endTime: $event->endTime(),
             unitPriceValue: $unitPrice,
-            lineTotalValue: (float) $lineTotal,
+            lineTotalValue: $lineTotalValue,
             seatCount: max(0, (int) ($event->seatCount() ?? 0)),
             familyTicket: $familyTicket
         );

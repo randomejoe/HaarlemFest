@@ -5,6 +5,7 @@ namespace App\Controllers;
 use App\Services\Interfaces\IAuthService;
 use App\Services\Interfaces\IOrderService;
 use App\View;
+use App\ViewModels\OrderViewModel;
 
 class OrdersController
 {
@@ -25,7 +26,10 @@ class OrdersController
             exit;
         }
 
-        $orders = $this->orders->getOrdersForUser($sessionUser->getId());
+        $orders = array_map(
+            static fn($order): array => (new OrderViewModel($order))->toArray(),
+            $this->orders->getOrdersForUser($sessionUser->getId())
+        );
 
         echo View::render('orders', [
             'orders' => $orders,

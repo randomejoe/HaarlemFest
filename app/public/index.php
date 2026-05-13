@@ -32,6 +32,7 @@ use App\Services\CheckoutService;
 use App\Services\ContentService;
 use App\Services\CsrfService;
 use App\Services\EventService;
+use App\Services\Interfaces\IEventService;
 use App\Services\InvoicePdfService;
 use App\Services\LocationService;
 use App\Services\Mailer;
@@ -41,6 +42,7 @@ use App\Services\PageService;
 use App\Services\PasswordResetService;
 use App\Services\PdoTransactionManager;
 use App\Services\PlannerService;
+use App\Services\SessionManager;
 use App\Services\TicketDeliveryService;
 use App\Services\TicketPdfService;
 use App\Services\UserService;
@@ -102,9 +104,11 @@ $registerSingleton(CsrfService::class, static fn(callable $get): CsrfService => 
 $registerSingleton(Mailer::class, static fn(callable $get): Mailer => new Mailer());
 $registerSingleton(TicketPdfService::class, static fn(callable $get): TicketPdfService => new TicketPdfService());
 $registerSingleton(InvoicePdfService::class, static fn(callable $get): InvoicePdfService => new InvoicePdfService());
+$registerSingleton(SessionManager::class, static fn(callable $get): SessionManager => new SessionManager());
 
 $registerSingleton(PlannerService::class, static fn(callable $get): PlannerService => new PlannerService(
-    $get(EventRepository::class)
+    $get(EventRepository::class),
+    $get(SessionManager::class)
 ));
 
 $registerSingleton(TicketDeliveryService::class, static fn(callable $get): TicketDeliveryService => new TicketDeliveryService(
@@ -114,7 +118,7 @@ $registerSingleton(TicketDeliveryService::class, static fn(callable $get): Ticke
 ));
 
 $registerSingleton(CheckoutService::class, static fn(callable $get): CheckoutService => new CheckoutService(
-    $get(PDO::class),
+    new PdoTransactionManager($get(PDO::class)),
     $get(PlannerService::class),
     $get(CheckoutRepository::class),
     $get(UserRepository::class),
@@ -144,6 +148,7 @@ $registerSingleton(EventService::class, static fn(callable $get): EventService =
     $get(EventRepository::class),
     $get(PageRepository::class)
 ));
+$registerSingleton(IEventService::class, static fn(callable $get): IEventService => $get(EventService::class));
 
 $registerSingleton(ContentService::class, static fn(callable $get): ContentService => new ContentService(
     $get(PageRepository::class),
@@ -188,10 +193,11 @@ $registerTransient(PasswordController::class, static fn(callable $get): Password
 $registerTransient(CmsController::class, static fn(callable $get): CmsController => new CmsController(
     $get(PageService::class),
     $get(ContentService::class),
-    $get(EventService::class),
+    $get(IEventService::class),
     $get(LocationService::class),
     $get(UserService::class),
     $get(OrderService::class),
+    $get(SessionManager::class),
 ));
 
 View::setCsrfTokenResolver(static function () use ($resolve): string {

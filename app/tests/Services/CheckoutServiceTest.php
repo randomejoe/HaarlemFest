@@ -10,13 +10,13 @@ use App\Repositories\Interfaces\IUserRepository;
 use App\Services\CheckoutService;
 use App\Services\Interfaces\IPlannerService;
 use App\Services\Interfaces\ITicketDeliveryService;
-use PDO;
+use App\Services\Interfaces\ITransactionManager;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 
 final class CheckoutServiceTest extends TestCase
 {
-    private PDO&MockObject $pdo;
+    private ITransactionManager&MockObject $txManager;
     private IPlannerService&MockObject $planner;
     private ICheckoutRepository&MockObject $checkoutRepo;
     private IUserRepository&MockObject $users;
@@ -26,13 +26,13 @@ final class CheckoutServiceTest extends TestCase
 
     protected function setUp(): void
     {
-        $this->pdo = $this->createMock(PDO::class);
+        $this->txManager = $this->createMock(ITransactionManager::class);
         $this->planner = $this->createMock(IPlannerService::class);
         $this->checkoutRepo = $this->createMock(ICheckoutRepository::class);
         $this->users = $this->createMock(IUserRepository::class);
         $this->ticketDelivery = $this->createMock(ITicketDeliveryService::class);
         $this->sut = new CheckoutService(
-            $this->pdo,
+            $this->txManager,
             $this->planner,
             $this->checkoutRepo,
             $this->users,
@@ -66,8 +66,7 @@ final class CheckoutServiceTest extends TestCase
             'total_price_value' => 25.0,
         ]);
 
-        $this->pdo->expects($this->once())->method('beginTransaction')->willReturn(true);
-        $this->pdo->expects($this->once())->method('commit')->willReturn(true);
+        $this->txManager->expects($this->once())->method('run')->willReturnCallback(fn(callable $op) => $op());
 
         $this->checkoutRepo->expects($this->once())
             ->method('findEventForUpdate')
@@ -149,7 +148,7 @@ final class CheckoutServiceTest extends TestCase
     public function test_confirmCheckout_rejects_empty_planner(): void
     {
         $this->planner->method('getDetailedPlanner')->willReturn(['is_empty' => true]);
-        $this->pdo->expects($this->never())->method('beginTransaction');
+        $this->txManager->expects($this->never())->method('run');
 
         $result = $this->sut->confirmCheckout($this->user);
 

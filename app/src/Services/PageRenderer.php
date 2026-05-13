@@ -30,7 +30,11 @@ class PageRenderer
                     if (!method_exists($service, $methodName)) {
                         throw new \RuntimeException("Method not found");
                     }
-                    $contentItem->appendData([$arrayKeyName => $service->{$methodName}(...($params ?? []))]);
+                    $result = $service->{$methodName}(...($params ?? []));
+                    if (is_object($result) && method_exists($result, 'toArray')) {
+                        $result = $result->toArray();
+                    }
+                    $contentItem->appendData([$arrayKeyName => $result]);
                 }
             } 
         }
@@ -59,4 +63,3 @@ class PageRenderer
         return $newParams;
     }
 }
-

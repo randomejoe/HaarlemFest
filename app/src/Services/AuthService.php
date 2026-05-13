@@ -58,6 +58,7 @@ class AuthService implements IAuthService
             'username' => (string) ($_SESSION['username'] ?? ''),
             'email' => (string) ($_SESSION['email'] ?? ''),
             'role' => $role->value,
+            'enabled' => (bool) ($_SESSION['enabled'] ?? false),
         ]);
     }
 
