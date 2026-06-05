@@ -16,11 +16,6 @@ class PageRepository implements IPageRepository
         $this->pdo = $pdo;
     }
 
-    public function assertAdmin(): void
-    {
-        // Admin access is enforced at the controller level (CmsController)
-    }
-
     public function getAllPages(): array
     {
         $stmt = $this->pdo->prepare('SELECT title, page_id, is_main_event FROM pages');
@@ -64,7 +59,12 @@ class PageRepository implements IPageRepository
         fn($row) => PageContent::fromArray($row),
             $rows
         );
-        $page = Page::fromArray($rows[0]);
+        if (empty($rows)) {
+            throw new \NotFoundException("No content for page found");
+        }
+        else {
+            $page = Page::fromArray($rows[0]);
+        }
         $page->setContent($pageContent);
 
         return $page;

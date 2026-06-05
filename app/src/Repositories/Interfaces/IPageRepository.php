@@ -22,8 +22,6 @@ interface IPageRepository
 
     public function addContentItemToPage(int $pageId, string $componentName);
 
-    public function assertAdmin(): void;
-
     public function updateContentItem(int $id, string $encodedJson): bool;
 
     public function deletePage(int $pageId);

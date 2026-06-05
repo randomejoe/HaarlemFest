@@ -121,7 +121,6 @@ class ContentService implements CMSServiceInterface
 
     private function persistSanitized(int $id, array $data): bool
     {
-        $this->repository->assertAdmin();
         unset($data['name'], $data['csrf_token']);
 
         foreach ($data as $key => $value) {
