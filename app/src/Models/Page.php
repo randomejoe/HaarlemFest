@@ -22,6 +22,15 @@ class Page extends CmsItem
             content: (array) ($data['content'] ?? []),
         );
     }
+    public static function emptyPage(): self
+    {
+        return new self(
+            id: 0,
+            title: '',
+            isMainEvent: false,
+            content: [],
+        );
+    }
 
     public function getId(): int {
         return $this->id;

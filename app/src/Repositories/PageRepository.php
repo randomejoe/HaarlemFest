@@ -60,7 +60,7 @@ class PageRepository implements IPageRepository
             $rows
         );
         if (empty($rows)) {
-            throw new \NotFoundException("No content for page found");
+            $page = Page::emptyPage();
         }
         else {
             $page = Page::fromArray($rows[0]);
