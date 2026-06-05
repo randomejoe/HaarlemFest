@@ -16,30 +16,37 @@ class PageRenderer
     public function renderPage(Page $page) {
         require __DIR__ . '/../Views/partials/cms/component_registry.php';
 
-        foreach($page->getContent() as $contentItem) {
-            if (isset($components[$contentItem->getName()]['methods'])) {
-                $methods = $components[$contentItem->getName()]['methods'];
-                foreach ($methods as $method) {
-                    ['service' => $requestedService, 'method' => $methodName, 'name' => $arrayKeyName] = $method;
-                    $params = $method['parameters'] ?? [];
+        if (empty($page->getContent())) {
+            require __DIR__ . '/../Views/invalid_page.php';
+        }
+        else {
+            foreach($page->getContent() as $contentItem) {
+                if (isset($components[$contentItem->getName()]['methods'])) {
+                    $methods = $components[$contentItem->getName()]['methods'];
+                    foreach ($methods as $method) {
+                        ['service' => $requestedService, 'method' => $methodName, 'name' => $arrayKeyName] = $method;
+                        $params = $method['parameters'] ?? [];
 
-                    $service = ($this->resolve)($requestedService);
+                        $service = ($this->resolve)($requestedService);
 
-                    $params = $this->resolveParams($params, $page, $contentItem->getData());
+                        $params = $this->resolveParams($params, $page, $contentItem->getData());
 
-                    if (!method_exists($service, $methodName)) {
-                        throw new \RuntimeException("Method not found");
+                        if (!method_exists($service, $methodName)) {
+                            throw new \RuntimeException("Method not found");
+                        }
+                        $result = $service->{$methodName}(...($params ?? []));
+                        if (is_object($result) && method_exists($result, 'toArray')) {
+                            $result = $result->toArray();
+                        }
+                        $contentItem->appendData([$arrayKeyName => $result]);
                     }
-                    $result = $service->{$methodName}(...($params ?? []));
-                    if (is_object($result) && method_exists($result, 'toArray')) {
-                        $result = $result->toArray();
-                    }
-                    $contentItem->appendData([$arrayKeyName => $result]);
-                }
-            } 
+                } 
+            }
+
+            require __DIR__ . '/../Views/dynamic_page.php';
         }
 
-        require __DIR__ . '/../Views/dynamicPage.php';
+        
     }
 
     private function resolveParams(array $params, page $page, array $data) {

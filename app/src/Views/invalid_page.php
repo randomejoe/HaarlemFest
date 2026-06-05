@@ -1,3 +1,4 @@
+<?php require __DIR__ . '/../Views/partials/header.php'; ?>
 <div class="d-flex align-items-center justify-content-center vh-100">
     <div class="text-center">
         <h1 class="display-1 fw-bold">404</h1>
@@ -8,3 +9,4 @@
         <a href="/" class="btn btn-primary">Return to homepage</a>
     </div>
 </div>
+<?php require __DIR__ . '/../Views/partials/footer.php'; ?>

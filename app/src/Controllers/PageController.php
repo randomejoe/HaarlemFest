@@ -19,6 +19,7 @@ class PageController
     public function showPage($page): void
     {
         $page = $this->pageService->getPage(urldecode($page));
+        
         $this->renderer->renderPage($page);
     }
 }
