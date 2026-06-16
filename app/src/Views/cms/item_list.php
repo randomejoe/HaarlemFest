@@ -2,6 +2,7 @@
     use App\Models\CmsType;
     use App\Models\FlashType;
 ?>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
 <div>
     <?php include __DIR__ . '/../partials/cms/cms_nav.php';?>
     <div class='horizontal-center vertical-center'>
@@ -23,7 +24,11 @@
                     if (isset($categories)) {
                         require __DIR__ . '/../partials/cms/event_category_selector.php';
                     }
+                    if ($type == CmsType::User) {
+                        require __DIR__ . '/../partials/cms/searchbar.php';
+                    }
                 ?>
+                
             </div>
             <form id='add-item-form' style='display: none' class='add-item-form column' method="POST">
                 <div class="row">
@@ -120,14 +125,18 @@
     const start = document.getElementById("start_time");
     const end = document.getElementById("end_time");
 
-    btn.addEventListener('click', () => {
-    form.style.display = form.style.display === 'none' ? 'flex' : 'none';
-    });
+    if (btn) {
+        btn.addEventListener('click', () => {
+        form.style.display = form.style.display === 'none' ? 'flex' : 'none';
+        });
+    }
 
-    form.addEventListener('submit', (e) => {
-        if (new Date(end.value) < new Date(start.value)) {
-            e.preventDefault();
-            alert('temporary alert to notify that event starts after it ends')
-        }
-    })
+    if (form) {
+        form.addEventListener('submit', (e) => {
+            if (new Date(end.value) < new Date(start.value)) {
+                e.preventDefault();
+                alert('temporary alert to notify that event starts after it ends')
+            }
+        })
+    }
 </script>

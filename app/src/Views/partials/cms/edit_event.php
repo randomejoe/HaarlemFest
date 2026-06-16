@@ -50,7 +50,8 @@
 $items = $categories;
 $initialSelection = $item->category();
 $fieldName = 'category';
-require __DIR__ . '/selector.php'; ?>
+// TODO: turn into selector
+require __DIR__ . '/event_selector.php'; ?>
 <script>
     // Wait for DOM to be ready and category selector to exist
     function initArtistImageField() {

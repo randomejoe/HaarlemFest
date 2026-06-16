@@ -49,8 +49,12 @@ class CmsController
     {
         $type = CmsType::convertToType($type);
         $service = $this->resolveService($type);
+
+        $params = $_GET;
         try {
-            $items = $service->getAll();
+            
+            $items = $service->getAll($params);
+            
 
             if ($type == CmsType::Event) {
                 $categories = $service->getCategories();
@@ -66,7 +70,7 @@ class CmsController
         }
 
         $flash = $this->sessionManager->consumeFlash();
-        echo View::render('/../Views/cms/item_list', ['items' => $items, 'type' => $type, 'categories' => $categories ?? null, 'flash' => $flash]);
+        echo View::render('/../Views/cms/item_list', ['items' => $items, 'type' => $type, 'categories' => $categories ?? null, 'flash' => $flash, 'params' => $params]);
     }
     public function showItemsByCategory(string $type, string $category): void
     {

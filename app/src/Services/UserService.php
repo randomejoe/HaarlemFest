@@ -33,9 +33,18 @@ class UserService implements CMSServiceInterface
         return $this->repository->deleteUser($id);
     }
 
-    public function getAll()
+    public function getAll(array $params)
     {
-        return $this->repository->getAllUsers();
+        $validParams = ['search', 'sort_by'];
+
+        $filteredParams = array_intersect_key(
+            $params,
+
+            // $validParams is basically [0 => 'search', 1 => 'sort_by']
+            array_flip($validParams)
+        );
+
+        return $this->repository->getAllUsers($filteredParams);
     }
 
 }

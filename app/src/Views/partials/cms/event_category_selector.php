@@ -1,14 +1,14 @@
 <div>
-    <button class="button form-input category-selector" id="open-selector-btn">
+    <button class="button form-input selector" id="open-selector-btn">
         <?php echo urldecode($currentCategory ?? 'None') ?>
     </button>
-    <div class="column category-selector-item-container" style="position: absolute; display: none" id="categories">
-        <a href='/cms/events' class="form-input category-selector-item">None</a>
+    <div class="column selector-item-container" style="position: absolute; display: none" id="categories">
+        <a href='/cms/events' class="form-input selector-item">None</a>
         <?php foreach ($categories as $index => $category): ?>
             <a href='<?php echo '/cms/events/' . $category?>' class="<?php if ($index == array_key_last($categories)) { 
-                echo "form-input category-selector-item category-selector-item-last";
+                echo "form-input selector-item selector-item-last";
                 } else {
-                    echo "form-input category-selector-item";
+                    echo "form-input selector-item";
                 }?>"
                 >
                 <?php echo $category; ?>

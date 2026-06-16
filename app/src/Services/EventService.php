@@ -52,6 +52,10 @@ class EventService implements CMSServiceInterface, IEventService
     {
         return $this->repository->getAllEventsInCategory($category);
     }
+    public function getAllFiltered(string $category)
+    {
+        return $this->repository->getAllEventsInCategory($category);
+    }
 
     public function getSchedule(string $event): array {
         // $event is the main event which is the category

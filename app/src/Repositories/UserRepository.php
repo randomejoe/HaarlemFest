@@ -4,6 +4,7 @@ namespace App\Repositories;
 
 use App\Models\User;
 use App\Models\UserRole;
+use App\Models\SortOption;
 use App\Repositories\Interfaces\IUserRepository;
 use PDO;
 use PDOException;
@@ -160,10 +161,40 @@ class UserRepository implements IUserRepository
         return $sqlState === '23000' || $driverCode === 1062;
     }
 
-    public function getAllUsers(): array
+    public function getAllUsers(array $params): array
     {
-        $stmt = $this->pdo->prepare('SELECT ' . self::USER_COLUMNS . ' FROM users WHERE enabled = 1');
-        $stmt->execute();
+        $stmtParams = [];
+        if (isset($params['sort_by'])) {
+            switch(SortOption::convertToOption($params['sort_by'])){
+                case SortOption::Name_AZ:
+                    $sortStatement = 'ORDER BY username ASC';
+                    break;
+                case SortOption::Name_ZA:
+                    $sortStatement = 'ORDER BY username DESC';
+                    break;
+                case SortOption::Date_Desc:
+                    $sortStatement = 'ORDER BY created_at DESC';
+                    break;
+                case SortOption::Date_Asc:
+                    $sortStatement = 'ORDER BY created_at ASC';
+                    break;
+                default: 
+                    $sortStatement = 'ORDER BY created_at ASC';
+                    break;
+            }
+        }
+        else {
+            $sortStatement = 'ORDER BY created_at ASC';
+        }
+        if (isset($params['search'])) {
+            $searchStatement = 'AND username LIKE :search';
+            $stmtParams['search'] =  '%' . $params['search'] . '%';
+        }
+        else {
+            $searchStatement = '';
+        }
+        $stmt = $this->pdo->prepare('SELECT ' . self::USER_COLUMNS . ' FROM users WHERE enabled = 1 ' . $searchStatement . ' ' . $sortStatement);
+        $stmt->execute($stmtParams);
         $results = $stmt->fetchAll();
         $users = [];
 

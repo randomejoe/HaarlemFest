@@ -24,7 +24,7 @@ interface IUserRepository
 
     public function updateCheckoutDetails(int $userId, array $details): void;
 
-    public function getAllUsers(): array;
+    public function getAllUsers(array $params): array;
 
     public function deleteUser(int $id): bool;
 }
