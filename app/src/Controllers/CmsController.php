@@ -53,7 +53,6 @@ class CmsController
 
         $params = $_GET;
         try {
-            
             $items = $service->getAll($params);
 
             if ($type == CmsType::Event) {
@@ -78,34 +77,25 @@ class CmsController
         $type = CmsType::convertToType($type);
         $service = $this->resolveService($type);
 
-
-
         try {
-            $service->create($_POST);
-            $this->sessionManager->setFlash(FlashType::Success, 'Successfully added ' . $type->value . ' ' . $_POST['item_name']);
-            header('Location: /cms/' . $type->value . 's');
-            exit;
+
+            if (isset($_GET['event'])) {
+                $category = $_GET['event'];
+                $service->createForCategory($category, $_POST);
+                $this->sessionManager->setFlash(FlashType::Success, 'Successfully added ' . $type->value . ' ' . $_POST['item_name']);
+                header('Location: /cms/' . $type->value . 's?event=' . $category);
+                exit;
+            }
+            else {
+                $service->create($_POST);
+                $this->sessionManager->setFlash(FlashType::Success, 'Successfully added ' . $type->value . ' ' . $_POST['item_name']);
+                header('Location: /cms/' . $type->value . 's');
+                exit;
+            }
         }
         catch (\Throwable $e) {
             $this->sessionManager->setFlash(FlashType::Error, 'An error occurred while trying to add ' . $type->value . ' ' . $_POST['item_name']);
             $this->showCmsItems($type->value);
-        }
-    }
-    public function createItemInCategory(string $type, string $category): void
-    {
-        $type = CmsType::convertToType($type);
-        $service = $this->resolveService($type);
-        $category = urldecode($category);
-
-        try {
-            $service->createForCategory($category, $_POST);
-            $this->sessionManager->setFlash(FlashType::Success, 'Successfully added ' . $type->value . ' ' . $_POST['item_name']);
-            header('Location: /cms/' . $type->value . 's/' . $category);
-            exit;
-        }
-        catch (\Throwable $e) {
-            $this->sessionManager->setFlash(FlashType::Error, 'An error occurred while trying to add ' . $type->value . ' ' . $_POST['item_name']);
-            $this->showItemsByCategory($type->value, $category);
         }
     }
 
