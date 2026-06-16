@@ -1,6 +1,7 @@
 <?php 
     use App\Models\CmsType;
     use App\Models\FlashType;
+    $eventSelected = isset($params["event"]) && $params["event"] != "";
 ?>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
 <div>
@@ -17,7 +18,7 @@
             ?>
             <div class='between row'>
                 <?php if ($type != CmsType::User && $type != CmsType::Order) {?>
-                <button id='add-item-btn' class='add-item-btn button'><p>Add <?php if (isset($currentCategory) || $type != CmsType::Event) {echo $type->value;} else {
+                <button id='add-item-btn' class='add-item-btn button'><p>Add <?php if ($eventSelected || $type != CmsType::Event) {echo $type->value;} else {
                     echo 'main event';
                 } ?></p></button>
                 <?php }
@@ -25,7 +26,7 @@
                         require __DIR__ . '/../partials/cms/event_category_selector.php';
                     }
                     if ($type == CmsType::User) {
-                        require __DIR__ . '/../partials/cms/searchbar.php';
+                        require __DIR__ . '/../partials/cms/user_sorting_search.php';
                     }
                 ?>
                 
@@ -35,7 +36,7 @@
                     <div>
                         <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars((string) ($csrf_token ?? ''), ENT_QUOTES, 'UTF-8'); ?>">
                         <div class="vertical-center form-input-container">
-                            <label for="item_name"><?php if (isset($currentCategory) || $type != CmsType::Event) {echo ucfirst($type->value);} else {
+                            <label for="item_name"><?php if ($eventSelected || $type != CmsType::Event) {echo ucfirst($type->value);} else {
                             echo 'Main event';
                             } ?> name:</label>
                             <input type="text" id="item_name" name="item_name" class="form-input" required>
@@ -49,7 +50,7 @@
                                 </div>
                             <?php
                         }
-                        else if (isset($currentCategory)) {
+                        else if ($eventSelected) {
                         ?>
                         <div class="vertical-center form-input-container">
                             <label for="start_time">Start time:</label>
@@ -85,7 +86,7 @@
                     </div>
                 </div>
                 <?php 
-                if (isset($currentCategory)) {
+                if ($eventSelected) {
                     ?>
                         <div class="vertical-center form-input-container description-container">
                             <label for="description">Description:</label>

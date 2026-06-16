@@ -236,8 +236,6 @@ $dispatcher = simpleDispatcher(function (RouteCollector $r) {
     $r->addRoute('GET', '/cms', ['App\Controllers\CmsController', 'showCmsDashboard']);
     $r->addRoute('GET', '/cms/{type}', ['App\Controllers\CmsController', 'showCmsItems']);
     $r->addRoute('POST', '/cms/{type}', ['App\Controllers\CmsController', 'createCmsItem']);
-    $r->addRoute('GET', '/cms/{type}/{category}', ['App\Controllers\CmsController', 'showItemsByCategory']);
-    $r->addRoute('POST', '/cms/{type}/{category}', ['App\Controllers\CmsController', 'createItemInCategory']);
     $r->addRoute('GET', '/cms/{type}/{id:\d+}/edit', ['App\Controllers\CmsController', 'showEdit']);
     $r->addRoute('POST', '/cms/{type}/{id:\d+}/edit', ['App\Controllers\CmsController', 'editItem']);
     $r->addRoute('POST', '/cms/{type}/{id:\d+}/delete', ['App\Controllers\CmsController', 'deleteItem']);

@@ -44,9 +44,24 @@ class EventService implements CMSServiceInterface, IEventService
         return $this->repository->deleteEvent($id);
     }
 
-    public function getAll()
+    public function getAll(array $params)
     {
-        return $this->repository->getAllEvents();
+        $validParams = ['event'];
+
+        $filteredParams = array_intersect_key(
+            $params,
+
+            // $validParams is basically [0 => 'search', 1 => 'sort_by']
+            array_flip($validParams)
+        );
+
+        if ($filteredParams && $filteredParams['event'] != '') {
+            return $this->repository->getAllEventsInCategory($filteredParams['event']);
+        }
+        else {
+           return $this->repository->getAllEvents(); 
+        }
+        
     }
     public function getAllInCategory(string $category)
     {

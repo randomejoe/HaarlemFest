@@ -11,18 +11,19 @@
     <label for="sort">Sort by:</label>
     <?php 
         $baseRoute = '/cms/users';
+        $param = "sort_by";
         $options = [
-            'Newest' => ["param" => "sort_by", "value" => 'date_desc'], 
-            'Oldest' => ["param" => "sort_by", "value" => 'date_asc'], 
-            'Name (A-Z)' => ["param" => "sort_by", "value" => 'name_asc'], 
-            'Name (Z-A)' => ["param" => "sort_by", "value" => 'name_desc']
+            'Newest' => 'date_desc', 
+            'Oldest' => 'date_asc', 
+            'Name (A-Z)' => 'name_asc', 
+            'Name (Z-A)' => 'name_desc'
         ]; 
         $hasNone = false;
         
         $currentOption = 'Oldest';
 
         foreach ($options as $label => $info) {
-            if (($params['sort_by'] ?? null) === $info['value']) {
+            if (($params['sort_by'] ?? null) === $info) {
                 $currentOption = $label;
                 break;
             }

@@ -50,7 +50,6 @@
 $items = $categories;
 $initialSelection = $item->category();
 $fieldName = 'category';
-// TODO: turn into selector
 require __DIR__ . '/event_selector.php'; ?>
 <script>
     // Wait for DOM to be ready and category selector to exist
