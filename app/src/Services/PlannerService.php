@@ -14,6 +14,7 @@ use RuntimeException;
 class PlannerService implements IPlannerService
 {
     private const FAMILY_TICKET_PRICE = 60;
+    private const PARTICIPANTS_PER_FAMILY_TICKET = 4;
 
     private IEventRepository $events;
     private SessionManager $session;
@@ -254,7 +255,7 @@ class PlannerService implements IPlannerService
     private function calculateLineTotal(int $quantity, Event $event, bool $familyTicket): float
     {
         if ($familyTicket) {
-            return (float) (self::FAMILY_TICKET_PRICE * ceil($quantity / 4));
+            return (float) (self::FAMILY_TICKET_PRICE * ceil($quantity / PARTICIPANTS_PER_FAMILY_TICKET));
         }
 
         return $event->ticketPrice() * $quantity;
