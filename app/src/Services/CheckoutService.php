@@ -90,31 +90,14 @@ final class CheckoutService implements ICheckoutService
 
         try {
             $invoiceId = $this->txManager->run(function () use ($items, $user, $planner): int {
-                foreach ($items as $item) {
-                    $event = $this->checkoutRepo->findEventForUpdate((int) $item['event_id']);
-                    if ($event === null || (int) $event['available_tickets'] < (int) $item['quantity']) {
-                        throw new \RuntimeException(
-                            'Sorry, "' . (string) ($event['name'] ?? 'Event') . '" is out of stock.'
-                        );
-                    }
-                }
+                $this->validateItemStock($items);
 
                 $invoiceId = $this->checkoutRepo->createInvoice(
                     $user->getId(),
                     (float) ($planner['total_price_value'] ?? 0)
                 );
 
-                foreach ($items as $item) {
-                    $eventId = (int) $item['event_id'];
-                    $quantity = (int) $item['quantity'];
-                    $price = (float) ($item['unit_price_value'] ?? $item['unit_price'] ?? 0);
-
-                    for ($i = 0; $i < $quantity; $i++) {
-                        $this->checkoutRepo->createTicket($invoiceId, $user->getId(), $eventId, $price);
-                    }
-
-                    $this->checkoutRepo->decrementStock($eventId, $quantity);
-                }
+                $this->persistOrderItems($invoiceId, $user->getId(), $items);
 
                 return $invoiceId;
             });
@@ -130,6 +113,33 @@ final class CheckoutService implements ICheckoutService
         $this->planner->clear();
 
         return ['success' => true, 'order_id' => $invoiceId];
+    }
+
+    private function validateItemStock(array $items): void
+    {
+        foreach ($items as $item) {
+            $event = $this->checkoutRepo->findEventForUpdate((int) $item['event_id']);
+            if ($event === null || (int) $event['available_tickets'] < (int) $item['quantity']) {
+                throw new \RuntimeException(
+                    'Sorry, "' . (string) ($event['name'] ?? 'Event') . '" is out of stock.'
+                );
+            }
+        }
+    }
+
+    private function persistOrderItems(int $invoiceId, int $userId, array $items): void
+    {
+        foreach ($items as $item) {
+            $eventId  = (int) $item['event_id'];
+            $quantity = (int) $item['quantity'];
+            $price    = (float) ($item['unit_price_value'] ?? $item['unit_price'] ?? 0);
+
+            for ($i = 0; $i < $quantity; $i++) {
+                $this->checkoutRepo->createTicket($invoiceId, $userId, $eventId, $price);
+            }
+
+            $this->checkoutRepo->decrementStock($eventId, $quantity);
+        }
     }
 
     private function deliverOrderConfirmation(User $user, int $invoiceId): void

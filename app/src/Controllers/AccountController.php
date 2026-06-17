@@ -125,44 +125,20 @@ class AccountController
 
     private function validateProfileLengths(User $user): ?string
     {
-        $limits = [
-            'username' => User::USERNAME_MAX_LENGTH,
-            'first_name' => User::FIRST_NAME_MAX_LENGTH,
-            'last_name' => User::LAST_NAME_MAX_LENGTH,
-            'address' => User::ADDRESS_MAX_LENGTH,
-            'city' => User::CITY_MAX_LENGTH,
-            'country' => User::COUNTRY_MAX_LENGTH,
-            'phone_number' => User::PHONE_NUMBER_MAX_LENGTH,
+        $fields = [
+            ['Username',     User::USERNAME_MAX_LENGTH,     $user->username()],
+            ['First name',   User::FIRST_NAME_MAX_LENGTH,   $user->firstName()],
+            ['Last name',    User::LAST_NAME_MAX_LENGTH,    $user->lastName()],
+            ['Address',      User::ADDRESS_MAX_LENGTH,      $user->address()],
+            ['City',         User::CITY_MAX_LENGTH,         $user->city()],
+            ['Country',      User::COUNTRY_MAX_LENGTH,      $user->country()],
+            ['Phone number', User::PHONE_NUMBER_MAX_LENGTH, $user->phoneNumber()],
         ];
 
-        $labels = [
-            'username' => 'Username',
-            'first_name' => 'First name',
-            'last_name' => 'Last name',
-            'address' => 'Address',
-            'city' => 'City',
-            'country' => 'Country',
-            'phone_number' => 'Phone number',
-        ];
-
-        foreach ($limits as $field => $limit) {
-            if ($field === 'username') {
-                $value = trim((string) $user->username());
-            } elseif ($field === 'first_name') {
-                $value = trim((string) $user->firstName());
-            } elseif ($field === 'last_name') {
-                $value = trim((string) $user->lastName());
-            } elseif ($field === 'address') {
-                $value = trim((string) $user->address());
-            } elseif ($field === 'city') {
-                $value = trim((string) $user->city());
-            } elseif ($field === 'country') {
-                $value = trim((string) $user->country());
-            } else {
-                $value = trim((string) $user->phoneNumber());
-            }
+        foreach ($fields as [$label, $limit, $value]) {
+            $value = trim((string) $value);
             if ($value !== '' && mb_strlen($value, 'UTF-8') > $limit) {
-                return $labels[$field] . ' must be ' . $limit . ' characters or fewer.';
+                return $label . ' must be ' . $limit . ' characters or fewer.';
             }
         }
 

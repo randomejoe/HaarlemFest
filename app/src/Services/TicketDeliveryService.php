@@ -29,57 +29,68 @@ final class TicketDeliveryService implements ITicketDeliveryService
                 return;
             }
 
-            $toName = $this->customerName($user);
-            $ticketPayload = array_map(
-                static fn(Ticket $ticket): array => $ticket->toArray(),
-                $tickets
-            );
+            $toName       = $this->customerName($user);
+            $ticketPayload = array_map(static fn(Ticket $t): array => $t->toArray(), $tickets);
             $invoiceItems = $this->invoiceItems($ticketPayload);
 
-            $ticketPdfBinary = $this->ticketPdfService->generate([
-                'customer_name' => $toName,
-                'purchase_reference' => '#' . $orderId,
-                'issued_at' => date('Y-m-d H:i:s'),
-                'tickets' => $ticketPayload,
-                'terms' => 'Tickets are non-refundable unless required by law. Please bring a valid ID and this ticket at entry.',
-            ]);
-
-            $invoicePdfBinary = $this->invoicePdfService->generate([
-                'invoice_number' => 'INV-' . $orderId,
-                'order_reference' => '#' . $orderId,
-                'issued_at' => date('Y-m-d H:i:s'),
-                'customer_name' => $toName,
-                'customer_email' => $toEmail,
-                'customer_address' => trim((string) ($user->address() ?? '')),
-                'customer_phone' => trim((string) ($user->phoneNumber() ?? '')),
-                'currency' => 'EUR',
-                'total_price' => $total,
-                'total_tickets' => count($ticketPayload),
-                'items' => $invoiceItems,
-                'terms' => 'This invoice confirms your completed ticket purchase. Keep this document for your records.',
-            ]);
+            $ticketPdf  = $this->ticketPdfService->generate($this->buildTicketPdfPayload($toName, $orderId, $ticketPayload));
+            $invoicePdf = $this->invoicePdfService->generate($this->buildInvoicePdfPayload($user, $toName, $orderId, $invoiceItems, $total, count($ticketPayload)));
 
             $this->mailer->send(
                 $toEmail,
                 $toName,
                 'Haarlem Festival order confirmed - Order #' . $orderId,
                 $this->emailBody($toName, $orderId, $ticketPayload, $total),
-                [
-                    [
-                        'filename' => 'haarlem-festival-tickets-order-' . $orderId . '.pdf',
-                        'content' => $ticketPdfBinary,
-                        'mime' => 'application/pdf',
-                    ],
-                    [
-                        'filename' => 'haarlem-festival-invoice-' . $orderId . '.pdf',
-                        'content' => $invoicePdfBinary,
-                        'mime' => 'application/pdf',
-                    ],
-                ]
+                $this->buildEmailAttachments($orderId, $ticketPdf, $invoicePdf)
             );
         } catch (\Throwable $e) {
             error_log('TicketDeliveryService::sendOrderConfirmation failed: ' . $e->getMessage());
         }
+    }
+
+    private function buildTicketPdfPayload(string $customerName, int $orderId, array $tickets): array
+    {
+        return [
+            'customer_name'      => $customerName,
+            'purchase_reference' => '#' . $orderId,
+            'issued_at'          => date('Y-m-d H:i:s'),
+            'tickets'            => $tickets,
+            'terms'              => 'Tickets are non-refundable unless required by law. Please bring a valid ID and this ticket at entry.',
+        ];
+    }
+
+    private function buildInvoicePdfPayload(User $user, string $customerName, int $orderId, array $invoiceItems, float $total, int $totalTickets): array
+    {
+        return [
+            'invoice_number'   => 'INV-' . $orderId,
+            'order_reference'  => '#' . $orderId,
+            'issued_at'        => date('Y-m-d H:i:s'),
+            'customer_name'    => $customerName,
+            'customer_email'   => $user->email(),
+            'customer_address' => trim((string) ($user->address() ?? '')),
+            'customer_phone'   => trim((string) ($user->phoneNumber() ?? '')),
+            'currency'         => 'EUR',
+            'total_price'      => $total,
+            'total_tickets'    => $totalTickets,
+            'items'            => $invoiceItems,
+            'terms'            => 'This invoice confirms your completed ticket purchase. Keep this document for your records.',
+        ];
+    }
+
+    private function buildEmailAttachments(int $orderId, string $ticketPdf, string $invoicePdf): array
+    {
+        return [
+            [
+                'filename' => 'haarlem-festival-tickets-order-' . $orderId . '.pdf',
+                'content'  => $ticketPdf,
+                'mime'     => 'application/pdf',
+            ],
+            [
+                'filename' => 'haarlem-festival-invoice-' . $orderId . '.pdf',
+                'content'  => $invoicePdf,
+                'mime'     => 'application/pdf',
+            ],
+        ];
     }
 
     private function customerName(User $user): string
