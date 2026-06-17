@@ -22,6 +22,7 @@ class OrderSummary
         private float  $totalPriceValue,
         private int    $ticketCount,
         private array  $items,
+        private string $customerName,
     ) {
     }
 
@@ -41,6 +42,7 @@ class OrderSummary
             totalPriceValue:    (float)  ($data['total_price_value']  ?? 0.0),
             ticketCount:        (int)    ($data['ticket_count']       ?? 0),
             items:              $items,
+            customerName:       (string) ($data['customer_name'] ?? "")
         );
     }
 
@@ -50,6 +52,7 @@ class OrderSummary
 
     public function invoiceId(): int    { return $this->invoiceId; }
     public function createdAt(): string { return $this->createdAt; }
+    public function customerName(): string { return $this->customerName; }
     public function totalPriceValue(): float { return $this->totalPriceValue; }
     public function ticketCount(): int { return $this->ticketCount; }
 
@@ -74,11 +77,12 @@ class OrderSummary
                 static fn(PurchasedTicket $t): array => $t->toArray(),
                 $this->items
             ),
+            'customerName'         => $this->customerName,
         ];
     }
 
     public function getName() {
-        return '';
+        return $this->customerName;
     }
     public function getId() {
         return $this->invoiceId;

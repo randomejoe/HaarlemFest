@@ -60,11 +60,13 @@ class OrderRepository implements IOrderRepository
                 e.name AS event_name,
                 e.start_time,
                 e.end_time,
+                u.username,
                 COALESCE(NULLIF(e.location, \'\'), v.location) AS venue_location
             FROM invoices i
             LEFT JOIN tickets t ON t.invoice_id = i.invoice_id
             LEFT JOIN events e ON e.event_id = t.event_id
             LEFT JOIN venues v ON v.venue_id = e.venue_id
+            LEFT JOIN users u ON u.user_id = i.user_id
             ORDER BY i.created_at DESC, i.invoice_id DESC, t.ticket_id ASC'
         );
 
@@ -89,6 +91,7 @@ class OrderRepository implements IOrderRepository
                     'total_price_value' => (float) ($row['total_price'] ?? 0),
                     'ticket_count' => 0,
                     'items_map' => [],
+                    'customer_name' => (string) ($row['username'] ?? ''),
                 ];
             }
 
