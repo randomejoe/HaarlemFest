@@ -76,12 +76,12 @@ class User
     {
         $errors = [];
 
-        if ($username === '') {
-            $errors[] = 'Username is required.';
-        }
+        $errors = array_merge($errors, self::validateUsernameFormat($username));
 
         if ($email === '' || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
             $errors[] = 'Please provide a valid email address.';
+        } elseif (mb_strlen($email, 'UTF-8') > self::EMAIL_MAX_LENGTH) {
+            $errors[] = 'Email must be ' . self::EMAIL_MAX_LENGTH . ' characters or fewer.';
         }
 
         $errors = array_merge($errors, self::validatePassword($password));
@@ -123,10 +123,41 @@ class User
 
     public static function validateProfileUpdate(string $username): array
     {
+        return self::validateUsernameFormat($username);
+    }
+
+    public static function validatePhoneNumber(string $phone): ?string
+    {
+        if ($phone === '') {
+            return null; // phone is optional — empty is fine
+        }
+
+        if (!preg_match('/^[\d\s\+\-\(\)\.]+$/', $phone)) {
+            return 'Phone number may only contain digits, spaces, and the characters + - ( ).';
+        }
+
+        return null;
+    }
+
+    private static function validateUsernameFormat(string $username): array
+    {
         $errors = [];
 
         if ($username === '') {
             $errors[] = 'Username is required.';
+            return $errors;
+        }
+
+        if (mb_strlen($username, 'UTF-8') < 3) {
+            $errors[] = 'Username must be at least 3 characters.';
+        }
+
+        if (mb_strlen($username, 'UTF-8') > self::USERNAME_MAX_LENGTH) {
+            $errors[] = 'Username must be ' . self::USERNAME_MAX_LENGTH . ' characters or fewer.';
+        }
+
+        if (!preg_match('/^[a-zA-Z0-9_\-]+$/', $username)) {
+            $errors[] = 'Username may only contain letters, numbers, underscores, and hyphens.';
         }
 
         return $errors;

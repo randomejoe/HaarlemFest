@@ -2,8 +2,8 @@
 
 namespace App\Controllers;
 
-use App\Models\User;
 use App\Models\FlashType;
+use App\Models\User;
 use App\Services\Interfaces\ICheckoutService;
 use App\Services\Interfaces\IAuthService;
 use App\View;
@@ -52,6 +52,12 @@ class CheckoutController
                 $this->checkout->setFlash(FlashType::Error, 'Please complete all required checkout details.');
                 $this->redirect(self::CHECKOUT_PATH);
             }
+        }
+
+        $phoneError = User::validatePhoneNumber($details['phone_number'] ?? '');
+        if ($phoneError !== null) {
+            $this->checkout->setFlash(FlashType::Error, $phoneError);
+            $this->redirect(self::CHECKOUT_PATH);
         }
 
         $this->checkout->saveCheckoutDetails($user->getId(), $details);

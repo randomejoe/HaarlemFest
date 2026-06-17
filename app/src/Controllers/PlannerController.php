@@ -181,10 +181,10 @@ class PlannerController
             'success' => $success,
             'message' => $message,
             'planner' => [
-                'total_quantity' => (int) ($planner['total_quantity'] ?? 0),
-                'total_price' => (string) ($planner['total_price'] ?? '0.00'),
-                'is_empty' => (bool) ($planner['is_empty'] ?? false),
-                'time_conflicts' => (array) ($planner['time_conflicts'] ?? []),
+                'total_quantity'  => (int) ($planner['total_quantity'] ?? 0),
+                'total_price'     => (string) ($planner['total_price'] ?? '0.00'),
+                'is_empty'        => (bool) ($planner['is_empty'] ?? false),
+                'time_conflicts'  => (array) ($planner['time_conflicts'] ?? []),
             ],
             'payload' => $payload,
         ]);
@@ -231,7 +231,7 @@ class PlannerController
 
         foreach ($eventIds as $eventId) {
             $rows[] = [
-                'event_id' => (int) $eventId,
+                'event_id'    => (int) $eventId,
                 'familyTicket' => $isFamilyTicket,
             ];
         }

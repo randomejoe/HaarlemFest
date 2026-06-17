@@ -54,11 +54,11 @@ class AuthService implements IAuthService
         $role = UserRole::tryFrom((string) ($_SESSION['role'] ?? UserRole::User->value)) ?? UserRole::User;
 
         return User::fromArray([
-            'user_id' => (int) $_SESSION['user_id'],
+            'user_id'  => (int) $_SESSION['user_id'],
             'username' => (string) ($_SESSION['username'] ?? ''),
-            'email' => (string) ($_SESSION['email'] ?? ''),
-            'role' => $role->value,
-            'enabled' => (bool) ($_SESSION['enabled'] ?? false),
+            'email'    => (string) ($_SESSION['email'] ?? ''),
+            'role'     => $role->value,
+            'enabled'  => (bool) ($_SESSION['enabled'] ?? false),
         ]);
     }
 
@@ -119,5 +119,6 @@ class AuthService implements IAuthService
         $_SESSION['username'] = $sessionUser['username'];
         $_SESSION['email'] = $sessionUser['email'];
         $_SESSION['role'] = $sessionUser['role'];
+        $_SESSION['enabled'] = $sessionUser['enabled'];
     }
 }

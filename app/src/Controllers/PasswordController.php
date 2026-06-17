@@ -27,9 +27,11 @@ class PasswordController
             $this->reset->requestReset($email);
         }
 
+        $prefill = ['email' => $email];
+
         echo View::render('forgot', [
             'message' => 'If that address is in our system, you will receive a reset link shortly.',
-            'old' => ['email' => $email],
+            'prefill' => $prefill,
         ]);
     }
 

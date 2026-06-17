@@ -1,5 +1,5 @@
 <?php require __DIR__ . '/partials/header.php'; ?>
-<?php $old = $old ?? []; ?>
+<?php $prefill = $prefill ?? []; ?>
 
 <main>
     <section class="section auth-section">
@@ -27,7 +27,7 @@
                                     class="account-input"
                                     type="email"
                                     name="email"
-                                    value="<?php echo htmlspecialchars((string) ($old['email'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>"
+                                    value="<?php echo htmlspecialchars((string) ($prefill['email'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>"
                                     required
                                 >
                             </div>

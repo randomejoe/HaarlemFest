@@ -13,6 +13,8 @@ use RuntimeException;
 
 class PlannerService implements IPlannerService
 {
+    private const FAMILY_TICKET_PRICE = 60;
+
     private IEventRepository $events;
     private SessionManager $session;
 
@@ -107,7 +109,6 @@ class PlannerService implements IPlannerService
     public function removeItem(int $eventId): void
     {
         $this->assertEventId($eventId);
-
         $this->session->removePlannerItem((string) $eventId);
     }
 
@@ -194,7 +195,7 @@ class PlannerService implements IPlannerService
             }
 
             $filtered[$eventId] = [
-                'quantity' => (int) $item['quantity'],
+                'quantity'    => (int) $item['quantity'],
                 'familyTicket' => (bool) $item['familyTicket'],
             ];
         }
@@ -253,7 +254,7 @@ class PlannerService implements IPlannerService
     private function calculateLineTotal(int $quantity, Event $event, bool $familyTicket): float
     {
         if ($familyTicket) {
-            return (float) (60 * ceil($quantity / 4));
+            return (float) (self::FAMILY_TICKET_PRICE * ceil($quantity / 4));
         }
 
         return $event->ticketPrice() * $quantity;
@@ -294,5 +295,4 @@ class PlannerService implements IPlannerService
             $availableSeats === 1 ? 'seat is' : 'seats are'
         ));
     }
-
 }

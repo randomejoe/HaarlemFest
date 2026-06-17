@@ -18,6 +18,41 @@ class AuthController
         $this->captcha = $captcha;
     }
 
+    public function showLogin(): void
+    {
+        $redirect = $this->sanitizeRedirect((string) ($_GET['redirect'] ?? '/'));
+        echo View::render('login', ['redirect' => $redirect]);
+    }
+
+    public function login(): void
+    {
+        $identifier = trim($_POST['identifier'] ?? '');
+        $password = $_POST['password'] ?? '';
+        $redirect = $this->sanitizeRedirect((string) ($_POST['redirect'] ?? '/'));
+        $prefill = ['identifier' => $identifier];
+
+        if ($identifier === '' || $password === '') {
+            $this->renderLoginError($redirect, 'Email/username and password are required.', $prefill);
+            return;
+        }
+
+        $user = $this->auth->findByIdentifier($identifier);
+
+        if (!$user || !$this->auth->verifyPassword($password, $user->passwordHash() ?? '')) {
+            $this->renderLoginError($redirect, 'Invalid credentials.', $prefill);
+            return;
+        }
+
+        if (!$user->isEnabled()) {
+            $this->renderLoginError($redirect, 'That account has been disabled.', $prefill);
+            return;
+        }
+
+        $this->auth->login($user);
+        header('Location: ' . $redirect);
+        exit;
+    }
+
     public function showRegister(): void
     {
         $redirect = $this->sanitizeRedirect((string) ($_GET['redirect'] ?? '/'));
@@ -31,67 +66,27 @@ class AuthController
         $password = $_POST['password'] ?? '';
         $captchaPayload = $_POST['altcha'] ?? '';
         $redirect = $this->sanitizeRedirect((string) ($_POST['redirect'] ?? '/'));
-        $old = [
+        $prefill = [
             'username' => $username,
             'email' => $email,
         ];
 
         $errors = User::validateRegistration($username, $email, $password);
 
-        $lengthError = $this->validateRegistrationLengths($username, $email);
-        if ($lengthError !== null) {
-            $errors[] = $lengthError;
-        }
-
         if ($errors !== []) {
-            $this->renderRegisterErrors($redirect, $errors, $old);
+            $this->renderRegisterErrors($redirect, $errors, $prefill);
             return;
         }
 
         if (!$this->captcha->verify($captchaPayload)) {
-            $this->renderRegisterError($redirect, 'Captcha verification failed.', $old);
+            $this->renderRegisterError($redirect, 'Captcha verification failed.', $prefill);
             return;
         }
 
         try {
             $user = $this->auth->registerUser($username, $email, $password);
         } catch (\RuntimeException $e) {
-            $this->renderRegisterError($redirect, $e->getMessage(), $old);
-            return;
-        }
-
-        $this->auth->login($user);
-        header('Location: ' . $redirect);
-        exit;
-    }
-
-    public function showLogin(): void
-    {
-        $redirect = $this->sanitizeRedirect((string) ($_GET['redirect'] ?? '/'));
-        echo View::render('login', ['redirect' => $redirect]);
-    }
-
-    public function login(): void
-    {
-        $identifier = trim($_POST['identifier'] ?? '');
-        $password = $_POST['password'] ?? '';
-        $redirect = $this->sanitizeRedirect((string) ($_POST['redirect'] ?? '/'));
-        $old = ['identifier' => $identifier];
-
-        if ($identifier === '' || $password === '') {
-            $this->renderLoginError($redirect, 'Email/username and password are required.', $old);
-            return;
-        }
-
-        $user = $this->auth->findByIdentifier($identifier);
-
-        if (!$user || !$this->auth->verifyPassword($password, $user->passwordHash() ?? '')) {
-            $this->renderLoginError($redirect, 'Invalid credentials.', $old);
-            return;
-        }
-
-        if (!$user->isEnabled()) {
-            $this->renderLoginError($redirect, 'That account has been disabled.', $old);
+            $this->renderRegisterError($redirect, $e->getMessage(), $prefill);
             return;
         }
 
@@ -144,40 +139,27 @@ class AuthController
         return $redirect;
     }
 
-    private function renderRegisterError(string $redirect, string $message, array $old = []): void
+    private function renderRegisterError(string $redirect, string $message, array $prefill = []): void
     {
-        $this->renderRegisterErrors($redirect, [$message], $old);
+        $this->renderRegisterErrors($redirect, [$message], $prefill);
     }
 
-    private function renderRegisterErrors(string $redirect, array $errors, array $old = []): void
+    private function renderRegisterErrors(string $redirect, array $errors, array $prefill = []): void
     {
         echo View::render('register', [
-            'errors' => $errors,
-            'old' => $old,
+            'errors'   => $errors,
+            'prefill'  => $prefill,
             'redirect' => $redirect,
         ]);
     }
 
-    private function renderLoginError(string $redirect, string $message, array $old = []): void
+    private function renderLoginError(string $redirect, string $message, array $prefill = []): void
     {
         echo View::render('login', [
-            'error' => $message,
-            'old' => $old,
+            'error'    => $message,
+            'prefill'  => $prefill,
             'redirect' => $redirect,
         ]);
-    }
-
-    private function validateRegistrationLengths(string $username, string $email): ?string
-    {
-        if (mb_strlen($username, 'UTF-8') > User::USERNAME_MAX_LENGTH) {
-            return 'Username must be ' . User::USERNAME_MAX_LENGTH . ' characters or fewer.';
-        }
-
-        if (mb_strlen($email, 'UTF-8') > User::EMAIL_MAX_LENGTH) {
-            return 'Email must be ' . User::EMAIL_MAX_LENGTH . ' characters or fewer.';
-        }
-
-        return null;
     }
 
 }

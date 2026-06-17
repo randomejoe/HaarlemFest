@@ -56,6 +56,7 @@ class AccountController
         $city = trim($_POST['city'] ?? '');
         $country = trim($_POST['country'] ?? '');
         $phoneNumber = trim($_POST['phone_number'] ?? '');
+
         $submittedUser = $this->buildSubmittedUser($userId, $sessionUser, [
             'username' => $username,
             'first_name' => $firstName,
@@ -78,14 +79,20 @@ class AccountController
             return;
         }
 
+        $phoneError = User::validatePhoneNumber($phoneNumber);
+        if ($phoneError !== null) {
+            $this->renderAccountError($submittedUser, $phoneError);
+            return;
+        }
+
         try {
             $updatedUser = $this->account->updateProfile($userId, [
-                'username' => $username,
-                'first_name' => $firstName !== '' ? $firstName : null,
-                'last_name' => $lastName !== '' ? $lastName : null,
-                'address' => $address !== '' ? $address : null,
-                'city' => $city !== '' ? $city : null,
-                'country' => $country !== '' ? $country : null,
+                'username'     => $username,
+                'first_name'   => $firstName !== '' ? $firstName : null,
+                'last_name'    => $lastName !== '' ? $lastName : null,
+                'address'      => $address !== '' ? $address : null,
+                'city'         => $city !== '' ? $city : null,
+                'country'      => $country !== '' ? $country : null,
                 'phone_number' => $phoneNumber !== '' ? $phoneNumber : null,
             ]);
         } catch (\RuntimeException $e) {
@@ -144,5 +151,4 @@ class AccountController
 
         return null;
     }
-
 }

@@ -111,9 +111,9 @@ final class TicketDeliveryService implements ITicketDeliveryService
     {
         return View::render('emails/order_confirmation', [
             'customerName' => $customerName,
-            'orderId' => $orderId,
-            'tickets' => $tickets,
-            'total' => $total,
+            'orderId'      => $orderId,
+            'tickets'      => $tickets,
+            'total'        => $total,
         ]);
     }
 
@@ -123,16 +123,16 @@ final class TicketDeliveryService implements ITicketDeliveryService
 
         foreach ($tickets as $ticket) {
             $eventId = (int) ($ticket['event_id'] ?? 0);
-            $price = (float) ($ticket['ticket_price_value'] ?? ($ticket['ticket_price'] ?? 0));
+            $price   = (float) ($ticket['ticket_price_value'] ?? ($ticket['ticket_price'] ?? 0));
             $key = $eventId . '|' . number_format($price, 2, '.', '');
 
             if (!isset($linesByKey[$key])) {
                 $linesByKey[$key] = [
-                    'event_name' => (string) ($ticket['event_name'] ?? 'Event'),
-                    'event_date' => (string) ($ticket['event_date'] ?? '-'),
-                    'event_time' => (string) ($ticket['event_time'] ?? '-'),
-                    'venue' => (string) ($ticket['venue'] ?? 'Venue to be announced'),
-                    'quantity' => 0,
+                    'event_name'       => (string) ($ticket['event_name'] ?? 'Event'),
+                    'event_date'       => (string) ($ticket['event_date'] ?? '-'),
+                    'event_time'       => (string) ($ticket['event_time'] ?? '-'),
+                    'venue'            => (string) ($ticket['venue'] ?? 'Venue to be announced'),
+                    'quantity'         => 0,
                     'unit_price_value' => $price,
                     'line_total_value' => 0.0,
                 ];

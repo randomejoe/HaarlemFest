@@ -1,5 +1,5 @@
 <?php require __DIR__ . '/partials/header.php'; ?>
-<?php $old = $old ?? []; ?>
+<?php $prefill = $prefill ?? []; ?>
 
 <script type="module" src="https://cdn.jsdelivr.net/npm/altcha/dist/altcha.min.js"></script>
 
@@ -30,7 +30,7 @@
                                     class="account-input"
                                     type="text"
                                     name="username"
-                                    value="<?php echo htmlspecialchars((string) ($old['username'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>"
+                                    value="<?php echo htmlspecialchars((string) ($prefill['username'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>"
                                     required
                                 >
                             </div>
@@ -41,7 +41,7 @@
                                     class="account-input"
                                     type="email"
                                     name="email"
-                                    value="<?php echo htmlspecialchars((string) ($old['email'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>"
+                                    value="<?php echo htmlspecialchars((string) ($prefill['email'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>"
                                     required
                                 >
                             </div>
