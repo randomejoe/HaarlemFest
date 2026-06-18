@@ -10,7 +10,6 @@
     </div>
     <label for="sort">Sort by:</label>
     <?php 
-        $baseRoute = '/cms/users';
         $param = "sort_by";
         $options = [
             'Newest' => 'date_desc', 
