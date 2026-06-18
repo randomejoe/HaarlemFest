@@ -22,7 +22,7 @@ class Page extends CmsItem
             content: (array) ($data['content'] ?? []),
         );
     }
-    public static function emptyPage(): self
+    public static function invalidPage(): self
     {
         return new self(
             id: 0,

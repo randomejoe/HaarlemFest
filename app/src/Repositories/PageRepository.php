@@ -57,7 +57,7 @@ class PageRepository implements IPageRepository
         $pageData = $stmt->fetch();
         
         if (!$pageData) {
-            return Page::emptyPage();
+            return Page::invalidPage();
         }
         else {
             $page = Page::fromArray($pageData);
