@@ -18,7 +18,7 @@ class PageRepository implements IPageRepository
 
     public function getAllPages(): array
     {
-        $stmt = $this->pdo->prepare('SELECT title, page_id, is_main_event FROM pages');
+        $stmt = $this->pdo->prepare('SELECT title, page_id, is_main_event, style FROM pages');
         $stmt->execute();
         $pages = $stmt->fetchAll();
 
@@ -51,7 +51,7 @@ class PageRepository implements IPageRepository
     // to reduce code duplication
     private function getPageBy(string $whereStatement, array $params): Page {
         $stmt = $this->pdo->prepare('
-            SELECT title, page_id, is_main_event FROM pages ' . $whereStatement
+            SELECT title, page_id, is_main_event, style FROM pages ' . $whereStatement
         );
         $stmt->execute($params);
         $pageData = $stmt->fetch();
@@ -83,20 +83,19 @@ class PageRepository implements IPageRepository
         return $page;
     }
 
-    public function createPage(string $title, int $isMainEvent): bool
+    public function createPage(string $title, int $isMainEvent)
     {
         $stmt = $this->pdo->prepare('INSERT INTO pages (title, is_main_event) VALUES (:title, :mainEvent)');
         $stmt->execute([
             'title' => $title,
             'mainEvent' => $isMainEvent
         ]);
-        return true;
     }
 
     public function getPageForEdit(int $id)
     {
         $stmt = $this->pdo->prepare(
-            "SELECT p.title, pc.content_id, pc.component_name, pc.data
+            "SELECT p.title, pc.content_id, pc.component_name, pc.data, p.style
             FROM pages p
             LEFT JOIN page_content pc ON p.page_id = pc.page_id
             WHERE p.page_id = :page_id"
@@ -109,7 +108,7 @@ class PageRepository implements IPageRepository
             return null;
         }
 
-        $page = ['page_id' => $id, 'title' => $pageContent[0]['title'], 'content' => []];
+        $page = ['page_id' => $id, 'title' => $pageContent[0]['title'], 'content' => [], 'style' => $pageContent[0]['style']];
         foreach ($pageContent as $contentItem) {
             if (isset($contentItem['component_name'])) {
                 $page['content'][] = PageContent::fromArray($contentItem);
@@ -131,15 +130,20 @@ class PageRepository implements IPageRepository
         return PageContent::fromArray($component);
     }
 
-    public function updatePage(int $id, array $data): bool
+    public function updatePage(int $id, array $data)
     {
-        // Update page name
-        $stmt = $this->pdo->prepare("UPDATE pages SET title = :title WHERE page_id = :id");
+        // Update page name and style
+
+        if (isset($data['page_style']) && $data['page_style'] == 'None') {
+            $data['page_style'] = null;
+        }
+
+        $stmt = $this->pdo->prepare("UPDATE pages SET title = :title, style = :style WHERE page_id = :id");
         $stmt->execute([
             'id' => $id,
             'title' => $data['name'],
+            'style' => $data['page_style'] ?? null,
         ]);
-        return true;
     }
 
     public function addContentItemToPage(int $pageId, string $componentName)
@@ -149,7 +153,6 @@ class PageRepository implements IPageRepository
             'page_id' => $pageId,
             'component_name' => $componentName,
         ]);
-        return true;
     }
 
     public function updateContentItem(int $id, string $encodedJson): bool
@@ -167,7 +170,6 @@ class PageRepository implements IPageRepository
         $stmt->execute([
             'page_id' => $pageId
         ]);
-        return true;
     }
 
     public function deleteContentItem(int $contentId)
@@ -176,7 +178,6 @@ class PageRepository implements IPageRepository
         $stmt->execute([
             'content_id' => $contentId
         ]);
-        return true;
     }
 
     public function getEventCategories()

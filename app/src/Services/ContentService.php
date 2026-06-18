@@ -101,9 +101,9 @@ class ContentService implements CMSServiceInterface
 
         return $this->persistSanitized($id, $data);
     }
-    public function delete(int $id): bool
+    public function delete(int $id)
     {
-        return $this->repository->deleteContentItem($id);
+        $this->repository->deleteContentItem($id);
     }
 
     private function resolveExistingImageFields(array $data): array

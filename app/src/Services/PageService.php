@@ -32,7 +32,7 @@ class PageService implements CMSServiceInterface
     {
         $title = trim((string) ($postData['item_name'] ?? ''));
         $isMainEvent = ($postData['is_main_event'] ?? "off") == "on" ? 1 : 0;
-        return $this->repository->createPage($title, $isMainEvent);
+        $this->repository->createPage($title, $isMainEvent);
     }
     public function isNameEditable(): bool {
         return true;
@@ -50,13 +50,13 @@ class PageService implements CMSServiceInterface
 
     public function update(int $id, array $postData) {
         if (isset($postData['newContent'])) {
-            return $this->repository->addContentItemToPage($id, $postData['newContent']);
+            $this->repository->addContentItemToPage($id, $postData['newContent']);
         }
         else  {
-            return $this->repository->updatePage($id, $postData);
+            $this->repository->updatePage($id, $postData);
         }
     }
     public function delete(int $id) {
-        return $this->repository->deletePage($id);
+        $this->repository->deletePage($id);
     }
 }

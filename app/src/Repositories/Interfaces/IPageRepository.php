@@ -12,13 +12,13 @@ interface IPageRepository
 
     public function getPageByName(string $name);
 
-    public function createPage(string $title, int $isMainEvent): bool;
+    public function createPage(string $title, int $isMainEvent);
 
     public function getPageForEdit(int $id);
 
     public function getContentForEdit(int $id);
 
-    public function updatePage(int $id, array $data): bool;
+    public function updatePage(int $id, array $data);
 
     public function addContentItemToPage(int $pageId, string $componentName);
 

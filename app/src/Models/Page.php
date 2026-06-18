@@ -10,6 +10,7 @@ class Page extends CmsItem
         private string $title,
         private bool $isMainEvent,
         private array $content,
+        private ?string $pageStyle,
     ) {
     }
 
@@ -20,6 +21,7 @@ class Page extends CmsItem
             title: (string) ($data['title'] ?? ''),
             isMainEvent: (bool) ($data['is_main_event'] ?? false),
             content: (array) ($data['content'] ?? []),
+            pageStyle: ($data['style'] ?? null),
         );
     }
     public static function invalidPage(): self
@@ -46,5 +48,8 @@ class Page extends CmsItem
     }
     public function setContent(array $content) {
         $this->content = $content;
+    }
+    public function getStyle(): ?string {
+        return $this->pageStyle;
     }
 }
