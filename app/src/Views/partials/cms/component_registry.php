@@ -7,7 +7,6 @@ element is only for text elements currently and refers to the element used to wr
     'text' => [
         'fields' => [
             ['name' => 'text', 'type' => 'text', 'element' => 'p'],
-            ['name' => 'has padding', 'type' => 'checkbox'],
         ],
     ],
     'image' => [
