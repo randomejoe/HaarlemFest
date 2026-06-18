@@ -42,6 +42,7 @@ class PlannerController
         $returnTo = $this->resolveReturnTo((string) ($_POST['return_to'] ?? '/planner'));
         $eventIds = $this->resolveEventIds($_POST['event_ids'] ?? null, (int) ($_POST['event_id'] ?? 0));
         $quantity = (int) ($_POST['quantity'] ?? 1);
+        $familyTicket = isset($_POST['familyTicket']);
         $isAjax = $this->isAjaxRequest();
         $success = true;
         $message = '';
@@ -56,9 +57,9 @@ class PlannerController
             }
 
             if (count($eventIds) === 1) {
-                $this->planner->addItem($eventIds[0], $quantity, $_POST['familyTicket'] ?? null);
+                $this->planner->addItem($eventIds[0], $quantity, $familyTicket);
             } else {
-                $this->planner->addItems($this->buildPlannerRows($eventIds, $_POST['familyTicket'] ?? null), $quantity);
+                $this->planner->addItems($this->buildPlannerRows($eventIds, $familyTicket), $quantity);
             }
         } catch (RuntimeException | InvalidArgumentException $e) {
             $success = false;
@@ -224,15 +225,14 @@ class PlannerController
         return $fallbackEventId > 0 ? [$fallbackEventId] : [];
     }
 
-    private function buildPlannerRows(array $eventIds, ?string $familyTicket): array
+    private function buildPlannerRows(array $eventIds, bool $familyTicket): array
     {
-        $isFamilyTicket = in_array(strtolower((string) $familyTicket), ['1', 'true', 'yes', 'on'], true);
         $rows = [];
 
         foreach ($eventIds as $eventId) {
             $rows[] = [
-                'event_id'    => (int) $eventId,
-                'familyTicket' => $isFamilyTicket,
+                'event_id'     => (int) $eventId,
+                'familyTicket' => $familyTicket,
             ];
         }
 

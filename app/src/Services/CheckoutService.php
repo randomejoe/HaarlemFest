@@ -19,6 +19,15 @@ final class CheckoutService implements ICheckoutService
 {
     private const REQUIRED_FIELDS = ['first_name', 'last_name', 'address', 'city', 'country', 'phone_number'];
 
+    private const FIELD_GETTERS = [
+        'first_name'   => 'firstName',
+        'last_name'    => 'lastName',
+        'phone_number' => 'phoneNumber',
+        'address'      => 'address',
+        'city'         => 'city',
+        'country'      => 'country',
+    ];
+
     public function __construct(
         private ITransactionManager $txManager,
         private IPlannerService $planner,
@@ -26,44 +35,6 @@ final class CheckoutService implements ICheckoutService
         private IUserRepository $users,
         private ITicketDeliveryService $ticketDelivery,
     ) {
-    }
-
-    public function getPlannerSummary(): PlannerSummary
-    {
-        return $this->planner->getPlannerSummary();
-    }
-
-    public function consumeFlash(): ?array
-    {
-        return $this->planner->consumeFlash();
-    }
-
-    public function loadCheckoutUser(int $userId): ?User
-    {
-        return $this->users->findById($userId);
-    }
-
-    public function missingCheckoutDetails(User $user): array
-    {
-        $missing = [];
-        foreach (self::REQUIRED_FIELDS as $field) {
-            $method = $this->fieldToGetter($field);
-            if (trim((string) $user->{$method}()) === '') {
-                $missing[] = $field;
-            }
-        }
-
-        return $missing;
-    }
-
-    public function saveCheckoutDetails(int $userId, array $details): void
-    {
-        $this->users->updateCheckoutDetails($userId, $details);
-    }
-
-    public function setFlash(\App\Models\FlashType $type, string $message): void
-    {
-        $this->planner->setFlash($type, $message);
     }
 
     public function confirmCheckout(User $user): array
@@ -113,6 +84,44 @@ final class CheckoutService implements ICheckoutService
         $this->planner->clear();
 
         return ['success' => true, 'order_id' => $invoiceId];
+    }
+
+    public function getPlannerSummary(): PlannerSummary
+    {
+        return $this->planner->getPlannerSummary();
+    }
+
+    public function loadCheckoutUser(int $userId): ?User
+    {
+        return $this->users->findById($userId);
+    }
+
+    public function missingCheckoutDetails(User $user): array
+    {
+        $missing = [];
+        foreach (self::REQUIRED_FIELDS as $field) {
+            $method = $this->fieldToGetter($field);
+            if (trim((string) $user->{$method}()) === '') {
+                $missing[] = $field;
+            }
+        }
+
+        return $missing;
+    }
+
+    public function saveCheckoutDetails(int $userId, array $details): void
+    {
+        $this->users->updateCheckoutDetails($userId, $details);
+    }
+
+    public function setFlash(\App\Models\FlashType $type, string $message): void
+    {
+        $this->planner->setFlash($type, $message);
+    }
+
+    public function consumeFlash(): ?array
+    {
+        return $this->planner->consumeFlash();
     }
 
     private function validateItemStock(array $items): void
@@ -167,15 +176,6 @@ final class CheckoutService implements ICheckoutService
             error_log('CheckoutService::deliverOrderConfirmation failed: ' . $e->getMessage());
         }
     }
-
-    private const FIELD_GETTERS = [
-        'first_name'   => 'firstName',
-        'last_name'    => 'lastName',
-        'phone_number' => 'phoneNumber',
-        'address'      => 'address',
-        'city'         => 'city',
-        'country'      => 'country',
-    ];
 
     private function fieldToGetter(string $field): string
     {
