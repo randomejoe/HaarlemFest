@@ -47,10 +47,10 @@
     </div>
 </div>
 <?php
-$items = $categories;
+$selectorItems = $categories;
 $initialSelection = $item->category();
 $fieldName = 'category';
-require __DIR__ . '/event_selector.php'; ?>
+require __DIR__ . '/form_selector.php'; ?>
 <script>
     // Wait for DOM to be ready and category selector to exist
     function initArtistImageField() {

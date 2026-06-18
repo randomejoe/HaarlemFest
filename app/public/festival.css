@@ -1549,18 +1549,6 @@ h4 {
     color: var(--history-negative)
 }
 
-.padding-horizontal {
-    padding: 0 1rem;
-}
-
-.padding-top {
-    padding: 1rem 0 0 0;
-}
-
-.padding-top.padding-horizontal {
-    padding: 1rem 1rem 0 1rem;
-}
-
 .full-size-image {
     width: 100%;
     height: auto;
@@ -1591,4 +1579,8 @@ h4 {
 
 .w-40 {
     width: 40%;
+}
+
+.History {
+    padding: 1rem 1rem 0 1rem;
 }

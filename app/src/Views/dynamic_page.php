@@ -1,6 +1,6 @@
 <?php
     require __DIR__ . '/../Views/partials/header.php';
-    ?><div class='dynamic-page-content-container'><?php
+    ?><div class='dynamic-page-content-container <?php echo $page->getStyle(); ?>'><?php
     foreach ($page->getContent() as $pageContentItem) {
         if ($pageContentItem->getPageData() != null) {
             $data = $pageContentItem->getPageData();

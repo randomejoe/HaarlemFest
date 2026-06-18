@@ -13,6 +13,35 @@
                         echo $item->getName();
                         ?>" <?php if (!$editable) { echo 'readonly';} ?> required>
                         <button type="submit" class="form-submit-button button">Save</button>
+                        <?php 
+                        if ($type == CmsType::Page) {
+                            $fieldName = "page style";
+                            $selectorItems = [
+                                'None' => 'None',
+                                'History' => 'History',
+                            ]; 
+                            
+                            $style = $item->getStyle();
+                            $labelText = "Style";
+                            
+                            try {
+                                if (isset($style)) {
+                                    $initialSelection = $selectorItems[$style];
+                                }
+                                else {
+                                    $initialSelection = $selectorItems['None'];
+                                }
+                            }
+                            catch (Ex $e) {
+                                $initialSelection = $selectorItems['None'];
+                            }
+                            
+                            
+
+                            require __DIR__ . '/../partials/cms/form_selector.php';
+                        }
+                        
+                        ?>
                     </div>
                     <?php 
                         if ($type != CmsType::Page ) {

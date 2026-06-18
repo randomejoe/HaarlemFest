@@ -1,4 +1,4 @@
-<div class="wysiwyg d-flex history-detailpage-top g-0 <?php if (isset($data['has_top_padding']) && $data['has_top_padding'] == "1") {echo 'padding-top ';} if (isset($data['has_horizontal_padding']) && $data['has_horizontal_padding'] == "1") {echo 'padding-horizontal ';} ?>">
+<div class="wysiwyg d-flex history-detailpage-top g-0">
     <div class="flex-grow-1 text">
         <h1 class="wysiwyg">
         <?php echo $data['title_text'] ?? '' ?>

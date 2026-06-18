@@ -7,34 +7,28 @@ element is only for text elements currently and refers to the element used to wr
     'text' => [
         'fields' => [
             ['name' => 'text', 'type' => 'text', 'element' => 'p'],
-            ['name' => 'has padding', 'type' => 'checkbox'],
-            ['name' => 'has_horizontal_padding', 'type' => 'checkbox'],
         ],
     ],
     'image' => [
         'fields' => [
             ['name' => 'imgSource', 'type' => 'image'],
-            ['name' => 'has_horizontal_padding', 'type' => 'checkbox'],
         ]
     ],
     'title' => [
         'fields' => [
             ['name' => 'text', 'type' => 'text', 'element' => 'h1'],
-            ['name' => 'has_top_padding', 'type' => 'checkbox'],
-            ['name' => 'has_horizontal_padding', 'type' => 'checkbox'],
         ]
     ],
     'sub_title' => [
         'fields' => [
             ['name' => 'text', 'type' => 'text', 'element' => 'h2'],
-            ['name' => 'has_horizontal_padding', 'type' => 'checkbox'],
         ]
     ],
     'paragraph' => [
         'fields' => [
             ['name' => 'header_text', 'type' => 'text', 'element' => 'h2'],
             ['name' => 'paragraph_text', 'type' => 'text', 'element' => 'p'],
-            ['name' => 'has_horizontal_padding', 'type' => 'checkbox'],
+            
         ]
     ],
     'history_detailpage_top' => [
@@ -45,8 +39,7 @@ element is only for text elements currently and refers to the element used to wr
             ['name' => 'map_image_source', 'type' => 'image'],
             ['name' => 'night_image_source', 'type' => 'image'],
             ['name' => 'night_image_caption', 'type' => 'text', 'element' => 'p'],
-            ['name' => 'has_top_padding', 'type' => 'checkbox'],
-            ['name' => 'has_horizontal_padding', 'type' => 'checkbox'],
+            
         ]
     ],
     'double_caption_image' => [
@@ -55,7 +48,7 @@ element is only for text elements currently and refers to the element used to wr
             ['name' => 'left_image_caption', 'type' => 'text', 'element' => 'p'],
             ['name' => 'right_image_source', 'type' => 'image'],
             ['name' => 'right_image_caption', 'type' => 'text', 'element' => 'p'],
-            ['name' => 'has_horizontal_padding', 'type' => 'checkbox'],
+            
         ]
     ],
     'big_ticket_button' => [
@@ -76,7 +69,6 @@ element is only for text elements currently and refers to the element used to wr
     'history_locations' => [
         'fields' => [
             ['name' => 'header_text', 'type' => 'text', 'element' => 'h2'],
-            ['name' => 'has_top_padding', 'type' => 'checkbox'],
         ],
         'methods' => [
             ['name' => 'locations', 'service' => \App\Services\LocationService::class, 'method' => 'getAll'],
@@ -95,8 +87,6 @@ element is only for text elements currently and refers to the element used to wr
     'full_size_image' => [
         'fields' => [
             ['name' => 'image_source', 'type' => 'image'],
-            ['name' => 'has_horizontal_padding', 'type' => 'checkbox'],
-            ['name' => 'has_top_padding', 'type' => 'checkbox'],
         ]
     ],
     'hero_banner' => [

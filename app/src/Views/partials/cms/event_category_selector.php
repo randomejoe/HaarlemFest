@@ -4,7 +4,6 @@
     foreach ($categories as $category) {
         $options[$category] = $category;
     } 
-    $baseRoute = '/cms/events';
     $hasNone = true;
     
     if (isset($params['event'])) {

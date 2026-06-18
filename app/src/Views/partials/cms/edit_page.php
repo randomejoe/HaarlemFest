@@ -1,5 +1,4 @@
 <div class="cms-item-container column">
-
     <?php 
     $remove = true;
     $itemType = "content";
@@ -8,6 +7,6 @@
     {
         require __DIR__ . '/cms_item.php';      
     }
-    require __DIR__ . '/add_page_content.php'
+    require __DIR__ . '/add_page_content.php';
     ?>
 </div>

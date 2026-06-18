@@ -1,4 +1,4 @@
-<div class="wysiwyg padding-horizontal <?php if (isset($data['has_top_padding']) && $data['has_top_padding'] == "1") {echo 'padding-top ';}?>">
+<div class="wysiwyg">
     <h2 class="wysiwyg"><?php echo $data['header_text'] ?? '' ?></h2>
     <?php 
     $locations = $data['locations'];

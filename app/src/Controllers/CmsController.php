@@ -120,7 +120,7 @@ class CmsController
             echo View::render('/../Views/cms/edit', ['type' => $type, 'item' => $item, 'editable' => $editable, 'categories' => $categories ?? null]);
         }
         catch (\Throwable $e) {
-            $this->sessionManager->setFlash(FlashType::Error, 'An error occurred while trying to fetch the selected ' . $type->value);
+            $this->sessionManager->setFlash(FlashType::Error, 'An error occurred while trying to fetch the selected ' . $type->value . $e);
             print_r($e);
             header('Location: /cms/' . $type->value . 's');
             exit;
@@ -136,7 +136,7 @@ class CmsController
                 $service->updateWithImage($item_id, $_POST, $_FILES) :
                 $service->update($item_id, $_POST);
 
-                $this->sessionManager->setFlash(FlashType::Success, 'Successfully edited ' . $type->value . ' ' . $_POST['item_name']);
+                $this->sessionManager->setFlash(FlashType::Success, 'Successfully edited ' . $type->value . ' ' . $_POST['name']);
 
             if ($type == CmsType::Content || isset($_POST['newContent'])) {
                 if ($type == CmsType::Content) {
