@@ -66,12 +66,10 @@
                         </div>
                     </div>
                     <div>
-                        <!-- TODO: change to selector for location -->
                         <div class="vertical-center form-input-container">
                             <label for="location">Location:</label>
                             <input type="text" id="location" name="location" class="form-input" required> 
                         </div>
-                        <!-- TODO: change to use selected location ticket count -->
                         <div class="vertical-center form-input-container">
                             <label for="amount">Ticket amount:</label>
                             <input type="number" id="amount" name="ticket_amount" class="form-input" min="0" required> 
