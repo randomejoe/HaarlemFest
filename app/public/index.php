@@ -52,13 +52,13 @@ use function FastRoute\simpleDispatcher;
 
 session_start();
 
-// set_exception_handler(static function (\Throwable $e): void {
-//     error_log((string) $e);
-//     if (!headers_sent()) {
-//         http_response_code(500);
-//     }
-//     require __DIR__ . '/../src/Views/error.php';
-// });
+set_exception_handler(static function (\Throwable $e): void {
+    error_log((string) $e);
+    if (!headers_sent()) {
+        http_response_code(500);
+    }
+    require __DIR__ . '/../src/Views/error.php';
+});
 
 $factories = [];
 $singletons = [];
