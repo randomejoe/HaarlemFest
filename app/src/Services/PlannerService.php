@@ -30,7 +30,7 @@ class PlannerService implements IPlannerService
         return $this->session->getPlannerItems();
     }
 
-    public function addItem(int $eventId, int $quantity, ?string $familyTicket): void
+    public function addItem(int $eventId, int $quantity, bool $familyTicket): void
     {
         $this->assertEventId($eventId);
         $this->assertQuantity($quantity);
@@ -45,8 +45,7 @@ class PlannerService implements IPlannerService
 
         $items[$eventId] = [
             'quantity' => $requestedQuantity,
-            'familyTicket' => $this->isFamilyTicketSelected($familyTicket)
-                || (bool) ($currentItem['familyTicket'] ?? false),
+            'familyTicket' => $familyTicket || (bool) ($currentItem['familyTicket'] ?? false),
         ];
 
         $this->session->setPlannerItems($items);
@@ -118,16 +117,6 @@ class PlannerService implements IPlannerService
         $this->session->clearPlanner();
     }
 
-    public function setFlash(FlashType $type, string $message): void
-    {
-        $this->session->setFlash($type, $message);
-    }
-
-    public function consumeFlash(): ?array
-    {
-        return $this->session->consumeFlash();
-    }
-
     public function getPlannerSummary(): PlannerSummary
     {
         $items = $this->getItems();
@@ -164,6 +153,16 @@ class PlannerService implements IPlannerService
         ]);
     }
 
+    public function setFlash(FlashType $type, string $message): void
+    {
+        $this->session->setFlash($type, $message);
+    }
+
+    public function consumeFlash(): ?array
+    {
+        return $this->session->consumeFlash();
+    }
+
     private function assertEventId(int $eventId): void
     {
         if ($eventId <= 0) {
@@ -176,89 +175,6 @@ class PlannerService implements IPlannerService
         if ($quantity <= 0) {
             throw new InvalidArgumentException('Quantity must be greater than zero.');
         }
-    }
-
-    private function itemQuantity(array $item): int
-    {
-        return max(0, (int) ($item['quantity'] ?? 0));
-    }
-
-    private function filterOutUnavailableItems(array $items, array $eventsById): array
-    {
-        $filtered = [];
-
-        foreach ($items as $eventIdRaw => $item) {
-            $eventId = (int) $eventIdRaw;
-            $event = $eventsById[$eventId] ?? null;
-
-            if ($event !== null && ($event->isFree() || $event->isSoldOut())) {
-                continue;
-            }
-
-            $filtered[$eventId] = [
-                'quantity'    => (int) $item['quantity'],
-                'familyTicket' => (bool) $item['familyTicket'],
-            ];
-        }
-
-        return $filtered;
-    }
-
-    private function normalizeBulkRows(array $rows): array
-    {
-        $normalized = [];
-
-        foreach ($rows as $key => $row) {
-            if (is_array($row)) {
-                $eventId = (int) ($row['event_id'] ?? $row['id'] ?? $key);
-                $familyTicket = (bool) ($row['familyTicket'] ?? false);
-            } else {
-                $eventId = (int) $row;
-                $familyTicket = false;
-            }
-
-            if ($eventId > 0) {
-                $normalized[$eventId] = ['familyTicket' => $familyTicket];
-            }
-        }
-
-        return $normalized;
-    }
-
-    private function isFamilyTicketSelected(?string $familyTicket): bool
-    {
-        if ($familyTicket === null) {
-            return false;
-        }
-
-        return in_array(strtolower($familyTicket), ['1', 'true', 'yes', 'on'], true);
-    }
-
-    private function withLineTotals(array $items, array $eventsById): array
-    {
-        foreach ($items as $eventId => $item) {
-            $event = $eventsById[(int) $eventId] ?? null;
-            if (!$event instanceof Event) {
-                continue;
-            }
-
-            $items[$eventId]['line_total_value'] = $this->calculateLineTotal(
-                (int) ($item['quantity'] ?? 0),
-                $event,
-                (bool) ($item['familyTicket'] ?? false)
-            );
-        }
-
-        return $items;
-    }
-
-    private function calculateLineTotal(int $quantity, Event $event, bool $familyTicket): float
-    {
-        if ($familyTicket) {
-            return (float) (self::FAMILY_TICKET_PRICE * ceil($quantity / PARTICIPANTS_PER_FAMILY_TICKET));
-        }
-
-        return $event->ticketPrice() * $quantity;
     }
 
     private function assertEventCanBePlanned(int $eventId): Event
@@ -295,5 +211,79 @@ class PlannerService implements IPlannerService
             $availableSeats,
             $availableSeats === 1 ? 'seat is' : 'seats are'
         ));
+    }
+
+    private function itemQuantity(array $item): int
+    {
+        return max(0, (int) ($item['quantity'] ?? 0));
+    }
+
+    private function normalizeBulkRows(array $rows): array
+    {
+        $normalized = [];
+
+        foreach ($rows as $key => $row) {
+            if (is_array($row)) {
+                $eventId = (int) ($row['event_id'] ?? $row['id'] ?? $key);
+                $familyTicket = (bool) ($row['familyTicket'] ?? false);
+            } else {
+                $eventId = (int) $row;
+                $familyTicket = false;
+            }
+
+            if ($eventId > 0) {
+                $normalized[$eventId] = ['familyTicket' => $familyTicket];
+            }
+        }
+
+        return $normalized;
+    }
+
+    private function filterOutUnavailableItems(array $items, array $eventsById): array
+    {
+        $filtered = [];
+
+        foreach ($items as $eventIdRaw => $item) {
+            $eventId = (int) $eventIdRaw;
+            $event = $eventsById[$eventId] ?? null;
+
+            if ($event !== null && ($event->isFree() || $event->isSoldOut())) {
+                continue;
+            }
+
+            $filtered[$eventId] = [
+                'quantity'    => (int) $item['quantity'],
+                'familyTicket' => (bool) $item['familyTicket'],
+            ];
+        }
+
+        return $filtered;
+    }
+
+    private function withLineTotals(array $items, array $eventsById): array
+    {
+        foreach ($items as $eventId => $item) {
+            $event = $eventsById[(int) $eventId] ?? null;
+            if (!$event instanceof Event) {
+                continue;
+            }
+
+            $items[$eventId]['line_total_value'] = $this->calculateLineTotal(
+                (int) ($item['quantity'] ?? 0),
+                $event,
+                (bool) ($item['familyTicket'] ?? false)
+            );
+        }
+
+        return $items;
+    }
+
+    private function calculateLineTotal(int $quantity, Event $event, bool $familyTicket): float
+    {
+        if ($familyTicket) {
+            return (float) (self::FAMILY_TICKET_PRICE * ceil($quantity / self::PARTICIPANTS_PER_FAMILY_TICKET));
+        }
+
+        return $event->ticketPrice() * $quantity;
     }
 }

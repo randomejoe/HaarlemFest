@@ -16,7 +16,7 @@ interface IPlannerService
 
 	public function getDetailedPlanner(): array;
 
-	public function addItem(int $eventId, int $quantity, ?string $familyTicket): void;
+	public function addItem(int $eventId, int $quantity, bool $familyTicket): void;
 
 	public function addItems(array $items, int $quantity): int;
 
