@@ -5,6 +5,7 @@ $currentPath = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?: '/';
 if ($displayName === '') {
     $displayName = trim((string) ($_SESSION['email'] ?? ''));
 }
+require_once __DIR__ . '/../helpers.php';
 ?>
 <!doctype html>
 <html lang="en">
@@ -17,7 +18,10 @@ if ($displayName === '') {
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@400;500;600;700;800&family=Manrope:wght@400;500;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/festival.css">
+    <link rel='stylesheet' href='/festival.css'>
+    <?php foreach ((array) ($extraStylesheets ?? []) as $stylesheetPath): ?>
+        <link rel="stylesheet" href="<?php echo htmlspecialchars((string) $stylesheetPath, ENT_QUOTES, 'UTF-8'); ?>">
+    <?php endforeach; ?>
 </head>
 
 <body>
@@ -35,17 +39,15 @@ if ($displayName === '') {
                     <ul class="navbar-nav ms-lg-auto mb-2 mb-lg-0 fw-semibold">
                         <li class="nav-item"><a class="nav-link<?php echo $currentPath === '/' ? ' active' : ''; ?>" href="/">Home</a></li>
                         <li class="nav-item"><a class="nav-link<?php echo $currentPath === '/jazz' ? ' active' : ''; ?>" href="/jazz">Jazz</a></li>
-                        <li class="nav-item"><a class="nav-link" href="#events">Yummy</a></li>
-                        <li class="nav-item"><a class="nav-link" href="#events">Dance</a></li>
-                        <li class="nav-item"><a class="nav-link" href="#events">History</a></li>
+                        <li class="nav-item"><a class="nav-link" href="/A_stroll_through_history">History</a></li>
                     </ul>
                     <ul class="navbar-nav navbar-tools flex-row align-items-center gap-2 mt-2 mt-lg-0 ms-lg-3">
                         <li class="nav-item">
-                            <button type="button" class="icon-btn" aria-label="Calendar">
+                            <a href="/planner" class="icon-btn" aria-label="Planner">
                                 <svg viewBox="0 0 24 24" aria-hidden="true">
                                     <path d="M7 2v3M17 2v3M3 9h18M5 5h14a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2Z" />
                                 </svg>
-                            </button>
+                            </a>
                         </li>
                         <?php if ($isLoggedIn): ?>
                             <li class="nav-item user-menu">
@@ -56,6 +58,7 @@ if ($displayName === '') {
                                     <a href="/account" class="user-menu-item">Account</a>
                                     <a href="/orders" class="user-menu-item">Orders</a>
                                     <form method="post" action="/logout" class="m-0">
+                                        <input type="hidden" name="csrf_token" value="<?php echo hf_e(hf_csrf_token()); ?>">
                                         <button type="submit" class="user-menu-item user-menu-logout">Logout</button>
                                     </form>
                                 </div>

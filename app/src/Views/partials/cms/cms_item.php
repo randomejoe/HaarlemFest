@@ -1,0 +1,36 @@
+<?php use App\Models\CmsType; ?>
+<div class='cms-item'>
+    <div class='cms-item-content vertical-center'>
+        <p><?php echo str_replace('_', ' ', $item->getName()); ?></p><?php
+        if (isset($extraFields)) {
+            require __DIR__ . '/' . $extraFields;
+        }
+        ?>
+        <div class='cms-item-buttons vertical-center'>
+            <?php
+            if ($itemType != CmsType::User->value && $itemType != CmsType::Order->value) 
+                {?>
+                <a class='edit-btn button' href=<?php echo '/cms/' . $itemType . 's/' . $item->getId() . '/edit'?>>
+                    <p>Edit <?php echo $itemType ?></p>
+                </a>
+            <?php }?>
+            <form method="POST" class="no-margin" action=<?php echo '/cms/' . $itemType . 's/' . $item->getId() . '/delete'?>>
+                <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars((string) ($csrf_token ?? ''), ENT_QUOTES, 'UTF-8'); ?>">
+                <input type="hidden" name="return_url" value="<?php echo $_SERVER['REQUEST_URI'] ?>">
+                <?php if ($itemType != CmsType::Order->value) {?>
+                <button type="submit" class='delete-btn button'>
+                    <p><?php 
+                    if (isset($remove) && $remove == true) 
+                    { 
+                        echo 'Remove ';
+                    } else { 
+                        echo 'Delete ';
+                    } 
+                    echo $itemType ?></p>
+                </button>
+                <?php } ?>
+            </form>
+        </div>
+        
+    </div>
+</div>

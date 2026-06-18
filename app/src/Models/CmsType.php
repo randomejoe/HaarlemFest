@@ -1,0 +1,30 @@
+<?php
+
+namespace App\Models;
+
+use ValueError;
+
+enum CmsType: string
+{
+    case Page = 'page';
+    case Content = 'content';
+    case Event = 'event';
+    case Location = 'location';
+    case User = 'user';
+    case Order = 'order';
+    case None = 'none';
+
+    public static function convertToType(string $type): CmsType {
+        try {
+            return CmsType::from($type);
+        }
+        catch (ValueError $e) {
+            try {
+                return CmsType::from(substr($type, 0, -1));
+            }
+            catch (ValueError $e){
+                return CmsType::None;
+            }
+        }
+    }
+}

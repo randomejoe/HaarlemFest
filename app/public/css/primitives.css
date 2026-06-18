@@ -1,0 +1,292 @@
+/* ============================================================================
+   HaarlemFest CSS Primitives
+   Shared design tokens, typography, and reusable component patterns
+   ============================================================================ */
+
+/* ============================================================================
+   Design Tokens
+   ============================================================================ */
+
+:root {
+	/* Colors - Brand Palette */
+	--hf-color-gold: #d4a017;
+	--hf-color-gold-faded: rgba(212, 160, 23, 0.3);
+	--hf-color-gold-overlay: rgba(212, 160, 23, 0.15);
+	--hf-color-ink: #1e1e1e;
+	--hf-color-ink-faded: rgba(30, 30, 30, 0.45);
+	--hf-color-white: #ffffff;
+	--hf-color-cream: #f5e8c7;
+	--hf-color-cream-soft: #ece2c9;
+
+	/* Colors - Backgrounds & Neutrals */
+	--hf-color-navy: #002c53;
+	--hf-color-navy-deep: #0a1828;
+	--hf-color-navy-deepest: #0a1828;
+
+	/* Colors - Accents */
+	--hf-color-red-orange: #f83800;
+
+	/* Typography - Font Families */
+	--hf-font-serif: "Instrument Serif", serif;
+	--hf-font-sans: "Barlow", sans-serif;
+	--hf-font-sans-condensed: "Barlow Semi Condensed", sans-serif;
+	--hf-font-ui: "Inter", sans-serif;
+
+	/* Spacing - Standard Scale */
+	--hf-space-xs: 0.25rem;
+	--hf-space-sm: 0.5rem;
+	--hf-space-md: 1rem;
+	--hf-space-lg: 1.5rem;
+	--hf-space-xl: 2rem;
+	--hf-space-2xl: 3rem;
+	--hf-space-3xl: 5rem;
+
+	/* Border Radius - Standard Sizes */
+	--hf-radius-sm: 8px;
+	--hf-radius-md: 12px;
+	--hf-radius-lg: 16px;
+
+	/* Shadows */
+	--hf-shadow-sm: 0 4px 8px rgba(0, 0, 0, 0.1);
+	--hf-shadow-md: 0 20px 30px rgba(0, 0, 0, 0.3);
+	--hf-shadow-lg: 0 28px 34px rgba(0, 0, 0, 0.34);
+
+	/* Responsive Breakpoints (for reference) */
+	--hf-bp-desktop-lg: 1200px;
+	--hf-bp-desktop: 1024px;
+	--hf-bp-tablet-lg: 900px;
+	--hf-bp-tablet: 768px;
+	--hf-bp-tablet-sm: 600px;
+	--hf-bp-mobile: 480px;
+}
+
+/* ============================================================================
+   Typography Utilities
+   ============================================================================ */
+
+/* Serif Heading - Large (used for section titles) */
+.hf-heading-serif-lg {
+	font: 400 clamp(2rem, 3vw, 2.5rem) / 1 var(--hf-font-serif);
+	color: var(--hf-color-gold);
+	margin: 0;
+	letter-spacing: 0.02em;
+}
+
+/* Serif Heading - Medium */
+.hf-heading-serif-md {
+	font: 400 clamp(1.9rem, 2.4vw, 2.25rem) / 1.1 var(--hf-font-serif);
+	color: var(--hf-color-gold);
+	margin: 0;
+}
+
+/* Serif Heading - Small */
+.hf-heading-serif-sm {
+	font: 400 1.9rem / 1.15 var(--hf-font-serif);
+	color: var(--hf-color-gold);
+	margin: 0;
+}
+
+/* Body Text - Default */
+.hf-body-text {
+	color: var(--hf-color-ink);
+	font: 300 clamp(1.2rem, 2vw, 1.5rem) / 1.8 var(--hf-font-sans-condensed);
+	margin: 0;
+}
+
+/* Body Text - Condensed */
+.hf-body-text-sm {
+	color: var(--hf-color-ink);
+	font: 300 1.125rem / 1.55 var(--hf-font-sans-condensed);
+	margin: 0;
+}
+
+/* Body Text - Light (for secondary/softer text) */
+.hf-body-text-light {
+	color: rgba(255, 255, 255, 0.7);
+	font: 400 1rem / 1.6 var(--hf-font-sans-condensed);
+	margin: 0;
+}
+
+/* ============================================================================
+   Layout Utilities
+   ============================================================================ */
+
+/* Container - Constrained max-width with centered margin */
+.hf-container {
+	width: min(100%, 1440px);
+	margin-left: auto;
+	margin-right: auto;
+}
+
+/* Container - Slightly narrower for content */
+.hf-container-narrow {
+	width: min(100%, 1174px);
+	margin-left: auto;
+	margin-right: auto;
+}
+
+/* Container - Compact width */
+.hf-container-compact {
+	width: min(100%, 900px);
+	margin-left: auto;
+	margin-right: auto;
+}
+
+/* Flexbox Center - for centering content */
+.hf-flex-center {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+/* ============================================================================
+   Component Patterns
+   ============================================================================ */
+
+/* Divider with Gradient - Used in tickets_passes, lineup, venues sections */
+.hf-divider {
+	display: flex;
+	align-items: center;
+	gap: var(--hf-space-md);
+	width: 100%;
+	text-align: center;
+}
+
+.hf-divider::before,
+.hf-divider::after {
+	content: "";
+	flex: 1;
+	height: 1px;
+	background: linear-gradient(90deg,
+			rgba(0, 0, 0, 0) 0%,
+			rgba(212, 160, 23, 0.8) 50%,
+			rgba(0, 0, 0, 0) 100%);
+}
+
+.hf-divider span {
+	color: var(--hf-color-gold);
+	font: 400 clamp(2rem, 3vw, 2.5rem) / 1 var(--hf-font-serif);
+	flex-shrink: 0;
+}
+
+/* Panel / Card Base - Used for bordered containers */
+.hf-panel {
+	border: 1px solid var(--hf-color-gold);
+	border-radius: var(--hf-radius-md);
+	background: var(--hf-color-navy-deep);
+	box-shadow: var(--hf-shadow-md);
+}
+
+.hf-panel-lg {
+	border-radius: var(--hf-radius-lg);
+}
+
+/* Panel Highlighted State - for featured/promoted panels */
+.hf-panel-highlighted {
+	transform: translateY(-4px);
+	box-shadow: var(--hf-shadow-lg);
+}
+
+/* Button Base - Primary CTA Button */
+.hf-button {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	min-height: 48px;
+	padding: 0.95rem 1.6rem;
+	border-radius: var(--hf-radius-sm);
+	border: 2px solid transparent;
+	background: var(--hf-color-gold);
+	color: var(--hf-color-white);
+	font: 600 1rem / 1 var(--hf-font-sans);
+	letter-spacing: 0.12em;
+	text-transform: uppercase;
+	text-decoration: none;
+	cursor: pointer;
+	transition: background-color 0.2s ease, transform 0.2s ease;
+}
+
+.hf-button:hover,
+.hf-button:focus {
+	background: var(--hf-color-red-orange);
+}
+
+.hf-button:active {
+	transform: scale(0.98);
+}
+
+/* Button Secondary - Outlined variant */
+.hf-button-secondary {
+	background: transparent;
+	border-color: var(--hf-color-cream);
+	color: var(--hf-color-white);
+}
+
+.hf-button-secondary:hover,
+.hf-button-secondary:focus {
+	background: rgba(212, 160, 23, 0.1);
+}
+
+/* Image Container with Overlay */
+.hf-image-container {
+	position: relative;
+	overflow: hidden;
+	border-radius: var(--hf-radius-md);
+	border: 1px solid var(--hf-color-gold);
+}
+
+.hf-image-container::after {
+	content: "";
+	position: absolute;
+	inset: 0;
+	background: var(--hf-color-gold-overlay);
+	pointer-events: none;
+}
+
+.hf-image-container img {
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+	opacity: 0.92;
+	display: block;
+}
+
+/* Badge - for highlighting/labeling items */
+.hf-badge {
+	position: absolute;
+	top: -16px;
+	left: 50%;
+	transform: translateX(-50%);
+	padding: 0.5rem 1.25rem;
+	border-radius: var(--hf-radius-sm);
+	background: var(--hf-color-gold);
+	color: var(--hf-color-white);
+	font: 600 0.875rem / 1 var(--hf-font-sans);
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+	white-space: nowrap;
+}
+
+/* ============================================================================
+   Responsive Utilities
+   ============================================================================ */
+
+@media (max-width: 1024px) {
+	:root {
+		--hf-space-3xl: 2rem;
+	}
+}
+
+@media (max-width: 768px) {
+	:root {
+		--hf-space-xl: 1.5rem;
+		--hf-space-3xl: 1.5rem;
+	}
+}
+
+@media (max-width: 480px) {
+	:root {
+		--hf-space-lg: 1rem;
+		--hf-space-xl: 1.5rem;
+	}
+}

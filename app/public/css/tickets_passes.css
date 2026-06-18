@@ -1,0 +1,168 @@
+/* Tickets & Passes Component Styles */
+
+.tp-tickets {
+	padding: var(--hf-space-xl) var(--hf-space-md);
+	background: var(--hf-color-navy-deep);
+}
+
+.tp-panel {
+	width: min(100%, 1261px);
+	margin: 0 auto;
+	padding: clamp(32px, 5vw, 80px) clamp(20px, 5vw, 88px);
+	border: 1px solid var(--hf-color-gold);
+	border-radius: var(--hf-radius-md);
+}
+
+.tp-divider {
+	display: flex;
+	align-items: center;
+	gap: var(--hf-space-md);
+	width: 100%;
+	text-align: center;
+}
+
+.tp-divider::before,
+.tp-divider::after {
+	content: "";
+	flex: 1;
+	height: 1px;
+	background: linear-gradient(90deg, rgba(0, 0, 0, 0) 0%, rgba(212, 160, 23, 0.8) 50%, rgba(0, 0, 0, 0) 100%);
+}
+
+.tp-divider span {
+	color: var(--hf-color-gold);
+	font: 400 clamp(2rem, 3vw, 2.5rem) / 1 var(--hf-font-serif);
+}
+
+.tp-copy {
+	max-width: 900px;
+	margin: var(--hf-space-lg) auto 0;
+	text-align: center;
+	color: var(--hf-color-cream-soft);
+	font: 300 clamp(1rem, 2vw, 1.25rem) / 1.6 var(--hf-font-sans-condensed);
+}
+
+.tp-grid {
+	display: grid;
+	grid-template-columns: repeat(3, minmax(0, 1fr));
+	gap: 32px;
+	margin-top: var(--hf-space-2xl);
+}
+
+.tp-card {
+	position: relative;
+	display: grid;
+	gap: var(--hf-space-md);
+	align-content: start;
+	min-height: 420px;
+	padding: var(--hf-space-xl);
+	border: 1px solid var(--hf-color-gold);
+	border-radius: var(--hf-radius-lg);
+	background: var(--hf-color-navy-deep);
+	box-shadow: var(--hf-shadow-md);
+	text-align: center;
+}
+
+.tp-card.tp-card-highlighted {
+	transform: translateY(-4px);
+	box-shadow: var(--hf-shadow-lg);
+}
+
+.tp-card h3 {
+	margin: 0;
+	color: var(--hf-color-gold);
+	font: 400 clamp(2rem, 2.4vw, 2.25rem) / 1.1 var(--hf-font-serif);
+}
+
+.tp-card h3::after {
+	content: "";
+	display: block;
+	width: 80px;
+	height: 1px;
+	margin: 1rem auto 0;
+	background: var(--hf-color-gold-faded);
+}
+
+.tp-price {
+	color: var(--hf-color-white);
+	font: 400 clamp(3rem, 4vw, 3.5rem) / 1 var(--hf-font-serif);
+}
+
+.tp-card p {
+	margin: 0;
+	color: var(--hf-color-cream);
+	font: 300 1.125rem / 1.55 var(--hf-font-sans-condensed);
+}
+
+.tp-button {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 100%;
+	min-height: 48px;
+	margin-top: var(--hf-space-md);
+	border-radius: var(--hf-radius-sm);
+	background: var(--hf-color-gold);
+	color: var(--hf-color-white);
+	font: 600 1rem / 1 var(--hf-font-sans);
+	letter-spacing: 0.12em;
+	text-transform: uppercase;
+	text-decoration: none;
+	cursor: pointer;
+	transition: background-color 0.2s ease;
+}
+
+.tp-button:hover,
+.tp-button:focus {
+	background: var(--hf-color-red-orange);
+}
+
+.tp-badge {
+	position: absolute;
+	top: -16px;
+	left: 50%;
+	transform: translateX(-50%);
+	padding: 0.5rem 1.25rem;
+	border-radius: var(--hf-radius-sm);
+	background: var(--hf-color-gold);
+	color: var(--hf-color-white);
+	font: 600 0.875rem / 1 var(--hf-font-sans);
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+}
+
+.tp-notes {
+	margin-top: var(--hf-space-2xl);
+	text-align: center;
+}
+
+.tp-notes p {
+	margin: 0;
+	color: rgba(255, 255, 255, 0.7);
+	font: 400 1rem / 1.6 var(--hf-font-sans-condensed);
+}
+
+.tp-notes p+p {
+	margin-top: 0.65rem;
+}
+
+@media (max-width: 1100px) {
+	.tp-grid {
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+	}
+}
+
+@media (max-width: 768px) {
+	.tp-tickets {
+		padding: 36px 14px;
+	}
+
+	.tp-grid {
+		grid-template-columns: 1fr;
+		gap: 20px;
+	}
+
+	.tp-card {
+		min-height: 0;
+	}
+}

@@ -2,9 +2,31 @@
     font-family: Arial, Helvetica, sans-serif;
 }
 
+.tox-tinymce {
+    min-width: 400px;
+}
+
+img {
+    max-width: 100%;
+    height: auto;
+}
+
+p {
+    font-size: 16px;
+}
+
 nav {
     height: 10vh;
     background-color: #555;
+}
+
+body {
+    margin: 0;
+}
+
+a {
+    color: inherit;
+    text-decoration: none;
 }
 
 .navItemsContainer {
@@ -26,22 +48,13 @@ nav {
     background-color: #606060;
 }
 
-.navItem > p {
+.navItem>p {
     width: 180px;
     text-align: center;
     color: white;
 }
 
-body {
-    margin: 0;
-}
-
-a {
-    color: inherit;
-    text-decoration: none;
-}
-
-/* CMS area components */ 
+/* CMS area components */
 
 .cms-container {
     border: black 3px solid;
@@ -50,6 +63,217 @@ a {
     margin-top: 1em;
     min-height: 80vh;
     padding: 10px
+}
+
+.button {
+    padding: 16px;
+    width: fit-content;
+    display: block;
+    border-radius: 10px;
+    border: none;
+    cursor: pointer;
+}
+
+.button:hover {
+    background-color: #e0e0e0;
+}
+
+.button>p {
+    width: fit-content;
+    margin: 0px;
+}
+
+.add-item-btn {
+    background-color: green;
+}
+
+.add-item-btn:hover {
+    background-color: rgb(2, 89, 2);
+}
+
+.add-item-btn>p {
+    color: white;
+}
+
+.cms-item-container {
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.cms-content-editor {
+    align-items: stretch;
+    width: 100%;
+}
+
+.cms-content-editor__fields {
+    width: 100%;
+    gap: 16px;
+}
+
+.cms-content-editor__field {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    width: 100%;
+}
+
+.cms-content-editor__field>label {
+    font-weight: 600;
+}
+
+.cms-content-editor__image-field {
+    gap: 12px;
+}
+
+.cms-content-editor .tox-tinymce {
+    min-width: 0;
+}
+
+.cms-item {
+    border: solid 2px #666666;
+    padding: 20px 10px;
+    border-radius: 10px;
+}
+
+.cms-item-content {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+}
+
+.cms-item-buttons {
+    display: flex;
+    flex-direction: row;
+    gap: 10px;
+}
+
+.edit-btn {
+    background-color: orange;
+}
+
+.edit-btn:hover {
+    background-color: #e68900;
+}
+
+.delete-btn {
+    background-color: red;
+}
+
+.delete-btn:hover {
+    background-color: #b52f26;
+}
+
+.edit-btn>p,
+.delete-btn>p {
+    color: white;
+}
+
+.notification {
+    padding: 5px;
+    margin: 5px 0px;
+    border-radius: 5px;
+    border: solid 2px black;
+}
+
+.notification>p {
+    margin: 5px;
+}
+
+.success {
+    background-color: #c0e9c085;
+    border-color: #93c993;
+}
+
+.error {
+    background-color: #ffa7a785;
+    border-color: #c47070;
+}
+
+.add-item-form {
+    margin-top: 10px;
+    gap: 12px;
+    display: flex;
+}
+
+input[readonly] {
+    cursor: default;
+}
+
+.form-input {
+    padding: 10px 12px;
+    border-radius: 8px;
+    border: 2px solid #666;
+    font-size: 1rem;
+    outline: none;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.form-input:focus {
+    border-color: #444;
+    box-shadow: 0 0 5px rgba(0, 0, 0, 0.2);
+}
+
+.form-input-container {
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+    gap: 10px;
+}
+
+.form-submit-button {
+    background-color: #4a79d8;
+    color: white;
+}
+
+.form-submit-button:hover {
+    background-color: #3b63b5;
+}
+
+.checkbox-input {
+    width: 65%;
+}
+
+.description-container {
+    justify-content: flex-start;
+}
+
+.selector,
+.selector-item-container {
+    width: 20em;
+    text-align: left;
+}
+
+.selector {
+    padding: 16px;
+}
+
+.selector.open {
+    border-radius: 8px 8px 0px 0px;
+}
+
+.selector-item {
+    background-color: white;
+    border-radius: 0px;
+    border-top: 0px;
+}
+
+.selector-item-last {
+    background-color: white;
+    border-radius: 0px 0px 8px 8px;
+    border-top: 0px;
+}
+
+.component-list {
+    max-height: 50vh;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.component-item {
+    padding: 10px;
+    text-align: left;
 }
 
 .vertical-center {
@@ -62,77 +286,73 @@ a {
     justify-content: center;
 }
 
-.add-page-btn {
-    background-color: green;
-}
-.add-page-btn > p {
-    color: white;
-}
-
-.button {
-    padding: 1em;
-    width: fit-content;
-    display:block;
-    border-radius: 10px;
-    border: none;
-}
-.button > p {
-    width: fit-content;
-    margin: 0px;
+.row {
+    display: flex;
+    flex-direction: row;
+    gap: 12px;
 }
 
-.page-item-container {
-    gap: 10px;
-    margin-top: 10px;
+.column {
     display: flex;
     flex-direction: column;
 }
 
-.page-item {
-    border: solid 2px #666666;
-    padding: 20px 10px;
-    border-radius: 10px;
-}
-.page-item-content {
-    display: flex;
-    flex-direction: row;
+.between {
     justify-content: space-between;
 }
-.page-item-buttons {
+
+.max-width {
+    width: 100%;
+}
+
+.half-width {
+    width: 50%;
+}
+
+.no-margin {
+    margin: 0px;
+}
+
+.fit-content {
+    width: fit-content;
+}
+
+.fill-flex {
+    flex: auto;
+    padding: 0px 2em;
+}
+
+.modal {
+    position: fixed;
+    justify-content: center;
+    align-items: center;
+    inset: 0;
+}
+
+.modal-content {
+    border: solid black 2px;
+    background: white;
+    padding: 20px;
+    width: 400px;
+    max-height: 70vh;
+    border-radius: 8px;
+}
+
+.search-bar-container {
+    max-width: 300px;
+    min-width: 200px;
+    border: solid 2px #666;
+    padding: 10px;
+    border-radius: 8px;
     display: flex;
-    flex-direction: row;
-    gap: 10px;
 }
 
-.edit-btn {
-    background-color: orange;
-}
-.delete-btn {
-    background-color: red;
-}
-.edit-btn > p, .delete-btn > p {
-    color: white;
+.search-bar-container input {
+    align-items: center;
+    border: none;
+    outline: none;
 }
 
-.notification {
-    padding: 5px;
-    margin: 5px 0px;
-    border-radius: 5px;
-    border: solid 2px black;
-}
-.notification > p {
-    margin: 5px;
-}
-
-.success {
-    background-color: #c0e9c085;
-    border-color: #93c993;
-}
-.failure {
-    background-color: #af6868;
-    border-color: #af6868;
-}
-
-.add-page-form {
-    margin-top: 10px;
+.search-bar-container form {
+    margin-block-end: 0;
 }

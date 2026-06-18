@@ -1,0 +1,478 @@
+/* ═══════════════════════════════════════════════════════════
+   Jazz Program — Overlay shell
+   ═══════════════════════════════════════════════════════════ */
+
+.jazz-program-overlay {
+	position: fixed;
+	inset: 0;
+	z-index: 1000;
+	background: #021b38;
+	color: #fff;
+	display: flex;
+	flex-direction: column;
+	overflow: hidden;
+	/* Animate in from below */
+	transition: opacity 220ms ease, transform 220ms ease;
+}
+
+/* While hidden the element is removed from the accessibility tree via [hidden],
+   but we also need the transition to play. Browsers ignore transitions on
+   elements with display:none, so we rely on the opacity + translate pair when
+   the JS class approach is used instead. The [hidden] attribute is enough for
+   the no-JS / initial state. */
+
+.jazz-overlay-open {
+	overflow: hidden;
+	/* lock body scroll while overlay is visible */
+}
+
+/* ── Overlay header ─────────────────────────────────────── */
+
+.jazz-overlay-header {
+	border-bottom: 1px solid rgba(212, 160, 23, 0.25);
+	padding: 1rem 0;
+	flex-shrink: 0;
+}
+
+.jazz-overlay-header-inner {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 1rem;
+	max-width: 1280px;
+}
+
+.jazz-back-btn {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.4rem;
+	font-size: 0.84rem;
+	font-weight: 700;
+	text-transform: uppercase;
+	letter-spacing: 0.04em;
+	color: #d4a017;
+	background: none;
+	border: none;
+	padding: 0;
+	cursor: pointer;
+}
+
+.jazz-back-btn::before {
+	content: "←";
+	font-size: 1rem;
+}
+
+.jazz-overlay-title {
+	flex: 1;
+	text-align: center;
+	font-size: clamp(1.1rem, 2.2vw, 1.6rem);
+	color: #f7e6b4;
+	margin: 0;
+}
+
+.jazz-overlay-close {
+	width: 36px;
+	height: 36px;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	border-radius: 50%;
+	border: 1px solid rgba(212, 160, 23, 0.4);
+	background: transparent;
+	color: #d4a017;
+	font-size: 1.2rem;
+	line-height: 1;
+	cursor: pointer;
+	transition: background 160ms ease;
+}
+
+.jazz-overlay-close:hover {
+	background: rgba(212, 160, 23, 0.14);
+}
+
+/* ── Scrollable body ────────────────────────────────────── */
+
+.jazz-overlay-body {
+	flex: 1;
+	overflow-y: auto;
+	overscroll-behavior: contain;
+}
+
+/* ── Day tabs ───────────────────────────────────────────── */
+
+.jazz-tabs-wrap {
+	border-bottom: 1px solid rgba(212, 160, 23, 0.2);
+	padding: 1.4rem 0 1.5rem;
+	flex-shrink: 0;
+}
+
+.jazz-day-tabs {
+	display: flex;
+	flex-wrap: wrap;
+	justify-content: center;
+	gap: 0.9rem;
+}
+
+.jazz-day-tab {
+	width: 88px;
+	border: 1px solid #d4a017;
+	border-radius: 10px;
+	padding: 0.68rem 0.45rem 0.62rem;
+	text-align: center;
+	color: #d4a017;
+	background: transparent;
+	display: grid;
+	gap: 0.15rem;
+	cursor: pointer;
+	transition: background 160ms ease, color 160ms ease;
+}
+
+.jazz-day-tab.active {
+	background: #d4a017;
+	color: #002c53;
+}
+
+.jazz-day-tab-day {
+	font-family: "Bricolage Grotesque", sans-serif;
+	font-size: 0.75rem;
+	line-height: 1;
+	letter-spacing: 0.06em;
+}
+
+.jazz-day-tab-date {
+	font-size: 0.86rem;
+}
+
+/* ── Program grid ───────────────────────────────────────── */
+
+.jazz-program {
+	padding: 1.5rem 0 3rem;
+}
+
+.jazz-program-grid {
+	max-width: 1260px;
+	margin: 0 auto;
+}
+
+.jazz-empty-state {
+	max-width: 1260px;
+	margin: 0 auto;
+	border: 1px solid rgba(255, 255, 255, 0.16);
+	background: rgba(255, 255, 255, 0.05);
+	border-radius: 10px;
+	padding: 1.1rem;
+	color: rgba(255, 255, 255, 0.8);
+}
+
+/* ── Event card ─────────────────────────────────────────── */
+
+.jazz-event-card {
+	position: relative;
+	border-radius: 10px;
+	border: 1px solid rgba(255, 255, 255, 0.14);
+	background: rgba(255, 255, 255, 0.05);
+	padding: 1.25rem 1.25rem 1rem 1.4rem;
+	display: grid;
+	grid-template-rows: auto auto minmax(0, 1fr) auto auto;
+	gap: 0.72rem;
+}
+
+.jazz-event-card::before {
+	content: "";
+	position: absolute;
+	left: 0;
+	top: 0;
+	bottom: 0;
+	width: 4px;
+	border-radius: 10px 0 0 10px;
+	background: #d4a017;
+}
+
+.jazz-event-card h3 {
+	padding-left: 0.55rem;
+	font-size: 1.52rem;
+	line-height: 1.15;
+	color: #fff;
+}
+
+.jazz-event-meta {
+	list-style: none;
+	margin: 0;
+	padding: 0 0 0 0.55rem;
+	display: grid;
+	gap: 0.22rem;
+}
+
+.jazz-event-meta li {
+	position: relative;
+	padding-left: 1.15rem;
+	color: rgba(255, 255, 255, 0.72);
+	font-size: 0.84rem;
+}
+
+.jazz-event-meta li::before {
+	content: "";
+	width: 7px;
+	height: 7px;
+	border: 1px solid rgba(255, 255, 255, 0.75);
+	border-radius: 50%;
+	position: absolute;
+	left: 0;
+	top: 0.42rem;
+}
+
+.jazz-event-description {
+	margin: 0;
+	padding-left: 0.55rem;
+	color: rgba(255, 255, 255, 0.72);
+	font-size: 0.83rem;
+	line-height: 1.45;
+}
+
+.jazz-event-summary {
+	margin-top: 0.2rem;
+	padding: 0.95rem 0 0 0.55rem;
+	border-top: 1px solid rgba(255, 255, 255, 0.08);
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 1rem;
+	color: rgba(255, 255, 255, 0.82);
+	font-size: 0.84rem;
+}
+
+.jazz-event-summary.no-availability {
+	justify-content: flex-end;
+}
+
+.jazz-availability {
+	color: rgba(255, 255, 255, 0.78);
+	font-weight: 600;
+}
+
+.jazz-price-wrap {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.6rem;
+	padding: 0.4rem 0.72rem;
+	border-radius: 999px;
+	border: 1px solid rgba(255, 255, 255, 0.12);
+	background: rgba(0, 0, 0, 0.18);
+}
+
+.jazz-price-wrap.price-only {
+	padding-left: 0.72rem;
+}
+
+.jazz-status {
+	font-size: 0.7rem;
+	font-weight: 800;
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+}
+
+.jazz-status.sold-out {
+	color: #f95d5d;
+}
+
+.jazz-price {
+	color: #fff;
+	font-size: 1rem;
+	font-weight: 800;
+	letter-spacing: 0.03em;
+}
+
+.jazz-price.is-free {
+	color: #f7e6b4;
+}
+
+/* ── Add to planner form ────────────────────────────────── */
+
+.jazz-card-actions {
+	padding-left: 0.55rem;
+	display: flex;
+	align-items: center;
+	gap: 0.85rem;
+}
+
+.jazz-add-form {
+	width: 100%;
+	display: flex;
+	align-items: center;
+	gap: 0.85rem;
+}
+
+.jazz-qty {
+	background: rgba(0, 0, 0, 0.32);
+	border-radius: 10px;
+	padding: 0.34rem 0.5rem;
+	min-width: 102px;
+	display: inline-flex;
+	align-items: center;
+	justify-content: space-between;
+}
+
+.jazz-qty button {
+	border: 0;
+	background: transparent;
+	color: #d4a017;
+	width: 24px;
+	height: 24px;
+	padding: 0;
+	font-size: 1rem;
+	line-height: 1;
+}
+
+.jazz-qty button[disabled] {
+	opacity: 0.35;
+}
+
+.jazz-qty span {
+	min-width: 18px;
+	text-align: center;
+	font-size: 0.92rem;
+}
+
+.jazz-qty-input {
+	width: 62px;
+	min-height: 30px;
+	border-radius: 8px;
+	border: 1px solid rgba(255, 255, 255, 0.35);
+	background: rgba(0, 0, 0, 0.22);
+	color: #fff;
+	text-align: center;
+}
+
+.jazz-add-btn {
+	flex: 1;
+	min-height: 40px;
+	border: 0;
+	border-radius: 10px;
+	background: #d4a017;
+	color: #002c53;
+	font-family: "Bricolage Grotesque", sans-serif;
+	font-size: 0.9rem;
+	font-weight: 800;
+	letter-spacing: 0.04em;
+	text-transform: uppercase;
+	transition: background 160ms ease, color 160ms ease, opacity 160ms ease;
+}
+
+.jazz-add-btn:hover:not([disabled]) {
+	background: #e5b73a;
+}
+
+.jazz-add-btn.is-added,
+.jazz-add-btn.is-added:hover:not([disabled]) {
+	background: #2f9e44;
+	color: #f5fff7;
+}
+
+.jazz-add-btn.is-submitting {
+	animation: jazz-add-btn-pulse 0.8s ease-in-out infinite;
+}
+
+.jazz-add-btn[disabled] {
+	opacity: 0.55;
+	cursor: not-allowed;
+}
+
+@keyframes jazz-add-btn-pulse {
+
+	0%,
+	100% {
+		box-shadow: 0 0 0 0 rgba(212, 160, 23, 0);
+	}
+
+	50% {
+		box-shadow: 0 0 0 6px rgba(212, 160, 23, 0.24);
+	}
+}
+
+/* ── Planner bar ────────────────────────────────────────── */
+
+.jazz-planner-bar {
+	border-top: 1px solid rgba(212, 160, 23, 0.5);
+	background: #00172f;
+	flex-shrink: 0;
+}
+
+.jazz-planner-inner {
+	min-height: 82px;
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 1rem;
+	padding: 0.9rem 1.25rem;
+	max-width: 1280px;
+	margin: 0 auto;
+}
+
+.jazz-planner-copy h2 {
+	color: #f7e6b4;
+	font-size: 1.02rem;
+	text-transform: uppercase;
+}
+
+.jazz-planner-copy p {
+	margin: 0.12rem 0 0;
+	color: rgba(255, 255, 255, 0.82);
+	font-size: 0.83rem;
+}
+
+.jazz-planner-actions {
+	display: inline-flex;
+	gap: 0.55rem;
+	flex-wrap: wrap;
+}
+
+.jazz-outline-btn,
+.jazz-primary-btn {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	flex: 1 1 220px;
+	min-height: 42px;
+	border-radius: 9px;
+	border: 1px solid #d4a017;
+	padding: 0.55rem 1.15rem;
+	font-family: "Bricolage Grotesque", sans-serif;
+	font-size: 0.84rem;
+	font-weight: 800;
+	text-transform: uppercase;
+	letter-spacing: 0.04em;
+	text-decoration: none;
+}
+
+.jazz-outline-btn {
+	background: transparent;
+	color: #d4a017;
+}
+
+.jazz-primary-btn {
+	background: #d4a017;
+	color: #002c53;
+}
+
+.jazz-lock-note {
+	margin-top: 0.35rem;
+	color: #f3bcc8;
+	font-weight: 600;
+}
+
+/* ── Responsive ─────────────────────────────────────────── */
+
+@media (max-width: 991px) {
+	.jazz-overlay-header-inner {
+		gap: 0.6rem;
+	}
+
+	.jazz-program {
+		padding-bottom: 1.8rem;
+	}
+
+	.jazz-planner-inner {
+		flex-direction: column;
+		align-items: flex-start;
+	}
+}

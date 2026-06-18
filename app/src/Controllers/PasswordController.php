@@ -2,16 +2,17 @@
 
 namespace App\Controllers;
 
-use App\Services\PasswordResetService;
+use App\Models\User;
+use App\Services\Interfaces\IPasswordResetService;
 use App\View;
 
 class PasswordController
 {
-    private PasswordResetService $reset;
+    private IPasswordResetService $reset;
 
-    public function __construct()
+    public function __construct(IPasswordResetService $reset)
     {
-        $this->reset = new PasswordResetService();
+        $this->reset = $reset;
     }
 
     public function showForgot(): void
@@ -26,24 +27,31 @@ class PasswordController
             $this->reset->requestReset($email);
         }
 
+        $prefill = ['email' => $email];
+
         echo View::render('forgot', [
-            'message' => 'If that address is in our system, you will receive a reset link shortly.'
+            'message' => 'If that address is in our system, you will receive a reset link shortly.',
+            'prefill' => $prefill,
         ]);
     }
 
-    public function showReset(array $vars = []): void
+    public function showReset(string $token = ''): void
     {
-        $token = $vars['token'] ?? '';
         echo View::render('reset', ['token' => $token]);
     }
 
-    public function reset(array $vars = []): void
+    public function reset(string $token = ''): void
     {
-        $token = $vars['token'] ?? '';
         $password = $_POST['password'] ?? '';
 
         if ($token === '' || $password === '') {
             echo View::render('reset', ['token' => $token, 'error' => 'Password is required.']);
+            return;
+        }
+
+        $errors = User::validatePassword($password);
+        if ($errors !== []) {
+            echo View::render('reset', ['token' => $token, 'error' => $errors[0]]);
             return;
         }
 

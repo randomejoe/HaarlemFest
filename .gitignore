@@ -41,3 +41,10 @@ node_modules/
 # Docker overrides (optional local overrides)
 docker-compose.override.yml
 
+# Claude Code local config (untracked)
+.claude/
+
+# Local agent state
+.omc/
+.omx/
+app/.omc/

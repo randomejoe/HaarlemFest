@@ -24,6 +24,23 @@ services:
             SMTP_FROM_NAME: 'HaarlemFest'
             APP_BASE_URL: 'http://localhost'
             ALTCHA_HMAC_KEY: 'dev-altcha-hmac-key'
+    expiry-cleanup-cron:
+        build:
+            context: .
+            dockerfile: PHP.Dockerfile
+        volumes:
+            - ./app:/app
+        depends_on:
+            - mysql
+        command:
+            - sh
+            - -lc
+            - |
+                [ -f vendor/autoload.php ] || composer install --no-interaction --no-progress
+                cat <<'EOF' | crontab -
+                * * * * * cd /app && /usr/local/bin/php bin/release_expired_holds.php >> /proc/1/fd/1 2>&1
+                EOF
+                exec cron -f
     mysql:
         image: mariadb:latest
         environment:

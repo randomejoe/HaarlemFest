@@ -1,4 +1,5 @@
 <?php require __DIR__ . '/partials/header.php'; ?>
+<?php $prefill = $prefill ?? []; ?>
 
 <script type="module" src="https://cdn.jsdelivr.net/npm/altcha/dist/altcha.min.js"></script>
 
@@ -11,11 +12,17 @@
                         <h1>Create Account</h1>
                         <p class="account-intro">Join Haarlem Festival to manage your bookings and profile.</p>
 
-                        <?php if (!empty($error)): ?>
-                            <p class="account-message error"><?php echo htmlspecialchars($error, ENT_QUOTES, 'UTF-8'); ?></p>
+                        <?php if (!empty($errors)): ?>
+                            <ul class="account-message error" style="margin:0;padding-left:1.25rem;">
+                                <?php foreach ((array) $errors as $err): ?>
+                                    <li><?php echo htmlspecialchars((string) $err, ENT_QUOTES, 'UTF-8'); ?></li>
+                                <?php endforeach; ?>
+                            </ul>
                         <?php endif; ?>
 
                         <form method="post" action="/register" class="account-form auth-form">
+                            <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars((string) ($csrf_token ?? ''), ENT_QUOTES, 'UTF-8'); ?>">
+                            <input type="hidden" name="redirect" value="<?php echo htmlspecialchars((string) ($redirect ?? '/'), ENT_QUOTES, 'UTF-8'); ?>">
                             <div>
                                 <label class="account-label" for="register-username">Username</label>
                                 <input
@@ -23,7 +30,7 @@
                                     class="account-input"
                                     type="text"
                                     name="username"
-                                    value="<?php echo htmlspecialchars((string) ($_POST['username'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>"
+                                    value="<?php echo htmlspecialchars((string) ($prefill['username'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>"
                                     required
                                 >
                             </div>
@@ -34,13 +41,14 @@
                                     class="account-input"
                                     type="email"
                                     name="email"
-                                    value="<?php echo htmlspecialchars((string) ($_POST['email'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>"
+                                    value="<?php echo htmlspecialchars((string) ($prefill['email'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>"
                                     required
                                 >
                             </div>
                             <div>
                                 <label class="account-label" for="register-password">Password</label>
-                                <input id="register-password" class="account-input" type="password" name="password" required>
+                                <input id="register-password" class="account-input" type="password" name="password" minlength="12" required>
+                                <small>Use at least 12 characters with uppercase, lowercase, number, and special character.</small>
                             </div>
                             <div class="auth-captcha-wrap">
                                 <altcha-widget challengeurl="/altcha" name="altcha"></altcha-widget>
@@ -49,7 +57,7 @@
                         </form>
 
                         <div class="auth-links">
-                            <a href="/login">Already have an account? Log in</a>
+                            <a href="/login?redirect=<?php echo urlencode((string) ($redirect ?? '/')); ?>">Already have an account? Log in</a>
                         </div>
                     </div>
                 </div>

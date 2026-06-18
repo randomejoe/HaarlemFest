@@ -1,4 +1,5 @@
 <?php require __DIR__ . '/partials/header.php'; ?>
+<?php $updated = $updated ?? false; ?>
 
 <main>
     <section class="section">
@@ -7,7 +8,7 @@
                 <h1>My Account</h1>
                 <p class="account-intro">Update your personal details below.</p>
 
-                <?php if (!empty($_GET['updated'])): ?>
+                <?php if ($updated): ?>
                     <p class="account-message success">Your account details were saved.</p>
                 <?php endif; ?>
 
@@ -16,6 +17,7 @@
                 <?php endif; ?>
 
                 <form method="post" action="/account" class="account-form">
+                    <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars((string) ($csrf_token ?? ''), ENT_QUOTES, 'UTF-8'); ?>">
                     <div class="row g-3">
                         <div class="col-12 col-md-6">
                             <label class="account-label" for="account-email">Email</label>
@@ -23,7 +25,7 @@
                                 id="account-email"
                                 class="account-input"
                                 type="email"
-                                value="<?php echo htmlspecialchars((string) ($user['email'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>"
+                                value="<?php echo htmlspecialchars($user->email(), ENT_QUOTES, 'UTF-8'); ?>"
                                 readonly
                             >
                         </div>
@@ -34,7 +36,7 @@
                                 class="account-input"
                                 type="text"
                                 name="username"
-                                value="<?php echo htmlspecialchars((string) ($user['username'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>"
+                                value="<?php echo htmlspecialchars($user->username(), ENT_QUOTES, 'UTF-8'); ?>"
                                 required
                             >
                         </div>
@@ -45,7 +47,7 @@
                                 class="account-input"
                                 type="text"
                                 name="first_name"
-                                value="<?php echo htmlspecialchars((string) ($user['first_name'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>"
+                                value="<?php echo htmlspecialchars((string) ($user->firstName() ?? ''), ENT_QUOTES, 'UTF-8'); ?>"
                             >
                         </div>
                         <div class="col-12 col-md-6">
@@ -55,7 +57,7 @@
                                 class="account-input"
                                 type="text"
                                 name="last_name"
-                                value="<?php echo htmlspecialchars((string) ($user['last_name'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>"
+                                value="<?php echo htmlspecialchars((string) ($user->lastName() ?? ''), ENT_QUOTES, 'UTF-8'); ?>"
                             >
                         </div>
                         <div class="col-12">
@@ -65,7 +67,7 @@
                                 class="account-input"
                                 type="text"
                                 name="address"
-                                value="<?php echo htmlspecialchars((string) ($user['address'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>"
+                                value="<?php echo htmlspecialchars((string) ($user->address() ?? ''), ENT_QUOTES, 'UTF-8'); ?>"
                             >
                         </div>
                         <div class="col-12 col-md-6">
@@ -75,7 +77,7 @@
                                 class="account-input"
                                 type="text"
                                 name="city"
-                                value="<?php echo htmlspecialchars((string) ($user['city'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>"
+                                value="<?php echo htmlspecialchars((string) ($user->city() ?? ''), ENT_QUOTES, 'UTF-8'); ?>"
                             >
                         </div>
                         <div class="col-12 col-md-6">
@@ -85,7 +87,7 @@
                                 class="account-input"
                                 type="text"
                                 name="country"
-                                value="<?php echo htmlspecialchars((string) ($user['country'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>"
+                                value="<?php echo htmlspecialchars((string) ($user->country() ?? ''), ENT_QUOTES, 'UTF-8'); ?>"
                             >
                         </div>
                         <div class="col-12 col-md-6">
@@ -95,7 +97,7 @@
                                 class="account-input"
                                 type="text"
                                 name="phone_number"
-                                value="<?php echo htmlspecialchars((string) ($user['phone_number'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>"
+                                value="<?php echo htmlspecialchars((string) ($user->phoneNumber() ?? ''), ENT_QUOTES, 'UTF-8'); ?>"
                             >
                         </div>
                     </div>

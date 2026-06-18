@@ -3,18 +3,24 @@
 namespace App\Services;
 
 use App\Config;
-use App\Repositories\UserRepository;
+use App\Repositories\Interfaces\IUserRepository;
+use App\Services\Interfaces\IAuthService;
+use App\Services\Interfaces\IPasswordResetService;
 use DateTime;
+use RuntimeException;
+use Throwable;
 
-class PasswordResetService
+class PasswordResetService implements IPasswordResetService
 {
-    private UserRepository $users;
+    private IUserRepository $users;
     private Mailer $mailer;
+    private IAuthService $auth;
 
-    public function __construct()
+    public function __construct(IUserRepository $users, Mailer $mailer, IAuthService $auth)
     {
-        $this->users = new UserRepository();
-        $this->mailer = new Mailer();
+        $this->users = $users;
+        $this->mailer = $mailer;
+        $this->auth = $auth;
     }
 
     public function requestReset(string $email): void
@@ -28,7 +34,11 @@ class PasswordResetService
         $tokenHash = hash('sha256', $token);
         $expiresAt = (new DateTime('+1 hour'))->format('Y-m-d H:i:s');
 
-        $this->users->setPasswordResetToken((int) $user['user_id'], $tokenHash, $expiresAt);
+        try {
+            $this->users->setPasswordResetToken($user->getId(), $tokenHash, $expiresAt);
+        } catch (\Throwable $e) {
+            throw new RuntimeException('Failed to store reset token.', 0, $e);
+        }
 
         $baseUrl = rtrim(Config::env('APP_BASE_URL', 'http://localhost'), '/');
         $resetUrl = $baseUrl . '/password/reset/' . $token;
@@ -38,7 +48,11 @@ class PasswordResetService
             . '<p><a href="' . htmlspecialchars($resetUrl, ENT_QUOTES, 'UTF-8') . '">Reset password</a></p>'
             . '<p>This link expires in 1 hour.</p>';
 
-        $this->mailer->send($user['email'], $user['username'], $subject, $body);
+        try {
+            $this->mailer->send($user->email(), $user->username(), $subject, $body);
+        } catch (Throwable $e) {
+            error_log('Password reset email delivery failed for user ' . $user->getId() . ': ' . $e->getMessage());
+        }
     }
 
     public function resetPassword(string $token, string $newPassword): bool
@@ -49,13 +63,19 @@ class PasswordResetService
             return false;
         }
 
-        $expiresAt = $user['password_reset_expires_at'] ?? null;
+        $expiresAt = $user->passwordResetExpiresAt();
         if (!$expiresAt || strtotime($expiresAt) < time()) {
             return false;
         }
 
-        $passwordHash = password_hash($newPassword, PASSWORD_DEFAULT);
-        $this->users->updatePassword((int) $user['user_id'], $passwordHash);
+        $passwordHash = $this->auth->hashPassword($newPassword);
+
+        try {
+            $this->users->updatePassword($user->getId(), $passwordHash);
+        } catch (\Throwable $e) {
+            throw new RuntimeException('Failed to update password.', 0, $e);
+        }
+
         return true;
     }
 }
